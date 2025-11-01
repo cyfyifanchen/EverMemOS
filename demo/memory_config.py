@@ -123,7 +123,10 @@ class ExtractModeConfig:
     scenario_type: ScenarioType = ScenarioType.GROUP_CHAT
     # scenario_type: ScenarioType = ScenarioType.ASSISTANT
 
-    # 数据文件路径（自动根据场景类型绑定，也可手动覆盖）
+    # 🌏 语言模式（决定数据文件和输出目录的语言后缀）
+    language: str = "zh"  # "zh" 或 "en"
+
+    # 数据文件路径（自动根据场景类型和语言绑定，也可手动覆盖）
     data_file: Optional[Path] = None
 
     # 输出目录
@@ -187,26 +190,29 @@ class ExtractModeConfig:
                 "system",
             }
 
-        # 根据场景类型自动绑定数据文件（如果未手动设置）
+        # 🔥 根据场景类型和语言自动绑定数据文件（如果未手动设置）
         if self.data_file is None:
             # 获取项目根目录（demo 的父目录）
             project_root = Path(__file__).parent.parent
             data_dir = project_root / "data"
 
+            # 数据文件格式：{scenario_type}_chat_{language}.json
             if self.scenario_type == ScenarioType.ASSISTANT:
-                self.data_file = data_dir / "assistant_chat_zh.json"
+                self.data_file = data_dir / f"assistant_chat_{self.language}.json"
             elif self.scenario_type == ScenarioType.GROUP_CHAT:
-                self.data_file = data_dir / "group_chat_zh.json"
+                self.data_file = data_dir / f"group_chat_{self.language}.json"
 
-        # 根据场景类型自动调整输出目录
-        # 为不同场景创建独立的子目录，避免数据混乱
+        # 🔥 根据场景类型和语言自动调整输出目录
+        # 目录格式：memcell_outputs/{scenario_type}_{language}/
+        scenario_name = (
+            "assistant" if self.scenario_type == ScenarioType.ASSISTANT else "group_chat"
+        )
+        self.output_dir = self.output_dir / f"{scenario_name}_{self.language}"
+        
+        # 根据场景类型设置语义提取选项
         if self.scenario_type == ScenarioType.ASSISTANT:
-            # 助手场景：输出到 memcell_outputs/assistant/
-            self.output_dir = self.output_dir / "assistant"
             self.enable_semantic_extraction = True
         elif self.scenario_type == ScenarioType.GROUP_CHAT:
-            # 群聊场景：输出到 memcell_outputs/group_chat/
-            self.output_dir = self.output_dir / "group_chat"
             self.enable_semantic_extraction = False
 
         # 根据场景类型自动调整默认配置
@@ -231,12 +237,10 @@ class ChatModeConfig:
     """对话模式配置
 
     用于配置记忆增强对话系统的参数，包括对话历史、记忆检索、显示选项等。
+    
+    注意：scenario_type 和 language 应该在运行时由用户选择动态设置，
+    不建议在配置中硬编码。路径会在 ChatSession 初始化时根据运行时参数动态确定。
     """
-
-    # 基础配置
-    # scenario_type: ScenarioType = ScenarioType.GROUP_CHAT
-
-    scenario_type: ScenarioType = ScenarioType.ASSISTANT
 
     # 对话历史配置
     conversation_history_size: int = 5  # 保留最近 N 轮对话
@@ -252,7 +256,7 @@ class ChatModeConfig:
     verbose_memory_display: bool = False  # 是否详细显示记忆（False=简洁版）
     show_reasoning_metadata: bool = True  # 是否显示推理元数据（置信度、引用等）
 
-    # 路径配置
+    # 路径配置（基础目录）
     chat_history_dir: Path = field(
         default_factory=lambda: Path(__file__).parent / "chat_history"
     )
@@ -264,9 +268,4 @@ class ChatModeConfig:
         """初始化配置，确保目录存在"""
         # 确保对话历史目录存在
         self.chat_history_dir.mkdir(parents=True, exist_ok=True)
-
-        # 根据场景类型调整 memcell_output_dir 子目录
-        if self.scenario_type == ScenarioType.GROUP_CHAT:
-            self.memcell_output_dir = self.memcell_output_dir / "group_chat"
-        elif self.scenario_type == ScenarioType.ASSISTANT:
-            self.memcell_output_dir = self.memcell_output_dir / "assistant"
+        # memcell_output_dir 不在这里调整，由 ChatSession 根据运行时参数动态确定

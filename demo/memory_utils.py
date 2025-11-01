@@ -602,6 +602,10 @@ class VectorSimilarityStrategy(RetrievalStrategy):
         doc_semantic_memories_vecs = []
         candidate_filtered = []
         for candidate in candidates:
+            # 🔥 检查 semantic_memories 是否为 None
+            if not candidate.semantic_memories:
+                continue
+            
             semantic_memories_vecs = []
             for semantic_memory in candidate.semantic_memories:
                 # 获取 end_time 并规范化为 naive datetime 以便比较

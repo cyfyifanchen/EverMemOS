@@ -4,6 +4,22 @@
 
 This directory contains interactive demos showcasing the core functionality of EverMemOS.
 
+## 🌏 Multi-language Support
+
+The system supports **Chinese and English** language modes with fully automatic binding:
+
+| Config | Data File | Output Directory |
+|--------|-----------|------------------|
+| `language="zh"` | `data/group_chat_zh.json` | `memcell_outputs/group_chat_zh/` |
+| `language="en"` | `data/group_chat_en.json` | `memcell_outputs/group_chat_en/` |
+
+**Core Mechanism**:
+- Set the `language` parameter in `extract_memory.py` (`"zh"` or `"en"`)
+- System automatically matches corresponding data files and output directories
+- Select the same language during chat to properly load memories and profiles
+
+> 💡 **Tip**: Extraction and chat languages must match, otherwise Profile files won't be found
+
 ## 📂 Contents
 
 ### Core Demo Scripts
@@ -31,72 +47,196 @@ This directory contains interactive demos showcasing the core functionality of E
 
 ## 🚀 Quick Start
 
-### 1. Extract Memories
+### Step 1: Configure Language and Scenario
 
-First, extract memories from sample conversation data:
+#### Option A: Use Sample Data (Recommended for Beginners)
 
-```bash
-uv run python src/bootstrap.py demo/extract_memory.py
+Edit `extract_memory.py` and use the default configuration:
+
+```python
+# 💡 Use sample data (default):
+EXTRACT_CONFIG = ExtractModeConfig(
+    scenario_type=ScenarioType.GROUP_CHAT,  # Scenario: GROUP_CHAT or ASSISTANT
+    language="zh",  # 🌏 Language: zh (Chinese) or en (English)
+    enable_profile_extraction=True,
+)
 ```
 
-This will:
-- Read conversation data from `data/` directory
-- Extract MemCells using LLM
-- Generate user profiles
-- Store in MongoDB and save to local files
+The system will automatically use the corresponding sample data file (e.g., `data/group_chat_zh.json`).
 
-### 2. Chat with Memory
+#### Option B: Use Custom Data
 
-After extraction, start an interactive chat session:
+If you have your own conversation data, follow these steps:
 
-```bash
-uv run python src/bootstrap.py demo/chat_with_memory.py
+**1. Prepare Data File**
+
+Create a JSON file following our data format. For format details, refer to:
+- [Group Chat Format Specification](../data_format/group_chat/group_chat_format.md)
+- Files in [Sample Data](../data/) as reference
+
+**2. Modify Configuration**
+
+Uncomment and modify the custom data configuration in `extract_memory.py`:
+
+```python
+# 💡 Use custom data:
+EXTRACT_CONFIG = ExtractModeConfig(
+    scenario_type=ScenarioType.GROUP_CHAT,
+    language="zh",
+    data_file=Path("/path/to/your/data.json"),  # 🔧 Specify your data file path
+    output_dir=Path(__file__).parent / "memcell_outputs",  # 🔧 Output directory (optional)
+    group_id="my_custom_group",  # 🔧 Group ID (optional)
+    group_name="My Custom Group",  # 🔧 Group name (optional)
+    enable_profile_extraction=True,
+)
 ```
 
-Features:
-- Real-time conversation with AI
-- Automatic memory retrieval based on context
-- Bilingual support (English/Chinese)
-- Chat history auto-save
+> 💡 **Tip**: Use absolute or relative path to specify your data file location.
 
-## 📝 Usage Tips
+### Step 2: Extract Memories
 
-### Memory Extraction
+Run the extraction script to extract memories from conversation data:
 
-The extraction script processes JSON files in the `data/` directory (configured in `ExtractModeConfig` in `memory_config.py`). Ensure your conversation files follow the [GroupChatFormat](../data_format/group_chat/group_chat_format.md) specification. For convenience, we provide bilingual sample data files:
-- **English versions:** [group_chat_en.json](../data/group_chat_en.json) and [assistant_chat_en.json](../data/assistant_chat_en.json)
-- **Chinese versions:** [group_chat_zh.json](../data/group_chat_zh.json) and [assistant_chat_zh.json](../data/assistant_chat_zh.json)
+```bash
+cd demo
+python extract_memory.py
+# Or with uv: uv run python src/bootstrap.py demo/extract_memory.py
+```
 
-See the [data documentation](../data/README.md) for details.
+The system will automatically:
+- Read the corresponding data file (e.g., `data/group_chat_zh.json`)
+- Extract MemCells
+- Generate user Profiles
+- Save to MongoDB and local directory (e.g., `memcell_outputs/group_chat_zh/`)
 
-### Interactive Chat
+### Step 3: Start Conversation
 
-During chat sessions:
-- Type naturally to converse with the AI
-- The system automatically retrieves relevant memories
-- Use `exit` to end the session
-- Chat history is saved automatically (defaults to loading previous 5 messages as context)
+Run the chat script to start conversing with AI:
 
-## 🔧 Configuration
+```bash
+cd demo
+python chat_with_memory.py
+# Or with uv: uv run python src/bootstrap.py demo/chat_with_memory.py
+```
 
-Edit `memory_config.py` to customize:
-- LLM model selection
-- Memory extraction parameters
-- Database connection settings
-- Output directories
+**Interactive Selection**:
+1. **Language**: Choose `[1] 中文` or `[2] English` (should match Step 1 config)
+2. **Scenario**: Choose `[1] Assistant Mode` or `[2] Group Chat Mode`
 
-## 📊 Example Output
+**Chat Features**:
+- 💬 Natural language conversation with memory-based context
+- 🔍 Automatic retrieval of relevant memories (shows retrieval results)
+- 📝 Auto-save conversation history
+- 🧠 View reasoning process (type `reasoning`)
 
-After running `extract_memory.py`, you'll find:
+### 💡 Example Use Cases
+
+#### Case 1: Chinese Group Chat (Default, Recommended for Beginners)
+
+```python
+# extract_memory.py - No modification needed, use default config
+scenario_type=ScenarioType.GROUP_CHAT,
+language="zh",
+```
+
+Run extraction → Start chat → Select `[1] 中文` + `[2] Group Chat Mode`
+
+**Try asking**: "What did Alex do in the emotion recognition project?"
+
+#### Case 2: English Assistant
+
+```python
+# extract_memory.py - Modify config
+scenario_type=ScenarioType.ASSISTANT,
+language="en",
+```
+
+Run extraction → Start chat → Select `[2] English` + `[1] Assistant Mode`
+
+**Try asking**: "What foods might I like?"
+
+## 📁 Data Files and Output Directories
+
+### Data Files (Auto-binding)
+
+The system automatically selects the corresponding data file based on configuration:
+
+| Scenario | Language | Data File |
+|----------|----------|-----------|
+| Group Chat | Chinese | `data/group_chat_zh.json` |
+| Group Chat | English | `data/group_chat_en.json` |
+| Assistant | Chinese | `data/assistant_chat_zh.json` |
+| Assistant | English | `data/assistant_chat_en.json` |
+
+All data files follow the [GroupChatFormat](../data_format/group_chat/group_chat_format.md) specification. See [data documentation](../data/README.md) for details.
+
+### Output Directories (Auto-created)
+
+Extracted files are saved under `memcell_outputs/`:
 
 ```
 demo/memcell_outputs/
-├── user_profiles/
-│   ├── user_101_profile.json
-│   └── user_102_profile.json
-└── memcells/
-    ├── group_001_memcells.json
-    └── episode_memories.json
+├── group_chat_zh/          # Chinese Group Chat
+│   ├── profiles/           # User Profiles
+│   │   ├── profile_user_101.json
+│   │   └── ...
+│   └── memcell_*.json      # MemCells
+├── group_chat_en/          # English Group Chat
+├── assistant_zh/           # Chinese Assistant
+│   └── profiles_companion/ # Companion Profiles
+└── assistant_en/           # English Assistant
+```
+
+## 💬 Chat Commands
+
+During chat sessions, the following commands are supported:
+
+- **Normal Input**: Type questions directly, AI will answer based on memories
+- `help` - Show help information
+- `reasoning` - View complete reasoning process of last response
+- `clear` - Clear current conversation history
+- `reload` - Reload memories and profiles
+- `exit` - Save conversation history and exit
+- `Ctrl+C` - Interrupt and save
+
+## ⚙️ Configuration
+
+### Quick Configuration (Recommended)
+
+Simply modify two parameters in `extract_memory.py`:
+
+```python
+EXTRACT_CONFIG = ExtractModeConfig(
+    scenario_type=ScenarioType.GROUP_CHAT,  # Scenario type
+    language="zh",                          # Language mode
+)
+```
+
+### Advanced Configuration
+
+Edit `memory_config.py` to customize:
+- **LLM Config**: Model selection, API Key, temperature
+- **Embedding Config**: Vectorization service URL and model
+- **MongoDB Config**: Database connection settings
+- **Extraction Parameters**: Batch size, concurrency, performance optimization
+- **Chat Parameters**: History window size, retrieval count, display options
+
+### Environment Variables
+
+Create a `.env` file in the project root (refer to `env.template`):
+
+```bash
+# LLM Configuration
+LLM_MODEL=your_model
+LLM_API_KEY=your_api_key
+LLM_BASE_URL=your_base_url
+
+# Embedding Model Configuration
+EMB_BASE_URL=http://localhost:11000/v1/embeddings
+EMB_MODEL=Qwen3-Embedding-4B
+
+# MongoDB Configuration
+MONGODB_URI=mongodb://localhost:27017/memsys
 ```
 
 ## 🔗 Related Documentation
@@ -148,11 +288,48 @@ demo/memcell_outputs/
 - How is my health condition?
 
 
+## 🔗 Related Documentation
+
+- 📋 [Group Chat Format Specification](../data_format/group_chat/group_chat_format.md) - Data file format
+- 🔌 [API Documentation](../docs/api_docs/agentic_v3_api.md) - API reference
+- 📦 [Data Documentation](../data/README.md) - Sample data details
+- 🏠 [Project Home](../README.md) - Project overview and architecture
+- 📘 [Batch Memorization Guide](../docs/dev_docs/run_memorize_usage.md) - Advanced usage
+
+## ❓ FAQ
+
+### Q: Can't find Profile files?
+**A**: Ensure the `language` parameter used during extraction matches the language selected during chat. For example: extraction with `language="zh"` → chat with `[1] 中文`
+
+### Q: How to switch languages?
+**A**: Modify the `language` parameter in `extract_memory.py`, re-run the extraction script, then select the corresponding language during chat.
+
+### Q: What scenarios are supported?
+**A**: Two scenarios are supported:
+- **Group Chat Mode (GROUP_CHAT)**: Multi-person conversations, extracts group memories and user profiles
+- **Assistant Mode (ASSISTANT)**: One-on-one conversations, extracts personalized companion profiles
+
+### Q: What's the data file format?
+**A**: JSON format following the [GroupChatFormat](../data_format/group_chat/group_chat_format.md) specification. We provide 4 example files for reference.
+
+### Q: How to use my own data?
+**A**: Three simple steps:
+1. Prepare your JSON data file following the [Data Format Specification](../data_format/group_chat/group_chat_format.md)
+2. Uncomment the "Use custom data" configuration section in `extract_memory.py`
+3. Modify the `data_file` parameter to point to your data file path
+
+### Q: What format is required for custom data?
+**A**: Basic requirements:
+- JSON format file
+- Contains `conversation_list` array, or is directly a message array
+- Each message must include at least: `sender_name` (sender), `content` (content), `create_time` (timestamp)
+- Detailed specification: [GroupChatFormat](../data_format/group_chat/group_chat_format.md)
+
 ## 💡 Need Help?
 
-- Check the main [README](../README.md) for setup instructions
-- Review the [Batch Memorization Usage Guide](../docs/dev_docs/run_memorize_usage.md)
-- Open an issue on GitHub
+- 🏠 See the main [README](../README.md) for project setup and architecture
+- 💬 Open an issue on GitHub
+- 📧 Contact project maintainers
 
 ---
 

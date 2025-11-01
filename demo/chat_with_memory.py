@@ -364,14 +364,19 @@ class ChatSession:
                 f"\n[{self.texts.get('loading_label')}] {self.texts.get('loading_group_data', name=display_name)}"
             )
 
-            # Profile 文件保存在场景子目录下：
-            # - 群聊: memcell_outputs/group_chat/profiles/
-            # - 助手: memcell_outputs/assistant/profiles_companion/
-            profiles_dir = (
-                self.config.memcell_output_dir / "profiles_companion"
-                if self.scenario_type == ScenarioType.ASSISTANT
-                else self.config.memcell_output_dir / "profiles"
+            # 🔥 根据运行时的 scenario_type 和语言动态确定 Profile 路径
+            # 路径格式：memcell_outputs/{scenario}_{language}/profiles[_companion]/
+            scenario_name = (
+                "assistant" if self.scenario_type == ScenarioType.ASSISTANT else "group_chat"
             )
+            scenario_dir = self.config.memcell_output_dir / f"{scenario_name}_{self.texts.language}"
+            
+            # Profile 子目录：群聊用 profiles/，助手用 profiles_companion/
+            if self.scenario_type == ScenarioType.ASSISTANT:
+                profiles_dir = scenario_dir / "profiles_companion"
+            else:
+                profiles_dir = scenario_dir / "profiles"
+            
             self.user_profiles = load_user_profiles_from_dir(profiles_dir)
 
             if not self.user_profiles:
@@ -734,20 +739,16 @@ class ChatSession:
 
         # 2. 显示检索结果（如果配置启用）- 只显示前 5 条
         if self.config.show_retrieved_memories:
-            if memories:
+            # 🔥 合并所有检索结果，统一显示
+            all_memories = memories + memories_semantic
+            if all_memories:
                 ChatUI.print_retrieved_memories(
-                    memories[:5],
-                    total_count=len(memories),
+                    all_memories[:5],
+                    total_count=len(all_memories),
                     texts=self.texts,
-                    retrieval_method="vector_similarity",
+                    retrieval_method="default",  # 使用默认模式，不显示具体检索方法
                 )
-            if memories_semantic:
-                ChatUI.print_retrieved_memories(
-                    memories_semantic[:5],
-                    total_count=len(memories_semantic),
-                    texts=self.texts,
-                    retrieval_method="semantic_memory",
-                )
+        
         memories = memories + memories_semantic
         # 3. 构建 Prompt（使用全部 20 条记忆）
         messages = self.build_prompt(user_input, memories, self.user_profiles)
@@ -919,12 +920,17 @@ class ChatSession:
         print()
         ui.note(self.texts.get("cmd_reload_refreshing", name=display_name), icon="🔄")
 
-        # Profile 文件保存在场景子目录下
-        profiles_dir = (
-            self.config.memcell_output_dir / "profiles_companion"
-            if self.scenario_type == ScenarioType.ASSISTANT
-            else self.config.memcell_output_dir / "profiles"
+        # 🔥 根据运行时的 scenario_type 和语言动态确定 Profile 路径
+        scenario_name = (
+            "assistant" if self.scenario_type == ScenarioType.ASSISTANT else "group_chat"
         )
+        scenario_dir = self.config.memcell_output_dir / f"{scenario_name}_{self.texts.language}"
+        
+        if self.scenario_type == ScenarioType.ASSISTANT:
+            profiles_dir = scenario_dir / "profiles_companion"
+        else:
+            profiles_dir = scenario_dir / "profiles"
+        
         self.user_profiles = load_user_profiles_from_dir(profiles_dir)
 
         # 重新统计 MemCell 数量
@@ -1036,29 +1042,12 @@ class ChatUI:
             memories: 记忆列表（显示用）
             total_count: 实际检索到的总数（保留参数以兼容旧代码，但不再使用）
             texts: 国际化文本对象
-            retrieval_method: 检索方式标识（vector_similarity, semantic_memory, default）
+            retrieval_method: 检索方式标识（保留参数以兼容旧代码）
         """
         ui = ChatUI._ui()
 
-        # 根据检索方式设置标题 - 显示检索方式、状态和显示数量
-        if retrieval_method == "vector_similarity":
-            method_label = (
-                "向量相似度检索"
-                if texts.language == "zh"
-                else "Vector Similarity Retrieval"
-            )
-        elif retrieval_method == "semantic_memory":
-            method_label = (
-                "语义记忆检索"
-                if texts.language == "zh"
-                else "Semantic Memory Retrieval"
-            )
-        else:
-            # default 模式
-            method_label = texts.get('retrieval_complete')
-
-        # 构建标题：检索方式 - 检索完成 - 显示前N条
-        heading = f"🔍 {method_label} - {texts.get('retrieval_complete')}"
+        # 🔥 简化标题：只显示"检索完成"和显示数量
+        heading = f"🔍 {texts.get('retrieval_complete')}"
         shown_count = len(memories)
         if shown_count > 0:
             heading += f" - {texts.get('retrieval_showing', shown=shown_count)}"

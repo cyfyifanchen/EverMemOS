@@ -90,12 +90,30 @@ PERF_METRICS = PerformanceMetrics()
 # CURRENT_RUN_MODE = RunMode.EXTRACT_PROFILE_ONLY  # ✅ 完整提取：MemCell + Profile
 CURRENT_RUN_MODE = RunMode.EXTRACT_ALL  # ✅ 完整提取：MemCell + Profile
 
-# 提取配置
+# 🔥 提取配置：明确指定场景和语言
+# 场景类型：ScenarioType.GROUP_CHAT（群聊）或 ScenarioType.ASSISTANT（助手）
+# 语言模式：支持 "zh"（中文）或 "en"（英文）
+# 自动绑定：数据文件和输出目录会根据场景和语言自动确定
+#
+# 💡 使用示例数据（默认）：
 EXTRACT_CONFIG = ExtractModeConfig(
     scenario_type=ScenarioType.GROUP_CHAT,
     # scenario_type=ScenarioType.ASSISTANT,
+    language="zh",  # 🌏 语言模式：zh（中文）或 en（英文）
     enable_profile_extraction=True,
 )
+
+# 💡 使用自定义数据：
+# 如果您想使用自己的数据文件，请取消注释以下配置，并修改路径
+# EXTRACT_CONFIG = ExtractModeConfig(
+#     scenario_type=ScenarioType.GROUP_CHAT,
+#     language="zh",
+#     data_file=Path("/path/to/your/data.json"),  # 🔧 指定您的数据文件路径
+#     output_dir=Path(__file__).parent / "memcell_outputs",  # 🔧 指定输出目录（可选）
+#     group_id="my_custom_group",  # 🔧 自定义群组 ID（可选）
+#     group_name="My Custom Group",  # 🔧 自定义群组名称（可选）
+#     enable_profile_extraction=True,
+# )
 
 # LLM 配置
 LLM_CONFIG = LLMConfig()
@@ -1411,6 +1429,8 @@ def main() -> None:
     print("=" * 80)
     print(f"运行模式: {CURRENT_RUN_MODE.value}")
     print(f"场景类型: {EXTRACT_CONFIG.scenario_type.value}")
+    print(f"数据文件: {EXTRACT_CONFIG.data_file}")
+    print(f"输出目录: {EXTRACT_CONFIG.output_dir}")
     print("=" * 80 + "\n")
 
     try:

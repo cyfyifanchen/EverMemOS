@@ -1,0 +1,37 @@
+{
+  "conversation_list": [
+    {
+      "sender_name": "Alice",
+      "sender_id": "user_001",
+      "content": "大家好，今天我们开始新项目的讨论。",
+      "create_time": "2024-01-01T09:00:00+08:00",
+      "message_id": "msg_001",
+      "type": "text"
+    },
+    {
+      "sender_name": "Bob",
+      "sender_id": "user_002",
+      "content": "好的，我已经准备好了技术方案。",
+      "create_time": "2024-01-01T09:05:00+08:00",
+      "message_id": "msg_002",
+      "type": "text"
+    },
+    {
+      "sender_name": "Charlie",
+      "sender_id": "user_003",
+      "content": "我负责前端部分，预计一周完成。",
+      "create_time": "2024-01-01T09:10:00+08:00",
+      "message_id": "msg_003",
+      "type": "text"
+    },
+    {
+      "sender_name": "Alice",
+      "sender_id": "user_001",
+      "content": "很好，那我们就按这个计划推进。",
+      "create_time": "2024-01-01T09:15:00+08:00",
+      "message_id": "msg_004",
+      "type": "text"
+    }
+  ]
+}
+

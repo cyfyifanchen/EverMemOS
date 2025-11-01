@@ -290,6 +290,70 @@ class GroupSelector:
 
 
 # ============================================================================
+# 检索模式选择器
+# ============================================================================
+
+
+class RetrievalModeSelector:
+    """检索模式选择器 - 用于选择轻量级或 Agentic 检索模式"""
+
+    @staticmethod
+    def select_retrieval_mode(texts: I18nTexts) -> Optional[str]:
+        """交互式选择检索模式
+
+        Args:
+            texts: 国际化文本对象
+
+        Returns:
+            "lightweight" 或 "agentic"，取消返回 None
+        """
+        ui = CLIUI()
+        print()
+        ui.section_heading(texts.get("retrieval_mode_selection_title"))
+        print()
+
+        # 显示模式列表
+        print(f"  [1] {texts.get('retrieval_mode_lightweight')}")
+        print(f"      {texts.get('retrieval_mode_lightweight_desc')}")
+        print()
+        print(f"  [2] {texts.get('retrieval_mode_agentic')}")
+        print(f"      {texts.get('retrieval_mode_agentic_desc')}")
+        print()
+
+        # 显示建议提示
+        ui.note(texts.get("retrieval_mode_lightweight_note"), icon="💡")
+        ui.note(texts.get("retrieval_mode_agentic_note"), icon="💡")
+        print()
+
+        while True:
+            try:
+                choice = input(f"{texts.get('retrieval_mode_prompt')}: ").strip()
+
+                if not choice:
+                    continue
+
+                index = int(choice)
+                if index == 1:
+                    ui.success(
+                        f"✓ {texts.get('retrieval_mode_selected')}: {texts.get('retrieval_mode_lightweight')}"
+                    )
+                    return "lightweight"
+                elif index == 2:
+                    ui.success(
+                        f"✓ {texts.get('retrieval_mode_selected')}: {texts.get('retrieval_mode_agentic')}"
+                    )
+                    return "agentic"
+                else:
+                    ui.error(f"✗ {texts.get('invalid_input_number')}")
+
+            except ValueError:
+                ui.error(f"✗ {texts.get('invalid_input_number')}")
+            except KeyboardInterrupt:
+                print("\n")
+                return None
+
+
+# ============================================================================
 # 对话会话管理
 # ============================================================================
 
@@ -304,6 +368,7 @@ class ChatSession:
         llm_config: LLMConfig,
         embedding_config: EmbeddingConfig,
         scenario_type: ScenarioType,
+        retrieval_mode: str,  # 🔥 新增：检索模式（"lightweight" 或 "agentic"）
         texts: I18nTexts,
     ):
         """初始化对话会话
@@ -314,6 +379,7 @@ class ChatSession:
             llm_config: LLM 配置
             embedding_config: 嵌入模型配置
             scenario_type: 场景类型（助手/群聊）
+            retrieval_mode: 检索模式（"lightweight" 或 "agentic"）
             texts: 国际化文本对象
         """
         self.group_id = group_id
@@ -321,6 +387,7 @@ class ChatSession:
         self.llm_config = llm_config
         self.embedding_config = embedding_config
         self.scenario_type = scenario_type  # 运行时场景类型
+        self.retrieval_mode = retrieval_mode  # 🔥 运行时检索模式
         self.texts = texts  # 国际化文本
 
         # 会话状态
@@ -336,6 +403,9 @@ class ChatSession:
 
         # 最后一次结构化响应（用于查看推理过程）
         self.last_structured_response: Optional[StructuredResponse] = None
+        
+        # 🔥 最后一次检索元数据（用于显示检索信息）
+        self.last_retrieval_metadata: Optional[Dict[str, Any]] = None
 
     async def initialize(self) -> bool:
         """初始化会话（加载 Profile、创建 LLM Provider 等）
@@ -523,7 +593,7 @@ class ChatSession:
             print(f"[{self.texts.get('error_label')}] {e}")
 
     async def retrieve_memories(self, query: str) -> List[Dict[str, Any]]:
-        """检索相关记忆
+        """检索相关记忆（支持多种检索模式）
 
         Args:
             query: 用户查询
@@ -540,7 +610,9 @@ class ChatSession:
         )
 
         if not candidates:
+            self.last_retrieval_metadata = {"retrieval_mode": self.retrieval_mode, "total_latency_ms": 0.0}
             return []
+<<<<<<< HEAD
 
         # 使用检索策略排序
         results = await self.retrieval_strategy.retrieve(
@@ -549,15 +621,100 @@ class ChatSession:
 
         if self.scenario_type == ScenarioType.ASSISTANT:
             results_semantic = await self.retrieval_strategy.retrieve_semantic(
+=======
+        
+        # 🔥 根据检索模式执行不同的检索逻辑
+        if self.retrieval_mode == "lightweight":
+            # 轻量级检索：Embedding + BM25 + RRF 融合
+            from demo.memory_utils import lightweight_retrieval
+            
+            results_tuples, metadata = await lightweight_retrieval(
+>>>>>>> 5e9b269915a57a1215c75cc89bc6f2e325eeac88
                 query=query,
                 candidates=candidates,
-                # date_query=datetime.now(),
-                date_query=datetime.strptime("2024-10-27", "%Y-%m-%d"),
-                top_k=self.config.top_k_memories,
+                embedding_config=self.embedding_config,
+                emb_top_n=self.config.lightweight_emb_top_n,
+                bm25_top_n=self.config.lightweight_bm25_top_n,
+                final_top_n=self.config.lightweight_final_top_n
             )
+            
+            # 保存元数据
+            self.last_retrieval_metadata = metadata
+            
+            # 转换为标准格式
+            results = []
+            for mem, score in results_tuples:
+                item = {
+                    "event_id": str(getattr(mem, "event_id", getattr(mem, "id", ""))),
+                    "timestamp": (
+                        getattr(mem, "timestamp", None).isoformat()
+                        if getattr(mem, "timestamp", None)
+                        else None
+                    ),
+                    "group_id": getattr(mem, "group_id", None),
+                    "subject": getattr(mem, "subject", None),
+                    "summary": getattr(mem, "summary", None),
+                    "episode": getattr(mem, "episode", None),
+                    "participants": getattr(mem, "participants", []),
+                    "score": round(score, 4),
+                }
+                results.append(item)
+            
+            return results
+        
+        elif self.retrieval_mode == "agentic":
+            # Agentic 检索：LLM 引导的多轮检索
+            from demo.memory_utils import agentic_retrieval
+            
+            results_tuples, metadata = await agentic_retrieval(
+                query=query,
+                candidates=candidates,
+                embedding_config=self.embedding_config,
+                llm_provider=self.llm_provider,
+                config=self.config
+            )
+            
+            # 保存元数据
+            self.last_retrieval_metadata = metadata
+            
+            # 转换为标准格式
+            results = []
+            for mem, score in results_tuples:
+                item = {
+                    "event_id": str(getattr(mem, "event_id", getattr(mem, "id", ""))),
+                    "timestamp": (
+                        getattr(mem, "timestamp", None).isoformat()
+                        if getattr(mem, "timestamp", None)
+                        else None
+                    ),
+                    "group_id": getattr(mem, "group_id", None),
+                    "subject": getattr(mem, "subject", None),
+                    "summary": getattr(mem, "summary", None),
+                    "episode": getattr(mem, "episode", None),
+                    "participants": getattr(mem, "participants", []),
+                    "score": round(score, 4),
+                }
+                results.append(item)
+            
+            return results
+        
         else:
-            results_semantic = []
-        return results, results_semantic
+            # 回退到默认检索（保持向后兼容）
+            results = await self.retrieval_strategy.retrieve(
+                query=query, candidates=candidates, top_k=self.config.top_k_memories
+            )
+
+            if self.scenario_type == ScenarioType.ASSISTANT:
+                results_semantic = await self.retrieval_strategy.retrieve_semantic(
+                    query=query,
+                    candidates=candidates,
+                    date_query=datetime.strptime("2024-10-27", "%Y-%m-%d"),
+                    top_k=self.config.top_k_memories,
+                )
+                results = results + results_semantic
+            
+            self.last_retrieval_metadata = {"retrieval_mode": "default", "total_latency_ms": 0.0}
+            return results
 
     def build_prompt(
         self, user_query: str, memories: List[Dict[str, Any]], profiles: Dict[str, Dict]
@@ -723,23 +880,22 @@ class ChatSession:
         Returns:
             助手回答
         """
-        # 1. 检索记忆
-        memories, memories_semantic = await self.retrieve_memories(user_input)
+        # 1. 检索记忆（新方法返回单个列表）
+        memories = await self.retrieve_memories(user_input)
 
         # 2. 显示检索结果（如果配置启用）- 只显示前 5 条
         if self.config.show_retrieved_memories:
-            # 🔥 合并所有检索结果，统一显示
-            all_memories = memories + memories_semantic
-            if all_memories:
+            if memories:
+                # 🔥 显示检索模式和耗时信息
+                retrieval_mode_display = self.retrieval_mode
                 ChatUI.print_retrieved_memories(
-                    all_memories[:5],
-                    total_count=len(all_memories),
+                    memories[:5],
+                    total_count=len(memories),
                     texts=self.texts,
-                    retrieval_method="default",  # 使用默认模式，不显示具体检索方法
+                    retrieval_metadata=self.last_retrieval_metadata,  # 🔥 传递元数据
                 )
         
-        memories = memories + memories_semantic
-        # 3. 构建 Prompt（使用全部 20 条记忆）
+        # 3. 构建 Prompt（使用全部记忆）
         messages = self.build_prompt(user_input, memories, self.user_profiles)
 
         # 4. 显示生成进度提示
@@ -1023,7 +1179,7 @@ class ChatUI:
         memories: List[Dict[str, Any]],
         total_count: Optional[int],
         texts: I18nTexts,
-        retrieval_method: str = "default",
+        retrieval_metadata: Optional[Dict[str, Any]] = None,
     ):
         """显示检索到的记忆（简洁版）
 
@@ -1031,15 +1187,34 @@ class ChatUI:
             memories: 记忆列表（显示用）
             total_count: 实际检索到的总数（保留参数以兼容旧代码，但不再使用）
             texts: 国际化文本对象
-            retrieval_method: 检索方式标识（保留参数以兼容旧代码）
+            retrieval_metadata: 检索元数据（可选）
         """
         ui = ChatUI._ui()
 
-        # 🔥 简化标题：只显示"检索完成"和显示数量
+        # 🔥 简化标题：显示检索完成和显示数量
         heading = f"🔍 {texts.get('retrieval_complete')}"
         shown_count = len(memories)
         if shown_count > 0:
             heading += f" - {texts.get('retrieval_showing', shown=shown_count)}"
+        
+        # 🔥 如果有元数据，显示检索模式和耗时
+        if retrieval_metadata:
+            retrieval_mode = retrieval_metadata.get("retrieval_mode", "default")
+            latency_ms = retrieval_metadata.get("total_latency_ms", 0.0)
+            is_multi_round = retrieval_metadata.get("is_multi_round", False)
+            
+            if retrieval_mode == "lightweight":
+                mode_text = texts.get("retrieval_mode_lightweight")
+            elif retrieval_mode == "agentic":
+                mode_text = texts.get("retrieval_mode_agentic")
+                if is_multi_round:
+                    mode_text += f" ({texts.get('retrieval_multi_round')})"
+                else:
+                    mode_text += f" ({texts.get('retrieval_single_round')})"
+            else:
+                mode_text = "Default"
+            
+            heading += f" | {mode_text} | {texts.get('retrieval_latency', latency=int(latency_ms))}"
 
         ui.section_heading(heading)
 
@@ -1291,17 +1466,25 @@ async def main():
         ChatUI.print_info(texts.get("groups_not_selected_exit"), texts)
         return
 
-    # 11. 刷新屏幕，保留横幅
+    # 11. 🔥 检索模式选择
+    retrieval_mode = RetrievalModeSelector.select_retrieval_mode(texts)
+    
+    if not retrieval_mode:
+        ChatUI.print_info(texts.get("groups_not_selected_exit"), texts)
+        return
+
+    # 12. 刷新屏幕，保留横幅
     ChatUI.clear_screen()
     ChatUI.print_banner(texts)
 
-    # 12. 创建并初始化对话会话
+    # 13. 创建并初始化对话会话
     session = ChatSession(
         group_id=selected_group_id,
         config=chat_config,
         llm_config=llm_config,
         embedding_config=embedding_config,
         scenario_type=scenario_type,
+        retrieval_mode=retrieval_mode,  # 🔥 传递检索模式
         texts=texts,
     )
 
@@ -1309,7 +1492,7 @@ async def main():
         ChatUI.print_error(texts.get("session_init_failed"), texts)
         return
 
-    # 13. 进入对话循环
+    # 14. 进入对话循环
     ui = ChatUI._ui()
     print()
     ui.rule()

@@ -232,6 +232,13 @@ class ExtractModeConfig:
             self.memcell_input_dir = self.output_dir
 
 
+class RetrievalMode(Enum):
+    """检索模式枚举"""
+    
+    LIGHTWEIGHT = "lightweight"  # 轻量级检索：快速但质量略低
+    AGENTIC = "agentic"  # Agentic 检索：慢但质量高
+
+
 @dataclass
 class ChatModeConfig:
     """对话模式配置
@@ -248,7 +255,30 @@ class ChatModeConfig:
     # 记忆检索配置
     top_k_memories: int = 20  # 每次检索 N 条记忆
     time_range_days: int = 365  # 记忆检索的时间范围（天）
-    retrieval_strategy: str = "vector_similarity"  # 检索策略
+    retrieval_strategy: str = "vector_similarity"  # 检索策略（已废弃，保留以兼容旧代码）
+    
+    # 🔥 新增：检索模式配置
+    retrieval_mode: RetrievalMode = RetrievalMode.LIGHTWEIGHT  # 检索模式（运行时可覆盖）
+    
+    # 🔥 轻量级检索参数
+    lightweight_emb_top_n: int = 50  # Embedding 检索的候选数
+    lightweight_bm25_top_n: int = 50  # BM25 检索的候选数
+    lightweight_final_top_n: int = 20  # RRF 融合后的最终结果数
+    
+    # 🔥 Agentic 检索参数
+    hybrid_emb_candidates: int = 100  # Embedding 候选数
+    hybrid_bm25_candidates: int = 100  # BM25 候选数
+    hybrid_rrf_k: int = 60  # RRF 融合参数 k
+    use_reranker: bool = True  # 是否使用 Reranker
+    reranker_instruction: str = "Given a user query and a memory, rate the relevance of the memory to the query."
+    reranker_batch_size: int = 10  # Reranker 批次大小
+    reranker_max_retries: int = 3  # Reranker 最大重试次数
+    reranker_retry_delay: float = 2.0  # Reranker 重试延迟（秒）
+    reranker_timeout: float = 30.0  # Reranker 超时（秒）
+    reranker_fallback_threshold: float = 0.3  # Reranker 降级阈值
+    reranker_concurrent_batches: int = 2  # Reranker 并发批次数
+    use_multi_query: bool = True  # 是否使用多查询策略
+    num_queries: int = 3  # 生成的查询数量
 
     # 显示配置
     show_retrieved_memories: bool = True  # 是否显示检索到的记忆

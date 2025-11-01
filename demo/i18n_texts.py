@@ -52,6 +52,34 @@ class I18nTexts:
             "en": "Multi-person chat with group memory-based conversation analysis",
         },
         "scenario_selected": {"zh": "已选择场景模式", "en": "Scenario mode selected"},
+        # ==================== 检索模式选择 ====================
+        "retrieval_mode_selection_title": {
+            "zh": "🔍  检索模式选择",
+            "en": "🔍  Retrieval Mode Selection",
+        },
+        "retrieval_mode_prompt": {
+            "zh": "请选择检索模式 [1-2]",
+            "en": "Please select retrieval mode [1-2]",
+        },
+        "retrieval_mode_lightweight": {"zh": "轻量级检索", "en": "Lightweight Retrieval"},
+        "retrieval_mode_lightweight_desc": {
+            "zh": "快速检索，适合 demo 数据或小批量数据",
+            "en": "Fast retrieval, suitable for demo or small-scale data",
+        },
+        "retrieval_mode_agentic": {"zh": "Agentic 检索", "en": "Agentic Retrieval"},
+        "retrieval_mode_agentic_desc": {
+            "zh": "智能多轮检索，提升检索效果，适合大规模数据",
+            "en": "Multi-round intelligent retrieval, improves quality, suitable for large-scale data",
+        },
+        "retrieval_mode_selected": {"zh": "已选择检索模式", "en": "Retrieval mode selected"},
+        "retrieval_mode_lightweight_note": {
+            "zh": "💡 轻量级检索：速度快，成本低，适合 demo 演示和快速测试",
+            "en": "💡 Lightweight: Fast and cost-effective, ideal for demos and quick tests",
+        },
+        "retrieval_mode_agentic_note": {
+            "zh": "💡 Agentic 检索：质量高，包含多轮检索和 LLM 引导，适合生产环境和大规模数据",
+            "en": "💡 Agentic: High quality with multi-round retrieval and LLM guidance, ideal for production and large datasets",
+        },
         # ==================== 横幅和欢迎 ====================
         "banner_title": {
             "zh": "🧠  EverMem 记忆对话助手",
@@ -172,6 +200,19 @@ class I18nTexts:
             "zh": "使用语义相似度进行检索",
             "en": "Using semantic similarity for retrieval",
         },
+        "retrieval_latency": {
+            "zh": "检索耗时: {latency}ms",
+            "en": "Retrieval latency: {latency}ms",
+        },
+        "retrieval_multi_round": {
+            "zh": "多轮检索（Round 1 → Round 2）",
+            "en": "Multi-round retrieval (Round 1 → Round 2)",
+        },
+        "retrieval_single_round": {
+            "zh": "单轮检索",
+            "en": "Single-round retrieval",
+        },
+        "prompt_memory_episode": {"zh": "详情：{episode}", "en": "Details: {episode}"},
         # ==================== 命令处理 ====================
         "cmd_help_title": {"zh": "📖  可用命令", "en": "📖  Available Commands"},
         "cmd_exit": {

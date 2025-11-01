@@ -739,3 +739,528 @@ def serialize_datetime(obj: Any) -> Any:
     # 其他类型直接返回
     else:
         return obj
+
+
+# ============================================================================
+# 高级检索功能（BM25 + 混合检索 + Agentic 检索）
+# ============================================================================
+
+
+def build_bm25_index(candidates: List[DocMemCell]):
+    """构建 BM25 索引
+    
+    Args:
+        candidates: 候选 MemCell 列表
+    
+    Returns:
+        (bm25_index, tokenized_docs, stemmer, stop_words)
+    """
+    try:
+        import nltk
+        from nltk.corpus import stopwords
+        from nltk.stem import PorterStemmer
+        from nltk.tokenize import word_tokenize
+        from rank_bm25 import BM25Okapi
+    except ImportError as e:
+        print(f"[BM25] ❌ 缺少依赖库: {e}")
+        print("[BM25] 提示: 请安装 nltk 和 rank_bm25")
+        print("  pip install nltk rank_bm25")
+        return None, None, None, None
+    
+    # 确保 NLTK 数据已下载
+    try:
+        nltk.data.find("tokenizers/punkt")
+    except LookupError:
+        nltk.download("punkt", quiet=True)
+    
+    try:
+        nltk.data.find("tokenizers/punkt_tab")
+    except LookupError:
+        nltk.download("punkt_tab", quiet=True)
+    
+    try:
+        nltk.data.find("corpora/stopwords")
+    except LookupError:
+        nltk.download("stopwords", quiet=True)
+    
+    stemmer = PorterStemmer()
+    stop_words = set(stopwords.words("english"))
+    
+    # 提取文本并分词
+    tokenized_docs = []
+    for mem in candidates:
+        # 优先使用 episode，回退到 summary
+        text = getattr(mem, "episode", None) or getattr(mem, "summary", "") or ""
+        tokens = word_tokenize(text.lower())
+        processed_tokens = [
+            stemmer.stem(token)
+            for token in tokens
+            if token.isalpha() and len(token) >= 2 and token not in stop_words
+        ]
+        tokenized_docs.append(processed_tokens)
+    
+    # 构建 BM25 索引
+    bm25 = BM25Okapi(tokenized_docs)
+    
+    return bm25, tokenized_docs, stemmer, stop_words
+
+
+async def search_with_bm25(
+    query: str,
+    bm25,
+    candidates: List[DocMemCell],
+    stemmer,
+    stop_words,
+    top_k: int = 50
+) -> List[tuple]:
+    """使用 BM25 索引执行检索
+    
+    Args:
+        query: 查询文本
+        bm25: BM25 索引
+        candidates: 候选 MemCell 列表
+        stemmer: 词干提取器
+        stop_words: 停用词集合
+        top_k: 返回结果数量
+    
+    Returns:
+        [(MemCell, score), ...] 排序后的结果列表
+    """
+    if bm25 is None:
+        return []
+    
+    try:
+        from nltk.tokenize import word_tokenize
+    except ImportError:
+        return []
+    
+    # 分词查询
+    tokens = word_tokenize(query.lower())
+    tokenized_query = [
+        stemmer.stem(token)
+        for token in tokens
+        if token.isalpha() and len(token) >= 2 and token not in stop_words
+    ]
+    
+    if not tokenized_query:
+        return []
+    
+    # 计算 BM25 分数
+    scores = bm25.get_scores(tokenized_query)
+    
+    # 排序并返回 Top-K
+    results = sorted(
+        zip(candidates, scores),
+        key=lambda x: x[1],
+        reverse=True
+    )[:top_k]
+    
+    return results
+
+
+def reciprocal_rank_fusion(
+    results1: List[tuple],
+    results2: List[tuple],
+    k: int = 60
+) -> List[tuple]:
+    """RRF 融合两个检索结果
+    
+    使用 Reciprocal Rank Fusion (RRF) 算法融合两个检索结果。
+    RRF 公式: score = sum(1 / (k + rank))
+    
+    Args:
+        results1: 第一个检索结果 [(doc, score), ...]
+        results2: 第二个检索结果 [(doc, score), ...]
+        k: RRF 参数（默认 60）
+    
+    Returns:
+        融合后的结果 [(doc, rrf_score), ...]
+    """
+    doc_rrf_scores = {}  # {doc_id: rrf_score}
+    doc_map = {}         # {doc_id: doc}
+    
+    # 处理第一个结果集
+    for rank, (doc, score) in enumerate(results1, start=1):
+        doc_id = id(doc)
+        if doc_id not in doc_map:
+            doc_map[doc_id] = doc
+        doc_rrf_scores[doc_id] = doc_rrf_scores.get(doc_id, 0.0) + 1.0 / (k + rank)
+    
+    # 处理第二个结果集
+    for rank, (doc, score) in enumerate(results2, start=1):
+        doc_id = id(doc)
+        if doc_id not in doc_map:
+            doc_map[doc_id] = doc
+        doc_rrf_scores[doc_id] = doc_rrf_scores.get(doc_id, 0.0) + 1.0 / (k + rank)
+    
+    # 按 RRF 分数排序
+    sorted_docs = sorted(doc_rrf_scores.items(), key=lambda x: x[1], reverse=True)
+    
+    # 转换回 (doc, score) 格式
+    fused_results = [(doc_map[doc_id], rrf_score) for doc_id, rrf_score in sorted_docs]
+    
+    return fused_results
+
+
+async def lightweight_retrieval(
+    query: str,
+    candidates: List[DocMemCell],
+    embedding_config: EmbeddingConfig,
+    emb_top_n: int = 50,
+    bm25_top_n: int = 50,
+    final_top_n: int = 20
+) -> tuple:
+    """轻量级检索（Embedding + BM25 + RRF 融合）
+    
+    流程：
+    1. 并行执行 Embedding 和 BM25 检索
+    2. 各取 Top-N 候选
+    3. 使用 RRF 融合
+    4. 返回 Top-K 结果
+    
+    Args:
+        query: 用户查询
+        candidates: 候选 MemCell 列表
+        embedding_config: 嵌入模型配置
+        emb_top_n: Embedding 检索数量
+        bm25_top_n: BM25 检索数量
+        final_top_n: 最终返回数量
+    
+    Returns:
+        (results, metadata)
+    """
+    import time
+    start_time = time.time()
+    
+    metadata = {
+        "retrieval_mode": "lightweight",
+        "emb_count": 0,
+        "bm25_count": 0,
+        "final_count": 0,
+        "total_latency_ms": 0.0,
+    }
+    
+    if not candidates:
+        metadata["total_latency_ms"] = (time.time() - start_time) * 1000
+        return [], metadata
+    
+    # 构建 BM25 索引
+    bm25, tokenized_docs, stemmer, stop_words = build_bm25_index(candidates)
+    
+    # 并行执行 Embedding 和 BM25 检索
+    vectorize_service = get_vectorize_service()
+    
+    # Embedding 检索
+    emb_results = []
+    try:
+        query_vec = await vectorize_service.get_embedding(query)
+        query_norm = np.linalg.norm(query_vec)
+        
+        if query_norm > 0:
+            scores = []
+            for mem in candidates:
+                try:
+                    doc_vec = np.array(mem.extend.get("embedding", []))
+                    if len(doc_vec) > 0:
+                        doc_norm = np.linalg.norm(doc_vec)
+                        if doc_norm > 0:
+                            sim = np.dot(query_vec, doc_vec) / (query_norm * doc_norm)
+                            scores.append((mem, float(sim)))
+                except:
+                    continue
+            
+            emb_results = sorted(scores, key=lambda x: x[1], reverse=True)[:emb_top_n]
+    except Exception as e:
+        print(f"[Embedding] ⚠️ 检索失败: {e}")
+    
+    metadata["emb_count"] = len(emb_results)
+    
+    # BM25 检索
+    bm25_results = []
+    if bm25 is not None:
+        bm25_results = await search_with_bm25(
+            query, bm25, candidates, stemmer, stop_words, top_k=bm25_top_n
+        )
+    
+    metadata["bm25_count"] = len(bm25_results)
+    
+    # RRF 融合
+    if not emb_results and not bm25_results:
+        metadata["total_latency_ms"] = (time.time() - start_time) * 1000
+        return [], metadata
+    elif not emb_results:
+        final_results = bm25_results[:final_top_n]
+    elif not bm25_results:
+        final_results = emb_results[:final_top_n]
+    else:
+        fused_results = reciprocal_rank_fusion(emb_results, bm25_results, k=60)
+        final_results = fused_results[:final_top_n]
+    
+    metadata["final_count"] = len(final_results)
+    metadata["total_latency_ms"] = (time.time() - start_time) * 1000
+    
+    return final_results, metadata
+
+
+async def agentic_retrieval(
+    query: str,
+    candidates: List[DocMemCell],
+    embedding_config: EmbeddingConfig,
+    llm_provider,
+    config,
+) -> tuple:
+    """Agentic 多轮检索（LLM 引导）
+    
+    流程：
+    1. Round 1: 轻量级检索 Top 20
+    2. LLM 判断充分性（使用前 5 条）
+    3. 如果不充分：生成改进查询 → Round 2 → 合并
+    4. 返回最终结果
+    
+    Args:
+        query: 用户查询
+        candidates: 候选 MemCell 列表
+        embedding_config: 嵌入模型配置
+        llm_provider: LLM 提供者
+        config: 配置对象
+    
+    Returns:
+        (results, metadata)
+    """
+    import time
+    start_time = time.time()
+    
+    metadata = {
+        "retrieval_mode": "agentic",
+        "is_multi_round": False,
+        "round1_count": 0,
+        "round2_count": 0,
+        "is_sufficient": None,
+        "reasoning": None,
+        "final_count": 0,
+        "total_latency_ms": 0.0,
+    }
+    
+    if not candidates:
+        metadata["total_latency_ms"] = (time.time() - start_time) * 1000
+        return [], metadata
+    
+    # ========== Round 1: 轻量级检索 ==========
+    round1_results, round1_meta = await lightweight_retrieval(
+        query=query,
+        candidates=candidates,
+        embedding_config=embedding_config,
+        emb_top_n=50,
+        bm25_top_n=50,
+        final_top_n=20
+    )
+    
+    metadata["round1_count"] = len(round1_results)
+    
+    if not round1_results:
+        metadata["total_latency_ms"] = (time.time() - start_time) * 1000
+        return [], metadata
+    
+    # ========== LLM 充分性检查（使用前 5 条）==========
+    top5_for_check = round1_results[:5]
+    
+    try:
+        is_sufficient, reasoning = await check_sufficiency_simple(
+            query=query,
+            results=top5_for_check,
+            llm_provider=llm_provider
+        )
+        
+        metadata["is_sufficient"] = is_sufficient
+        metadata["reasoning"] = reasoning
+        
+        # 如果充分，直接返回 Round 1 结果
+        if is_sufficient:
+            metadata["final_count"] = len(round1_results)
+            metadata["total_latency_ms"] = (time.time() - start_time) * 1000
+            return round1_results, metadata
+    
+    except Exception as e:
+        print(f"[Agentic] ⚠️ LLM 充分性检查失败: {e}，回退到 Round 1 结果")
+        metadata["final_count"] = len(round1_results)
+        metadata["total_latency_ms"] = (time.time() - start_time) * 1000
+        return round1_results, metadata
+    
+    # ========== Round 2: 生成改进查询并重新检索 ==========
+    metadata["is_multi_round"] = True
+    
+    try:
+        refined_query = await generate_refined_query_simple(
+            original_query=query,
+            results=top5_for_check,
+            llm_provider=llm_provider
+        )
+        
+        metadata["refined_query"] = refined_query
+        
+        # 使用改进查询进行第二轮检索
+        round2_results, round2_meta = await lightweight_retrieval(
+            query=refined_query,
+            candidates=candidates,
+            embedding_config=embedding_config,
+            emb_top_n=50,
+            bm25_top_n=50,
+            final_top_n=20
+        )
+        
+        metadata["round2_count"] = len(round2_results)
+        
+        # 合并两轮结果（去重）
+        round1_ids = {id(doc) for doc, _ in round1_results}
+        round2_unique = [(doc, score) for doc, score in round2_results if id(doc) not in round1_ids]
+        
+        # Round1 Top20 + Round2 去重后的文档（最多 40 个）
+        combined_results = round1_results.copy()
+        needed_from_round2 = 40 - len(combined_results)
+        combined_results.extend(round2_unique[:needed_from_round2])
+        
+        # 取前 20 个作为最终结果
+        final_results = combined_results[:20]
+        
+        metadata["final_count"] = len(final_results)
+        metadata["total_latency_ms"] = (time.time() - start_time) * 1000
+        
+        return final_results, metadata
+    
+    except Exception as e:
+        print(f"[Agentic] ⚠️ Round 2 失败: {e}，回退到 Round 1 结果")
+        metadata["final_count"] = len(round1_results)
+        metadata["total_latency_ms"] = (time.time() - start_time) * 1000
+        return round1_results, metadata
+
+
+async def check_sufficiency_simple(
+    query: str,
+    results: List[tuple],
+    llm_provider
+) -> tuple:
+    """简化版充分性检查
+    
+    Args:
+        query: 用户查询
+        results: 检索结果 [(MemCell, score), ...]
+        llm_provider: LLM 提供者
+    
+    Returns:
+        (is_sufficient, reasoning)
+    """
+    # 构建提示词
+    memories_text = []
+    for i, (mem, score) in enumerate(results, start=1):
+        episode = getattr(mem, "episode", None) or getattr(mem, "summary", "")
+        memories_text.append(f"[{i}] {episode}")
+    
+    memories_str = "\n".join(memories_text)
+    
+    prompt = f"""Given a user query and retrieved memories, determine if the memories are sufficient to answer the query.
+
+User Query: {query}
+
+Retrieved Memories:
+{memories_str}
+
+Task: Analyze if these memories contain enough information to answer the query.
+- If YES: Return "SUFFICIENT" and briefly explain why
+- If NO: Return "INSUFFICIENT" and briefly explain what's missing
+
+Output format (JSON):
+{{
+  "is_sufficient": true/false,
+  "reasoning": "brief explanation"
+}}"""
+    
+    try:
+        # 调用 LLM
+        response = await llm_provider.generate(prompt)
+        
+        # 解析 JSON 响应
+        import json
+        import re
+        
+        # 尝试提取 JSON
+        json_match = re.search(r'\{.*\}', response, re.DOTALL)
+        if json_match:
+            result = json.loads(json_match.group(0))
+            is_sufficient = result.get("is_sufficient", False)
+            reasoning = result.get("reasoning", "")
+            return is_sufficient, reasoning
+        else:
+            # 回退：简单判断
+            if "sufficient" in response.lower():
+                return True, "Memories appear sufficient"
+            else:
+                return False, "Memories appear insufficient"
+    
+    except Exception as e:
+        print(f"[LLM] ⚠️ 充分性检查异常: {e}")
+        # 默认认为充分（保守策略）
+        return True, "Sufficiency check failed, assuming sufficient"
+
+
+async def generate_refined_query_simple(
+    original_query: str,
+    results: List[tuple],
+    llm_provider
+) -> str:
+    """简化版查询改进
+    
+    Args:
+        original_query: 原始查询
+        results: 检索结果 [(MemCell, score), ...]
+        llm_provider: LLM 提供者
+    
+    Returns:
+        改进后的查询
+    """
+    # 构建提示词
+    memories_text = []
+    for i, (mem, score) in enumerate(results, start=1):
+        episode = getattr(mem, "episode", None) or getattr(mem, "summary", "")
+        memories_text.append(f"[{i}] {episode}")
+    
+    memories_str = "\n".join(memories_text)
+    
+    prompt = f"""Given a user query and insufficient retrieved memories, generate an improved query to find more relevant information.
+
+Original Query: {original_query}
+
+Retrieved Memories (insufficient):
+{memories_str}
+
+Task: Generate a better query that might retrieve more relevant memories.
+- Focus on missing aspects
+- Use synonyms or related terms
+- Be more specific or more general as needed
+
+Output format (JSON):
+{{
+  "refined_query": "your improved query here"
+}}"""
+    
+    try:
+        # 调用 LLM
+        response = await llm_provider.generate(prompt)
+        
+        # 解析 JSON 响应
+        import json
+        import re
+        
+        # 尝试提取 JSON
+        json_match = re.search(r'\{.*\}', response, re.DOTALL)
+        if json_match:
+            result = json.loads(json_match.group(0))
+            refined_query = result.get("refined_query", original_query)
+            return refined_query
+        else:
+            # 回退：返回原始查询
+            return original_query
+    
+    except Exception as e:
+        print(f"[LLM] ⚠️ 查询改进异常: {e}")
+        # 默认返回原始查询
+        return original_query

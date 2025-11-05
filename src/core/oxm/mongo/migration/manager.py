@@ -116,19 +116,28 @@ class Backward:
     @staticmethod
     def _get_mongodb_uri() -> str:
         """Get MongoDB URI from environment variables"""
+        base_uri = None
         if uri := os.getenv("MONGODB_URI"):
-            return uri
+            base_uri = uri
+        else:
+            # Build URI from separate environment variables
+            host = os.getenv("MONGODB_HOST", "localhost")
+            port = os.getenv("MONGODB_PORT", "27017")
+            username = os.getenv("MONGODB_USERNAME", "")
+            password = os.getenv("MONGODB_PASSWORD", "")
+            database = os.getenv("MONGODB_DATABASE", "memsys")
 
-        # Build URI from separate environment variables
-        host = os.getenv("MONGODB_HOST", "localhost")
-        port = os.getenv("MONGODB_PORT", "27017")
-        username = os.getenv("MONGODB_USERNAME", "")
-        password = os.getenv("MONGODB_PASSWORD", "")
-        database = os.getenv("MONGODB_DATABASE", "memsys")
+            if username and password:
+                base_uri = f"mongodb://{username}:{password}@{host}:{port}/{database}"
+            else:
+                base_uri = f"mongodb://{host}:{port}/{database}"
 
-        if username and password:
-            return f"mongodb://{username}:{password}@{host}:{port}/{database}"
-        return f"mongodb://{host}:{port}/{database}"
+        # 追加 URI 参数（如果有）
+        uri_params = os.getenv("MONGODB_URI_PARAMS", "").strip()
+        if uri_params:
+            separator = '&' if ('?' in base_uri) else '?'
+            return f"{base_uri}{separator}{uri_params}"
+        return base_uri
 
     @staticmethod
     def _get_mongodb_database() -> str:

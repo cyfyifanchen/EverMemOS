@@ -24,7 +24,39 @@
 - **conversation_meta**: 会话元信息
 - **conversation_list**: 消息列表
 
-### 2. 用户详细信息
+### 2. 场景类型和场景描述
+
+支持两种核心对话场景：
+
+- **company**: 人机助手对话场景，一对一对话，AI 扮演个人助理
+- **work**: 工作群聊场景，多人群聊，团队协作
+
+**Company 场景示例**:
+```json
+"conversation_meta": {
+  "scene": "company",
+  "scene_desc": {
+    "bot_ids": ["robot_001"]
+  },
+  ...
+}
+```
+
+**Work 场景示例**:
+```json
+"conversation_meta": {
+  "scene": "work",
+  "scene_desc": {},
+  ...
+}
+```
+
+- **scene**: 场景类型标识符（`company` 或 `work`）
+- **scene_desc**: 场景描述信息
+  - Company 场景：包含 `bot_ids` 列表，标注哪些用户是助手机器人
+  - Work 场景：通常为空对象，表示多人协作场景
+
+### 3. 用户详细信息
 
 所有用户的详细信息集中存储在 `conversation_meta.user_details` 中：
 
@@ -39,7 +71,7 @@
 }
 ```
 
-### 3. 消息结构
+### 4. 消息结构
 
 每条消息使用用户 ID 作为 `sender`，可选的 `sender_name` 用于方便阅读：
 
@@ -55,13 +87,13 @@
 }
 ```
 
-### 4. 时区感知的时间戳
+### 5. 时区感知的时间戳
 
 - 使用 ISO 8601 格式
 - 推荐包含时区信息（如 `+08:00`）
 - 如果消息没有时区信息，可从 `conversation_meta.default_timezone` 获取
 
-### 5. 消息类型
+### 6. 消息类型
 
 支持多种消息类型：
 
@@ -73,7 +105,7 @@
 - **link**: 链接消息
 - **system**: 系统消息
 
-### 6. 消息引用
+### 7. 消息引用
 
 支持灵活的引用方式，`refer_list` 中的每个元素可以是：
 

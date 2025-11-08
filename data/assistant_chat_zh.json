@@ -1,6 +1,10 @@
 {
   "version": "1.0.0",
   "conversation_meta": {
+    "scene": "company",
+    "scene_desc": {
+      "bot_ids": ["robot_001"]
+    },
     "name": "用户健康咨询对话",
     "description": "用户与AI助手关于北京旅游、健康管理、运动康复等主题的对话记录",
     "group_id": "chat_user_001_assistant",

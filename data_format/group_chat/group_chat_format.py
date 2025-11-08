@@ -34,6 +34,8 @@ class ConversationMeta(TypedDict, total=False):
     """会话元信息
 
     Attributes:
+        scene: 场景类型，支持 "company"（人机助手对话）或 "work"（工作群聊）（可选）
+        scene_desc: 场景描述信息，如 company 场景可包含 bot_ids 列表标注助手机器人（可选）
         name: 群聊名称
         description: 群聊描述
         group_id: 群聊唯一标识（可选）
@@ -44,6 +46,8 @@ class ConversationMeta(TypedDict, total=False):
         extra: 其他扩展信息（可选）
     """
 
+    scene: Optional[str]
+    scene_desc: Optional[Dict[str, Any]]
     name: str
     description: str
     group_id: Optional[str]

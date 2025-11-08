@@ -1,6 +1,8 @@
 {
   "version": "1.0.0",
   "conversation_meta": {
+    "scene": "work",
+    "scene_desc": {},
     "name": "Intelligent Sales Assistant Project Team",
     "description": "Development Discussion Group for the Intelligent Sales Assistant Project",
     "default_timezone": "Asia/Shanghai",

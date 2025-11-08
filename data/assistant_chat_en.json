@@ -1,6 +1,10 @@
 {
   "version": "1.0.0",
   "conversation_meta": {
+    "scene": "company",
+    "scene_desc": {
+      "bot_ids": ["robot_001"]
+    },
     "name": "User health consultation dialogue",
     "description": "Conversation records between users and AI assistants on topics such as tourism in Beijing, health management, and sports rehabilitation.",
     "group_id": "chat_user_001_assistant",

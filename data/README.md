@@ -34,6 +34,8 @@ All conversation data files follow the standardized [GroupChatFormat](../data_fo
 {
   "version": "1.0.0",
   "conversation_meta": {
+    "scene": "work",
+    "scene_desc": {},
     "group_id": "group_001",
     "name": "Project Discussion Group",
     "user_details": {
@@ -53,6 +55,22 @@ All conversation data files follow the standardized [GroupChatFormat](../data_fo
   ]
 }
 ```
+
+### Scenario Types
+
+EverMemOS supports two core conversation scenarios:
+
+- **🤖 Company Scenario** (`scene: "company"`)
+  - Human-AI assistant dialogue
+  - One-on-one conversation format
+  - `scene_desc` contains `bot_ids` array to identify assistant robots
+  - Example: `assistant_chat_en.json`, `assistant_chat_zh.json`
+
+- **👥 Work Scenario** (`scene: "work"`)
+  - Multi-person group chat
+  - Work collaboration format
+  - `scene_desc` is typically an empty object
+  - Example: `group_chat_en.json`, `group_chat_zh.json`
 
 ## 📖 Data Scenarios
 

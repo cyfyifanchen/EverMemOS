@@ -1,6 +1,8 @@
 {
   "version": "1.0.0",
   "conversation_meta": {
+    "scene": "work",
+    "scene_desc": {},
     "name": "智能销售助手项目组",
     "description": "智能销售助手项目的开发讨论群",
     "default_timezone": "Asia/Shanghai",
@@ -4662,7 +4664,16 @@
       "sender": "user_103",
       "sender_name": "Chen",
       "type": "text",
-      "content": "好。记得结尾那句我来写：“EverMemOS，让 AI 真正拥有可控的记忆。”",
+      "content": "好。记得结尾那句我来写：EverMemOS，让 AI 真正拥有可控的记忆。",
+      "refer_list": []
+    },
+    {
+      "message_id": "msg_0509",
+      "create_time": "2025-07-20T10:00:00+08:00",
+      "sender": "user_103",
+      "sender_name": "Chen",
+      "type": "text",
+      "content": "各位辛苦了！EverMemOS v1.0 项目到此圆满结束。感谢大家这几个月的辛勤付出和协作，我们成功交付了一个优秀的产品。现在项目正式结项，今天的讨论到此结束。再次感谢大家！",
       "refer_list": []
     }
   ]

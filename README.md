@@ -1,6 +1,6 @@
 <div align="center">
 
-<h1>EverMemOS 🧠</h1>
+<h1>EverMemOS </h1>
 
 <p><strong>Let every interaction be driven by understanding.</strong> · Enterprise-Grade Intelligent Memory System</p>
 

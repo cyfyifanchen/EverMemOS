@@ -1,6 +1,6 @@
 <div align="center">
 
-<h1>EverMemOS 🧠</h1>
+<h1>EverMemOS </h1>
 
 <p><strong>每次交流，都由理解驱动</strong> · 企业级智能记忆系统</p>
 

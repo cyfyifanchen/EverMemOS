@@ -252,7 +252,7 @@ cp env.template .env
 #   - DEEPINFRA_API_KEY: 填入您的 DeepInfra API Key（用于 Embedding 和 Rerank）
 ```
 
-**Docker 服务说明**：
+**Docker 服务说明**（宿主机端口）：
 - **MongoDB** (27017): 主数据库，存储记忆单元和画像
 - **Elasticsearch** (19200): 关键词检索引擎（BM25）
 - **Milvus** (19530): 向量数据库，语义检索
@@ -404,7 +404,7 @@ cat evaluation/results/locomo-evermemos/pipeline.log        # 执行日志
 评估流程包含 4 个阶段（添加 → 搜索 → 回答 → 评估），支持自动检查点和恢复。
 
 > **⚙️ 评估配置**:
-> - **数据准备**：将数据集放置在 `evaluation/data/` 中（参见 `evaluation/README.md`）
+> - **数据准备**：需要将数据集放置在 `evaluation/data/` 中（参见 `evaluation/README.md`）
 > - **环境配置**：在 `.env` 中配置 LLM API 密钥（参见 `env.template`）
 > - **安装依赖**：运行 `uv sync --group evaluation` 安装依赖
 > - **自定义配置**：复制并修改 `evaluation/config/systems/` 或 `evaluation/config/datasets/` 中的 YAML 文件
@@ -569,8 +569,8 @@ EverMemOS 采用分层架构设计，主要包括：
 
 ### 联系方式
 
-- **GitHub Issues**: [提交问题和建议](https://github.com/your-org/memsys_opensource/issues)
-- **讨论区**: [参与讨论](https://github.com/your-org/memsys_opensource/discussions)
+- **GitHub Issues**: [提交问题和建议](https://github.com/EverMind-AI/EverMemOS/issues)
+- **讨论区**: [参与讨论](https://github.com/EverMind-AI/EverMemOS/discussions)
 - **邮箱**: []
 - **社区**: []
 

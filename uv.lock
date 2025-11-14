@@ -1512,20 +1512,6 @@ wheels = [
 ]
 
 [[package]]
-name = "memobase"
-version = "0.0.26"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "httpx" },
-    { name = "openai" },
-    { name = "pydantic" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/b1/e8/00a684f982997f51298c277429fed9fa46963c1f7b87ae8f949c2a853fe6/memobase-0.0.26.tar.gz", hash = "sha256:5964d8207055cf826a26349d7f0bfa0e0102b43613090956dec397288bf591e6", size = 24920, upload-time = "2025-10-08T01:24:57.71Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c6/b0/203362469476c96c3fa3dfd6e9fa06f7d7f55a8a03af46da163cb85a7039/memobase-0.0.26-py3-none-any.whl", hash = "sha256:adab22d6a7729ffa452a4a6d7d314e7cf7bd085ecdcc5a0efbebe1b16fa23b53", size = 22895, upload-time = "2025-10-08T01:24:52.654Z" },
-]
-
-[[package]]
 name = "memsys"
 version = "0.1.0"
 source = { editable = "." }
@@ -1621,11 +1607,8 @@ evaluation = [
 ]
 evaluation-full = [
     { name = "mem0ai" },
-    { name = "memobase" },
     { name = "requests" },
     { name = "rich" },
-    { name = "supermemory" },
-    { name = "zep-cloud" },
 ]
 gpu = [
     { name = "faiss-cpu" },
@@ -1725,11 +1708,8 @@ evaluation = [
 ]
 evaluation-full = [
     { name = "mem0ai", specifier = ">=1.0.0" },
-    { name = "memobase", specifier = ">=0.0.26" },
     { name = "requests", specifier = ">=2.31.0" },
     { name = "rich", specifier = ">=13.0.0" },
-    { name = "supermemory", specifier = ">=3.4.0" },
-    { name = "zep-cloud", specifier = ">=3.9.0" },
 ]
 gpu = [{ name = "faiss-cpu", specifier = ">=1.7.0" }]
 prod = [{ name = "faiss-cpu", specifier = ">=1.7.0" }]
@@ -2966,23 +2946,6 @@ wheels = [
 ]
 
 [[package]]
-name = "supermemory"
-version = "3.4.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "anyio" },
-    { name = "distro" },
-    { name = "httpx" },
-    { name = "pydantic" },
-    { name = "sniffio" },
-    { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/94/e9/1f6c34145b368ce95bc68c350e4b378b4da2ab4ce2d25035ee0e436b7c76/supermemory-3.4.0.tar.gz", hash = "sha256:449bc5b637ee8f5c6510c8e7bb41415b182bc6e68d30f1fdb602f632dde8f7c8", size = 119910, upload-time = "2025-10-09T18:49:28.254Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/eb/2b/22925c7235a44b9f214c27b30ccfdfc6ffa13e2fd7e2bc730eea92330502/supermemory-3.4.0-py3-none-any.whl", hash = "sha256:c81b4ddfc89c21fc71317bf6aaa80a4d3362de9bc17a153d5e01aff68a2a61fc", size = 119275, upload-time = "2025-10-09T18:49:26.936Z" },
-]
-
-[[package]]
 name = "sympy"
 version = "1.14.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3402,23 +3365,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/35/99/9918c8739ba271dcd935400cff8b32e3cd319eaf02fcd023d5dcd487a7c8/yarl-1.20.1-cp312-cp312-win32.whl", hash = "sha256:daea0d313868da1cf2fac6b2d3a25c6e3a9e879483244be38c8e6a41f1d876a5", size = 81249, upload-time = "2025-06-10T00:44:14.731Z" },
     { url = "https://files.pythonhosted.org/packages/eb/83/5d9092950565481b413b31a23e75dd3418ff0a277d6e0abf3729d4d1ce25/yarl-1.20.1-cp312-cp312-win_amd64.whl", hash = "sha256:48ea7d7f9be0487339828a4de0360d7ce0efc06524a48e1810f945c45b813698", size = 86710, upload-time = "2025-06-10T00:44:16.716Z" },
     { url = "https://files.pythonhosted.org/packages/b4/2d/2345fce04cfd4bee161bf1e7d9cdc702e3e16109021035dbb24db654a622/yarl-1.20.1-py3-none-any.whl", hash = "sha256:83b8eb083fe4683c6115795d9fc1cfaf2cbbefb19b3a1cb68f6527460f483a77", size = 46542, upload-time = "2025-06-10T00:46:07.521Z" },
-]
-
-[[package]]
-name = "zep-cloud"
-version = "3.9.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "httpx" },
-    { name = "openai" },
-    { name = "pydantic" },
-    { name = "pydantic-core" },
-    { name = "python-dateutil" },
-    { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/6d/5a/7b9f889d782b41d5dbefcf1b1660c7d3d186ecc63cfcb96dc723a2f0dc6e/zep_cloud-3.9.0.tar.gz", hash = "sha256:8f45c3595d16687e3ffd3233e2d5b1dd50d97407dd588cf2d54b8081b42566de", size = 57911, upload-time = "2025-10-30T20:32:59.177Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/76/37/5790d049997cca23c2a87f014ed22b4072800e45aade60f063e8eb732436/zep_cloud-3.9.0-py3-none-any.whl", hash = "sha256:f0a28638d8865394c1cb54dd63b073a57a8649144b19b6fe22fefb974cee1b9c", size = 99173, upload-time = "2025-10-30T20:32:57.249Z" },
 ]
 
 [[package]]

@@ -139,7 +139,7 @@ class OnlineAPIAdapter(BaseAdapter):
         Subclasses can override this method to return their own prompt.
         Defaults to generic default prompt.
         """
-        return self._prompts["online_api"]["default"]["answer_prompt"]
+        return self._prompts["online_api"]["default"]["answer_prompt_memos"]
     
     # ===== Helper methods: format conversion =====
     

@@ -33,9 +33,8 @@ llm_judge:
 # Online API Answer Prompts
 # Used in: src/adapters/online_base.py and its subclasses
 online_api:
-  # Default Answer Prompt (shared by Mem0, Memos, Memu)
   default:
-    answer_prompt: |
+    answer_prompt_mem0: |
       You are an intelligent memory assistant tasked with retrieving accurate information from conversation memories.
 
       # CONTEXT:
@@ -71,6 +70,111 @@ online_api:
       Question: {question}
 
       Answer:
+    
+    answer_prompt_memos: |
+      You are a knowledgeable and helpful AI assistant.
+
+      # CONTEXT:
+      You have access to memories from two speakers in a conversation. These memories contain
+      timestamped information that may be relevant to answering the question.
+
+      # INSTRUCTIONS:
+      1. Carefully analyze all provided memories. Synthesize information across different entries if needed to form a complete answer.
+      2. Pay close attention to the timestamps to determine the answer. If memories contain contradictory information, the **most recent memory** is the source of truth.
+      3. If the question asks about a specific event or fact, look for direct evidence in the memories.
+      4. Your answer must be grounded in the memories. However, you may use general world knowledge to interpret or complete information found within a memory (e.g., identifying a landmark mentioned by description).
+      5. If the question involves time references (like "last year", "two months ago", etc.), you **must** calculate the actual date based on the memory's timestamp. For example, if a memory from 4 May 2022 mentions "went to India last year," then the trip occurred in 2021.
+      6. Always convert relative time references to specific dates, months, or years in your final answer.
+      7. Do not confuse character names mentioned in memories with the actual users who created them.
+      8. The answer must be brief (under 5-6 words) and direct, with no extra description.
+
+      # APPROACH (Think step by step):
+      1. First, examine all memories that contain information related to the question.
+      2. Synthesize findings from multiple memories if a single entry is insufficient.
+      3. Examine timestamps and content carefully, looking for explicit dates, times, locations, or events.
+      4. If the answer requires calculation (e.g., converting relative time references), perform the calculation.
+      5. Formulate a precise, concise answer based on the evidence from the memories (and allowed world knowledge).
+      6. Double-check that your answer directly addresses the question asked and adheres to all instructions.
+      7. Ensure your final answer is specific and avoids vague time references.
+
+      {context}
+
+      Question: {question}
+
+      Answer:
+    
+    answer_prompt_cot: |
+      You are an intelligent memory assistant tasked with retrieving accurate information from episodic memories.
+
+      # CONTEXT:
+      You have access to episodic memories from conversations between two speakers. These memories contain
+      timestamped information that may be relevant to answering the question.
+
+      # INSTRUCTIONS:
+      Your goal is to synthesize information from all relevant memories to provide a comprehensive and accurate answer.
+      You MUST follow a structured Chain-of-Thought process to ensure no details are missed.
+      Actively look for connections between people, places, and events to build a complete picture. Synthesize information from different memories to answer the user's question.
+      It is CRITICAL that you move beyond simple fact extraction and perform logical inference. When the evidence strongly suggests a connection, you must state that connection. Do not dismiss reasonable inferences as "speculation." Your task is to provide the most complete answer supported by the available evidence.
+
+      # CRITICAL REQUIREMENTS:
+      1. NEVER omit specific names - use "Amy's colleague Rob" not "a colleague"
+      2. ALWAYS include exact numbers, amounts, prices, percentages, dates, times
+      3. PRESERVE frequencies exactly - "every Tuesday and Thursday" not "twice a week"
+      4. MAINTAIN all proper nouns and entities as they appear
+
+      # RESPONSE FORMAT (You MUST follow this structure):
+
+      ## STEP 1: RELEVANT MEMORIES EXTRACTION
+      [List each memory that relates to the question, with its timestamp]
+      - Memory 1: [timestamp] - [content]
+      - Memory 2: [timestamp] - [content]
+      ...
+
+      ## STEP 2: KEY INFORMATION IDENTIFICATION
+      [Extract ALL specific details from the memories]
+      - Names mentioned: [list all person names, place names, company names]
+      - Numbers/Quantities: [list all amounts, prices, percentages]
+      - Dates/Times: [list all temporal information]
+      - Frequencies: [list any recurring patterns]
+      - Other entities: [list brands, products, etc.]
+
+      ## STEP 3: CROSS-MEMORY LINKING
+      [Identify entities that appear in multiple memories and link related information. Make reasonable inferences when entities are strongly connected.]
+      - Shared entities: [list people, places, events mentioned across different memories]
+      - Connections found: [e.g., "Memory 1 mentions A moved from hometown → Memory 2 mentions A's hometown is LA → Therefore A moved from LA"]
+      - Inferred facts: [list any facts that require combining information from multiple memories]
+
+      ## STEP 4: TIME REFERENCE CALCULATION
+      [If applicable, convert relative time references]
+      - Original reference: [e.g., "last year" from May 2022]
+      - Calculated actual time: [e.g., "2021"]
+
+      ## STEP 5: CONTRADICTION CHECK
+      [If multiple memories contain different information]
+      - Conflicting information: [describe]
+      - Resolution: [explain which is most recent/reliable]
+
+      ## STEP 6: DETAIL VERIFICATION CHECKLIST
+      - [ ] All person names included: [list them]
+      - [ ] All locations included: [list them]
+      - [ ] All numbers exact: [list them]
+      - [ ] All frequencies specific: [list them]
+      - [ ] All dates/times precise: [list them]
+      - [ ] All proper nouns preserved: [list them]
+
+      ## STEP 7: ANSWER FORMULATION
+      [Explain how you're combining the information to answer the question]
+
+      ## FINAL ANSWER:
+      [Provide the concise answer with ALL specific details preserved]
+
+      ---
+
+      {context}
+
+      Question: {question}
+
+      Now, follow the Chain-of-Thought process above to answer the question:
 
   templates:
     # Default template (shared by Mem0, Memos, Memu)

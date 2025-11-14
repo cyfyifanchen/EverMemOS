@@ -15,7 +15,7 @@ base_url: "https://api.memu.so"  # Memu official API address
 max_retries: 5
 
 # Agent configuration (for identifying dialog partners)
-agent_id: "evaluation_agent_02"
+agent_id: "evaluation_agent_03"
 agent_name: "Memory Evaluation Assistant"
 
 # Task status check configuration

@@ -435,8 +435,15 @@ class MemuAdapter(OnlineAPIAdapter):
                 }
             })
         
-        # Build custom context
-        formatted_context = self._build_memu_context(search_results)
+        # Get all memories (categories summary) - fail silently if error
+        categories_summary = self._get_categories_summary(user_id)
+        
+        # Build custom context (with categories summary)
+        formatted_context = self._build_memu_context(
+            search_results=search_results,
+            categories_summary=categories_summary,
+            top_k=top_k
+        )
         
         return SearchResult(
             query=query,
@@ -481,9 +488,17 @@ class MemuAdapter(OnlineAPIAdapter):
         # Keep only top_k
         all_results = all_results[:top_k]
         
-        # Build dual perspective context
+        # Get categories summary for both speakers - fail silently if error
+        categories_summary_a = self._get_categories_summary(speaker_a_user_id)
+        categories_summary_b = self._get_categories_summary(speaker_b_user_id)
+        
+        # Build dual perspective context (with categories summary)
         formatted_context = self._build_dual_perspective_context(
-            speaker_a, speaker_b, result_a.results, result_b.results
+            speaker_a=speaker_a,
+            speaker_b=speaker_b,
+            results_a=result_a.results,
+            results_b=result_b.results,
+            top_k=top_k
         )
         
         return SearchResult(
@@ -498,6 +513,8 @@ class MemuAdapter(OnlineAPIAdapter):
                 "total_found": len(all_results),
                 "formatted_context": formatted_context,
                 "dual_perspective": True,
+                "categories_summary_a": categories_summary_a,
+                "categories_summary_b": categories_summary_b,
             }
         )
     
@@ -506,19 +523,39 @@ class MemuAdapter(OnlineAPIAdapter):
         speaker_a: str,
         speaker_b: str,
         results_a: List[Dict[str, Any]],
-        results_b: List[Dict[str, Any]]
+        results_b: List[Dict[str, Any]],
+        categories_summary_a: str = "",
+        categories_summary_b: str = "",
+        top_k: int = 5
     ) -> str:
         """
         Build dual perspective context using default template.
         
         Steps:
-        1. Build memory list with happened_at for each speaker
-        2. Wrap in dual perspective format using online_api.templates.default
+        1. Build categories summary for each speaker (if available)
+        2. Build memory list with happened_at for each speaker
+        3. Wrap in dual perspective format using online_api.templates.default
+        
+        Args:
+            speaker_a: Speaker A name
+            speaker_b: Speaker B name
+            results_a: Search results for speaker A
+            results_b: Search results for speaker B
+            categories_summary_a: Categories summary for speaker A (optional)
+            categories_summary_b: Categories summary for speaker B (optional)
+            top_k: Number of results to show (default: 5)
         """
+        # Build Speaker A's content
+        speaker_a_content_parts = []
+        
+        # Add categories summary if available
+        if categories_summary_a:
+            speaker_a_content_parts.append(categories_summary_a)
+        
         # Build Speaker A's memories (with happened_at and category)
         speaker_a_memories = []
         if results_a:
-            for idx, result in enumerate(results_a[:5], 1):
+            for idx, result in enumerate(results_a[:top_k], 1):
                 content = result.get("content", "")
                 metadata = result.get("metadata", {})
                 happened_at = metadata.get("happened_at", "")
@@ -538,12 +575,24 @@ class MemuAdapter(OnlineAPIAdapter):
                 
                 speaker_a_memories.append(memory_text)
         
-        speaker_a_memories_text = "\n".join(speaker_a_memories) if speaker_a_memories else "(No memories found)"
+        if speaker_a_memories:
+            if categories_summary_a:
+                speaker_a_content_parts.append("\n## Related Memories\n")
+            speaker_a_content_parts.append("\n".join(speaker_a_memories))
+        
+        speaker_a_memories_text = "".join(speaker_a_content_parts)
+        
+        # Build Speaker B's content
+        speaker_b_content_parts = []
+        
+        # Add categories summary if available
+        if categories_summary_b:
+            speaker_b_content_parts.append(categories_summary_b)
         
         # Build Speaker B's memories (with happened_at and category)
         speaker_b_memories = []
         if results_b:
-            for idx, result in enumerate(results_b[:5], 1):
+            for idx, result in enumerate(results_b[:top_k], 1):
                 content = result.get("content", "")
                 metadata = result.get("metadata", {})
                 happened_at = metadata.get("happened_at", "")
@@ -563,7 +612,12 @@ class MemuAdapter(OnlineAPIAdapter):
                 
                 speaker_b_memories.append(memory_text)
         
-        speaker_b_memories_text = "\n".join(speaker_b_memories) if speaker_b_memories else "(No memories found)"
+        if speaker_b_memories:
+            if categories_summary_b:
+                speaker_b_content_parts.append("\n## Related Memories\n")
+            speaker_b_content_parts.append("\n".join(speaker_b_memories))
+        
+        speaker_b_memories_text = "".join(speaker_b_content_parts)
         
         # Wrap using default template
         template = self._prompts["online_api"].get("templates", {}).get("default", "")
@@ -574,47 +628,154 @@ class MemuAdapter(OnlineAPIAdapter):
             speaker_2_memories=speaker_b_memories_text,
         )
     
-    def _build_memu_context(self, search_results: List[Dict[str, Any]]) -> str:
+    def _build_memu_context(
+        self,
+        search_results: List[Dict[str, Any]],
+        categories_summary: str = "",
+        top_k: int = 10
+    ) -> str:
         """
         Build custom context for Memu, using happened_at field to show event occurrence time.
         
         Args:
             search_results: Search results list
+            categories_summary: Categories summary (optional)
+            top_k: Number of results to show (default: 10)
         
         Returns:
             Formatted context string
         """
-        if not search_results:
-            return ""
-        
         context_parts = []
         
-        for idx, result in enumerate(search_results[:10], 1):
-            content = result.get("content", "")
-            metadata = result.get("metadata", {})
-            
-            # Prioritize happened_at (event occurrence time), otherwise use created_at
-            happened_at = metadata.get("happened_at", "")
-            category = metadata.get("category", "")
-            
-            # Build format for each memory
-            memory_text = f"{idx}. {content}"
-            
-            # Add time and category information (if available)
-            metadata_parts = []
-            if happened_at:
-                # Only show date part (YYYY-MM-DD)
-                date_str = happened_at.split("T")[0] if "T" in happened_at else happened_at
-                metadata_parts.append(f"Date: {date_str}")
-            if category:
-                metadata_parts.append(f"Category: {category}")
-            
-            if metadata_parts:
-                memory_text += f" ({', '.join(metadata_parts)})"
-            
-            context_parts.append(memory_text)
+        # Add categories summary first (if available)
+        if categories_summary:
+            context_parts.append(categories_summary)
         
-        return "\n\n".join(context_parts)
+        # Add search results
+        if search_results:
+            if categories_summary:
+                context_parts.append("\n## Related Memories\n")
+            
+            memories = []
+            for idx, result in enumerate(search_results[:top_k], 1):
+                content = result.get("content", "")
+                metadata = result.get("metadata", {})
+                
+                # Prioritize happened_at (event occurrence time), otherwise use created_at
+                happened_at = metadata.get("happened_at", "")
+                category = metadata.get("category", "")
+                
+                # Build format for each memory
+                memory_text = f"{idx}. {content}"
+                
+                # Add time and category information (if available)
+                metadata_parts = []
+                if happened_at:
+                    # Only show date part (YYYY-MM-DD)
+                    date_str = happened_at.split("T")[0] if "T" in happened_at else happened_at
+                    metadata_parts.append(f"Date: {date_str}")
+                if category:
+                    metadata_parts.append(f"Category: {category}")
+                
+                if metadata_parts:
+                    memory_text += f" ({', '.join(metadata_parts)})"
+                
+                memories.append(memory_text)
+            
+            context_parts.append("\n\n".join(memories))
+        elif not categories_summary:
+            # No categories summary and no search results
+            return ""
+        
+        return "".join(context_parts)
+    
+    def _get_all_memories(self, user_id: str) -> Dict[str, Any]:
+        """
+        Get all memories (categories with summaries) for a user.
+        
+        This method calls the Memu API to retrieve default categories and their summaries.
+        This provides a high-level overview of the user's memory landscape.
+        
+        Args:
+            user_id: User ID
+        
+        Returns:
+            API response containing categories and their summaries
+            Returns empty dict if error occurs (fail silently)
+        """
+        try:
+            url = f"{self.base_url}/api/v1/memory/retrieve/default-categories"
+            payload = {
+                "user_id": user_id,
+                "agent_id": self.agent_id,
+                "want_memory_items": True
+            }
+            
+            response = requests.post(url, headers=self.headers, json=payload)
+            response.raise_for_status()
+            result = response.json()
+            
+            return result
+            
+        except Exception as e:
+            # Fail silently - categories summary is optional context
+            self.console.print(
+                f"   ⚠️  Failed to get categories for {user_id}: {e}",
+                style="dim yellow"
+            )
+            return {}
+    
+    def _format_categories_summary(self, memories: Dict[str, Any]) -> str:
+        """
+        Format categories summary from get_all_memories response.
+        
+        Extracts category names and summaries and formats them into a readable string.
+        This provides a structured overview that helps the LLM understand the memory landscape.
+        
+        Args:
+            memories: Response from _get_all_memories()
+        
+        Returns:
+            Formatted categories summary string
+            Returns empty string if no valid categories found
+        """
+        if not memories or 'categories' not in memories:
+            return ""
+        
+        summary_parts = ["## Memory Overview (by Category)\n"]
+        
+        categories = memories.get('categories', [])
+        has_content = False
+        
+        for category in categories:
+            category_name = category.get('name', '')
+            category_summary = category.get('summary', '')
+            
+            if category_name and category_summary:
+                summary_parts.append(f"**{category_name}:** {category_summary}\n\n")
+                has_content = True
+        
+        if not has_content:
+            return ""
+        
+        return "".join(summary_parts)
+    
+    def _get_categories_summary(self, user_id: str) -> str:
+        """
+        Get and format categories summary for a user.
+        
+        This is a convenience method that combines _get_all_memories and _format_categories_summary.
+        It's designed to be called during search to augment context with memory overview.
+        
+        Args:
+            user_id: User ID
+        
+        Returns:
+            Formatted categories summary string
+            Returns empty string if error occurs or no categories found
+        """
+        memories = self._get_all_memories(user_id)
+        return self._format_categories_summary(memories)
     
     def get_system_info(self) -> Dict[str, Any]:
         """Return system info."""

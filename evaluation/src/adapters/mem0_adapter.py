@@ -8,6 +8,7 @@ Key features:
 """
 import json
 import time
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -31,6 +32,7 @@ class Mem0Adapter(OnlineAPIAdapter):
     adapter: "mem0"
     api_key: "${MEM0_API_KEY}"
     batch_size: 2
+    display_timezone_offset: 8  # Optional: convert timestamps to UTC+8 for display
     ```
     """
     
@@ -74,6 +76,39 @@ class Mem0Adapter(OnlineAPIAdapter):
         
         print(f"   Batch Size: {self.batch_size}")
         print(f"   Max Content Length: {self.max_content_length}")
+    
+    def _convert_timestamp_to_display_timezone(self, timestamp_str: str) -> str:
+        """
+        Convert mem0's timestamp to display timezone.
+        
+        Default behavior (if display_timezone_offset not set):
+        - Convert to system local timezone (symmetric with add stage where naive datetime 
+          is treated as local timezone by Python's .timestamp() method)
+        
+        Optional behavior (if display_timezone_offset is set):
+        - Convert to specified timezone (e.g., UTC for explicit UTC handling)
+        
+        Args:
+            timestamp_str: ISO format timestamp string with timezone (e.g., "2023-05-07T22:56:00-07:00")
+        
+        Returns:
+            Formatted timestamp string in display timezone or original if conversion fails
+        """
+        if not timestamp_str:
+            return timestamp_str
+        
+        try:
+            # Parse ISO format timestamp (with timezone)
+            dt = datetime.fromisoformat(timestamp_str)
+            
+            dt_display = dt.astimezone(None)
+            
+            # Format as readable string (YYYY-MM-DD HH:MM:SS)
+            return dt_display.strftime("%Y-%m-%d %H:%M:%S")
+        except Exception as e:
+            # If conversion fails, return original string
+            self.console.print(f"⚠️  Failed to convert timestamp '{timestamp_str}': {e}", style="yellow")
+            return timestamp_str
     
     async def prepare(self, conversations: List[Conversation], **kwargs) -> None:
         """
@@ -198,7 +233,7 @@ class Mem0Adapter(OnlineAPIAdapter):
             timestamp = None
             is_fake_timestamp = False
             if conv.messages and conv.messages[0].timestamp:
-                timestamp = int(conv.messages[0].timestamp.timestamp())
+                timestamp = int(conv.messages[0].timestamp.timestamp()) 
                 is_fake_timestamp = conv.messages[0].metadata.get("is_fake_timestamp", False)
             
             self.console.print(f"\n📥 Adding conversation: {conv_id}", style="cyan")
@@ -431,13 +466,18 @@ class Mem0Adapter(OnlineAPIAdapter):
         # Build detailed results list (add user_id to each memory)
         memory_results = []
         for memory in results.get("results", []):
+            # Convert timestamp to display timezone if configured
+            created_at_original = memory.get("created_at", "")
+            created_at_display = self._convert_timestamp_to_display_timezone(created_at_original)
+            
             memory_results.append({
-                "content": f"{memory['created_at']}: {memory['memory']}",
+                "content": f"{created_at_display}: {memory['memory']}",
                 "score": memory.get("score", 0.0),
                 "user_id": user_id,
                 "metadata": {
                     "id": memory.get("id", ""),
-                    "created_at": memory.get("created_at", ""),
+                    "created_at": created_at_original,  # Keep original for reference
+                    "created_at_display": created_at_display,  # Add display version
                     "memory": memory.get("memory", ""),
                     "user_id": memory.get("user_id", ""),
                 }
@@ -504,13 +544,17 @@ class Mem0Adapter(OnlineAPIAdapter):
         
         # Speaker A's memories
         for memory in search_speaker_a_results.get("results", []):
+            created_at_original = memory.get("created_at", "")
+            created_at_display = self._convert_timestamp_to_display_timezone(created_at_original)
+            
             all_results.append({
-                "content": f"{memory['created_at']}: {memory['memory']}",
+                "content": f"{created_at_display}: {memory['memory']}",
                 "score": memory.get("score", 0.0),
                 "user_id": speaker_a_user_id,
                 "metadata": {
                     "id": memory.get("id", ""),
-                    "created_at": memory.get("created_at", ""),
+                    "created_at": created_at_original,
+                    "created_at_display": created_at_display,
                     "memory": memory.get("memory", ""),
                     "user_id": memory.get("user_id", ""),
                 }
@@ -518,13 +562,17 @@ class Mem0Adapter(OnlineAPIAdapter):
         
         # Speaker B's memories
         for memory in search_speaker_b_results.get("results", []):
+            created_at_original = memory.get("created_at", "")
+            created_at_display = self._convert_timestamp_to_display_timezone(created_at_original)
+            
             all_results.append({
-                "content": f"{memory['created_at']}: {memory['memory']}",
+                "content": f"{created_at_display}: {memory['memory']}",
                 "score": memory.get("score", 0.0),
                 "user_id": speaker_b_user_id,
                 "metadata": {
                     "id": memory.get("id", ""),
-                    "created_at": memory.get("created_at", ""),
+                    "created_at": created_at_original,
+                    "created_at_display": created_at_display,
                     "memory": memory.get("memory", ""),
                     "user_id": memory.get("user_id", ""),
                 }
@@ -532,11 +580,11 @@ class Mem0Adapter(OnlineAPIAdapter):
         
         # Format memories (for formatted_context)
         speaker_a_memories = [
-            f"{memory['created_at']}: {memory['memory']}"
+            f"{self._convert_timestamp_to_display_timezone(memory['created_at'])}: {memory['memory']}"
             for memory in search_speaker_a_results.get("results", [])
         ]
         speaker_b_memories = [
-            f"{memory['created_at']}: {memory['memory']}"
+            f"{self._convert_timestamp_to_display_timezone(memory['created_at'])}: {memory['memory']}"
             for memory in search_speaker_b_results.get("results", [])
         ]
         
@@ -575,7 +623,7 @@ class Mem0Adapter(OnlineAPIAdapter):
         
         Uses generic default prompt (loaded from YAML).
         """
-        return self._prompts["online_api"]["default"]["answer_prompt"]
+        return self._prompts["online_api"]["default"]["answer_prompt_mem0"]
     
     def get_system_info(self) -> Dict[str, Any]:
         """Return system info."""

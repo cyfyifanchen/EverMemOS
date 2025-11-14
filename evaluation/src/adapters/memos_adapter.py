@@ -501,7 +501,15 @@ class MemosAdapter(OnlineAPIAdapter):
                 }
             }
         )
-    
+    def _get_answer_prompt(self) -> str:
+        """
+        Get answer prompt.
+        
+        Subclasses can override this method to return their own prompt.
+        Defaults to generic default prompt.
+        """
+        return self._prompts["online_api"]["default"]["answer_prompt_memos"]
+
     def get_system_info(self) -> Dict[str, Any]:
         """Return system info."""
         return {
@@ -511,3 +519,5 @@ class MemosAdapter(OnlineAPIAdapter):
             "adapter": "MemosAdapter",
         }
 
+
+   

@@ -125,7 +125,7 @@ class ChatSession:
             error_msg = (
                 f"\n❌ 无法连接到 API 服务器: {self.api_base_url}\n\n"
                 f"请先启动 V3 API 服务器：\n"
-                f"  uv run python src/bootstrap.py start_server.py\n\n"
+                f"  uv run python src/bootstrap.py src/run.py --port 8001\n\n"
                 f"然后在另一个终端运行聊天应用。\n"
             )
             raise ConnectionError(error_msg) from e
@@ -271,7 +271,7 @@ class ChatSession:
             error_msg = "请求超时（超过30秒）"
             raise RuntimeError(error_msg)
         except httpx.ConnectError as e:
-            error_msg = f"连接失败: 无法连接到 {self.api_base_url}\n请确保 V3 API 服务已启动: uv run python src/bootstrap.py start_server.py"
+            error_msg = f"连接失败: 无法连接到 {self.api_base_url}\n请确保 V3 API 服务已启动: uv run python src/bootstrap.py src/run.py --port 8001"
             raise RuntimeError(error_msg) from e
         except Exception as e:
             error_msg = f"检索失败: {type(e).__name__}: {e}"
@@ -332,7 +332,7 @@ class ChatSession:
             error_msg = "请求超时（超过180秒）\n提示：Agentic 检索涉及 LLM 调用和多轮检索，耗时较长\n建议：使用 RRF/Embedding/BM25 检索模式（更快）"
             raise RuntimeError(error_msg)
         except httpx.ConnectError as e:
-            error_msg = f"连接失败: 无法连接到 {self.api_base_url}\n请确保 V3 API 服务已启动: uv run python src/bootstrap.py start_server.py"
+            error_msg = f"连接失败: 无法连接到 {self.api_base_url}\n请确保 V3 API 服务已启动: uv run python src/bootstrap.py src/run.py --port 8001"
             raise RuntimeError(error_msg) from e
         except Exception as e:
             error_msg = f"Agentic 检索失败: {type(e).__name__}: {e}"

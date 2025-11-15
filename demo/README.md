@@ -97,7 +97,7 @@ await memory.search("What is the user's favorite team?")
 
 ```bash
 # Terminal 1: Start the API server
-uv run python src/bootstrap.py start_server.py
+uv run python src/bootstrap.py src/run.py --port 8001
 
 # Terminal 2: Run the simple demo
 uv run python src/bootstrap.py demo/simple_demo.py
@@ -142,7 +142,7 @@ The fastest way to experience EverMemOS! Just 2 terminals:
 
 ```bash
 # Terminal 1: Start the API server (required)
-uv run python src/bootstrap.py start_server.py
+uv run python src/bootstrap.py src/run.py --port 8001
 
 # Terminal 2: Run the simple demo
 uv run python src/bootstrap.py demo/simple_demo.py
@@ -154,7 +154,7 @@ uv run python src/bootstrap.py demo/simple_demo.py
 3. 🔍 Searches memories with 3 different queries
 4. 📊 Shows results with relevance scores and explanations
 
-**Note**: The API server (`start_server.py`) must be running in a separate terminal for the demo to work.
+**Note**: The API server (`src/run.py --port 8001`) must be running in a separate terminal for the demo to work.
 
 ---
 

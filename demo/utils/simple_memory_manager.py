@@ -134,7 +134,7 @@ class SimpleMemoryManager:
                     
         except httpx.ConnectError:
             print(f"  ❌ Cannot connect to API server ({self.base_url})")
-            print(f"     Please start first: uv run python src/bootstrap.py start_server.py")
+            print(f"     Please start first: uv run python src/bootstrap.py src/run.py --port 8001")
             return False
         except Exception as e:
             print(f"  ❌ Storage failed: {e}")

@@ -133,7 +133,7 @@ async def _check_api_server(self) -> None:
         error_msg = (
             f"\n❌ 无法连接到 API 服务器: {self.api_base_url}\n\n"
             f"请先启动 V3 API 服务器：\n"
-            f"  uv run python src/bootstrap.py start_server.py\n\n"
+            f"  uv run python src/bootstrap.py src/run.py --port 8001\n\n"
             f"然后在另一个终端运行聊天应用。\n"
         )
         raise ConnectionError(error_msg) from e
@@ -256,7 +256,7 @@ cp env.template .env
 ### 步骤 2: 启动 API 服务器（终端1）
 
 ```bash
-uv run python src/bootstrap.py start_server.py
+uv run python src/bootstrap.py src/run.py --port 8001
 ```
 
 **输出示例**：
@@ -296,7 +296,7 @@ uv run python src/bootstrap.py demo/chat_with_memory.py
 ❌ 无法连接到 API 服务器: http://localhost:8001
 
 请先启动 V3 API 服务器：
-  uv run python src/bootstrap.py start_server.py
+  uv run python src/bootstrap.py src/run.py --port 8001
 
 然后在另一个终端运行聊天应用。
 ```
@@ -340,7 +340,7 @@ HTTP API 调用会有轻微的网络延迟：
 ```
 
 **解决方案**：
-1. 确保服务器已启动：`uv run python src/bootstrap.py start_server.py`
+1. 确保服务器已启动：`uv run python src/bootstrap.py src/run.py --port 8001`
 2. 检查端口是否被占用：`lsof -i :8001`
 3. 检查 `.env` 中的 `API_BASE_URL` 配置
 

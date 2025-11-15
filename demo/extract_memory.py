@@ -1,8 +1,3 @@
-"""测试 V3 API HTTP 接口的记忆存储功能
-
-使用真实的 HTTP 请求调用 V3 API 的 /memorize 接口
-从 assistant_chat_zh.json 加载真实对话数据
-"""
 import asyncio
 import json
 from pathlib import Path
@@ -44,12 +39,10 @@ def load_conversation_data(file_path: str) -> tuple:
 
 async def test_v3_memorize_api():
     """测试 V3 API 的 /memorize 接口（单条消息存储）"""
-    
-    # 清空所有记忆数据
+
     await clear_all_memories()
     
-    # V3 API 基础 URL（根据实际部署修改）
-    base_url = "http://localhost:8001"  # 服务运行在 8001 端口
+    base_url = "http://localhost:8001" 
     memorize_url = f"{base_url}/api/v3/agentic/memorize"  # 正确的路由路径
     
     print("=" * 100)
@@ -64,10 +57,7 @@ async def test_v3_memorize_api():
         print(f"❌ 错误: {e}")
         return False
     
-    # ✨ 配置 Profile 提取场景
-    # "assistant" / "companion" -> 陪伴场景（提取兴趣、偏好、生活习惯）
-    # "group_chat" / "work" / "company" / None -> 工作/群聊场景（提取工作角色、技能、项目经验）
-    profile_scene = "assistant"  # 💡 根据实际场景修改这里
+    profile_scene = "assistant"
     
     print(f"\n📤 Sending {len(test_messages)} messages to V3 API")
     print(f"   URL: {memorize_url}")
@@ -79,7 +69,6 @@ async def test_v3_memorize_api():
     print("   • '✓ Extracted' = Boundary detected, memories saved to database")
     print()
     
-    # 逐条发送消息（增加超时时间到120秒，因为LLM调用可能需要时间）
     total_accumulated = 0
     total_extracted = 0
     
@@ -102,7 +91,6 @@ async def test_v3_memorize_api():
                     saved_count = result.get("result", {}).get("count", 0)
                     status_info = result.get("result", {}).get("status_info", "unknown")
                     
-                    # 统计累积和提取的消息数
                     if status_info == "accumulated":
                         total_accumulated += 1
                         print(f"   ⏳ Queued")
@@ -110,7 +98,7 @@ async def test_v3_memorize_api():
                         total_extracted += saved_count
                         print(f"   ✓ Extracted {saved_count} memories")
                     else:
-                        # 兼容旧版本响应格式
+                    
                         if saved_count > 0:
                             total_extracted += saved_count
                             print(f"   ✓ Extracted {saved_count} memories")
@@ -134,10 +122,7 @@ async def test_v3_memorize_api():
                 import traceback
                 traceback.print_exc()
                 return False
-            
-            # 延迟2秒，给LLM边界检测足够的时间（每次都要调用LLM判断）
-            # await asyncio.sleep(2)
-    
+
     print("\n" + "=" * 100)
     print("✓ Test completed successfully")
     print("\n📊 Summary:")
@@ -160,7 +145,5 @@ async def test_v3_memorize_api():
     
     return True
 
-
 if __name__ == "__main__":
     asyncio.run(test_v3_memorize_api())
-

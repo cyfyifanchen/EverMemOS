@@ -97,7 +97,7 @@ await memory.search("用户最喜欢的球队是什么？")
 
 ```bash
 # 终端 1：启动 API 服务器
-uv run python src/bootstrap.py start_server.py
+uv run python src/bootstrap.py src/run.py --port 8001
 
 # 终端 2：运行简单演示
 uv run python src/bootstrap.py demo/simple_demo.py
@@ -142,7 +142,7 @@ uv run python src/bootstrap.py demo/simple_demo.py
 
 ```bash
 # 终端 1：启动 API 服务器（必需）
-uv run python src/bootstrap.py start_server.py
+uv run python src/bootstrap.py src/run.py --port 8001
 
 # 终端 2：运行简单演示
 uv run python src/bootstrap.py demo/simple_demo.py
@@ -154,7 +154,7 @@ uv run python src/bootstrap.py demo/simple_demo.py
 3. 🔍 用 3 个不同的查询搜索记忆
 4. 📊 显示结果（相关度分数和说明）
 
-**注意**：必须在单独的终端中运行 API 服务器（`start_server.py`），演示才能正常工作。
+**注意**：必须在单独的终端中运行 API 服务器（`src/run.py --port 8001`），演示才能正常工作。
 
 ---
 

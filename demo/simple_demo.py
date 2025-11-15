@@ -6,7 +6,7 @@ Demonstrates how to use the memory system:
 
 Prerequisites:
     Start the API server first (in another terminal):
-    uv run python src/bootstrap.py start_server.py
+    uv run python src/bootstrap.py src/run.py --port 8001
 
 Run the demo:
     uv run python src/bootstrap.py demo/simple_demo.py

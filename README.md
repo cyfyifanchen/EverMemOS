@@ -281,7 +281,7 @@ The fastest way to experience EverMemOS! Just 2 steps to see memory storage and 
 
 ```bash
 # Step 1: Start the API server (in terminal 1)
-uv run python src/bootstrap.py start_server.py
+uv run python src/bootstrap.py src/run.py --port 8001
 
 # Step 2: Run the simple demo (in terminal 2)
 uv run python src/bootstrap.py demo/simple_demo.py
@@ -305,7 +305,7 @@ We also provide a full-featured experience:
 
 ```bash
 # Terminal 1: Start the API server (required)
-uv run python src/bootstrap.py start_server.py
+uv run python src/bootstrap.py src/run.py --port 8001
 ```
 
 > 💡 **Tip**: Keep the API server running throughout. All following operations should be performed in another terminal.
@@ -425,7 +425,7 @@ Before calling the API, make sure the API server is running:
 
 ```bash
 # Start the API server
-uv run python src/bootstrap.py start_server.py
+uv run python src/bootstrap.py src/run.py --port 8001
 ```
 
 > 💡 **Tip**: Keep the API server running throughout. All following API calls should be performed in another terminal.

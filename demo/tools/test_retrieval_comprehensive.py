@@ -8,10 +8,10 @@
 
 使用方法：
     # 确保 API 服务器已启动
-    uv run python src/bootstrap.py start_server.py
+    uv run python src/bootstrap.py src/run.py --port 8001
     
     # 在另一个终端运行测试
-    uv run python src/bootstrap.py demo/test_retrieval_comprehensive.py
+    uv run python src/bootstrap.py demo/tools/test_retrieval_comprehensive.py
 """
 
 import asyncio
@@ -330,7 +330,7 @@ async def main():
     print("  - Profile 数据源: 仅固定 user_id + group_id 的 direct 检索")
     print("  - 检索模式: embedding, bm25, rrf（仅适用于非 profile 数据源）")
     print(f"\n总测试数: 3 × 3 × 3 + profile(1) = 28 种组合（profile 若缺少 group_id 将跳过）")
-    print("\n⚠️  请确保 API 服务器已启动: uv run python src/bootstrap.py start_server.py")
+    print("\n⚠️  请确保 API 服务器已启动: uv run python src/bootstrap.py src/run.py --port 8001")
     print("\n按 Enter 继续...")
     input()
     
@@ -500,7 +500,7 @@ async def demo_semantic_memory_evidence():
                 
     except httpx.ConnectError:
         print(f"\n❌ 无法连接到 API 服务器 ({base_url})")
-        print("   请先启动服务: uv run python src/bootstrap.py start_server.py")
+        print("   请先启动服务: uv run python src/bootstrap.py src/run.py --port 8001")
     except Exception as e:
         print(f"\n❌ 异常: {e}")
 

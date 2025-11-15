@@ -276,7 +276,7 @@ cp env.template .env
 
 ```bash
 # 步骤 1：启动 API 服务器（终端 1）
-uv run python src/bootstrap.py start_server.py
+uv run python src/bootstrap.py src/run.py --port 8001
 
 # 步骤 2：运行简单演示（终端 2）
 uv run python src/bootstrap.py demo/simple_demo.py
@@ -300,7 +300,7 @@ uv run python src/bootstrap.py demo/simple_demo.py
 
 ```bash
 # 终端 1：启动 API 服务器（必需）
-uv run python src/bootstrap.py start_server.py
+uv run python src/bootstrap.py src/run.py --port 8001
 ```
 
 > 💡 **提示**：API 服务器需要一直运行，请保持此终端打开。下面的所有操作都需要在另一个终端中进行。
@@ -420,7 +420,7 @@ cat evaluation/results/locomo-evermemos/pipeline.log        # 执行日志
 
 ```bash
 # 启动 API 服务器
-uv run python src/bootstrap.py start_server.py
+uv run python src/bootstrap.py src/run.py --port 8001
 ```
 
 > 💡 **提示**：API 服务器需要一直运行，请保持此终端打开。下面的 API 调用需要在另一个终端中进行。

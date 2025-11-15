@@ -69,7 +69,7 @@ payload = {
 
 1. **启动 API 服务器：**
 ```bash
-uv run python src/bootstrap.py start_server.py
+uv run python src/bootstrap.py src/run.py --port 8001
 ```
 
 2. **配置环境变量：**
@@ -116,7 +116,7 @@ uv run python demo/test_v3_retrieve_http.py
 
 ```
 ❌ 连接失败: 无法连接到 http://localhost:8001
-   请确保 V3 API 服务已启动: uv run python src/bootstrap.py start_server.py
+   请确保 V3 API 服务已启动: uv run python src/bootstrap.py src/run.py --port 8001
 ```
 
 **解决方案：**

@@ -2,6 +2,33 @@
 
 A unified, modular evaluation framework for benchmarking memory systems on standard datasets.
 
+## 📖 Overview
+
+### Evaluation Scope
+
+In addition to **EvermemOS**, this framework supports evaluation of several influential memory systems in the industry:
+- **mem0** 
+- **MemOS** 
+- **memU** 
+- **Zep** 
+
+These systems were selected based on recent industry benchmarks and their prominence in global markets. Since many commercial systems have web-based optimizations not available in their open-source versions, we evaluate them through their **online API interfaces** to ensure fair comparison with production-grade capabilities.
+
+### Implementation
+
+Our adapter implementations are based on:
+- **Official open-source repositories**: mem0, MemOS (Memos) on GitHub
+- **Official documentation**: memU Quick Start guide and API documentation
+- **Zep evaluation reference**: Adapted from Zep's open-source evaluation code and official documentation, with migration from API v2 to v3
+- **Consistent methodology**: All systems evaluated using the same pipeline, datasets, and metrics
+- **Unified answer generation**: All systems use **GPT-4.1-mini** as the answer LLM to ensure fair comparison across different memory backends
+
+### Evaluation Results
+
+
+
+
+
 ## 🌟 Key Features
 
 ### Unified & Modular Framework
@@ -64,6 +91,7 @@ Each stage saves its output and can be resumed independently.
 Place your dataset files in the `evaluation/data/` directory:
 
 **LoCoMo** (native format, no conversion needed):
+Get data from: https://github.com/snap-research/locomo/tree/main/data
 
 ```
 evaluation/data/locomo/
@@ -71,6 +99,7 @@ evaluation/data/locomo/
 ```
 
 **LongMemEval** (auto-converts to LoCoMo format):
+Get data from: https://huggingface.co/datasets/xiaowu0162/longmemeval-cleaned
 
 ```
 evaluation/data/longmemeval/
@@ -79,6 +108,7 @@ evaluation/data/longmemeval/
 ```
 
 **PersonaMem** (auto-converts to LoCoMo format):
+Get data from: https://huggingface.co/datasets/bowen-upenn/PersonaMem
 
 ```
 evaluation/data/personamem/
@@ -104,8 +134,13 @@ uv sync --group evaluation-full
 ### Environment Configuration
 
 The evaluation framework reuses most environment variables from the main EvermemOS `.env` file:
-- `LLM_API_KEY`, `LLM_BASE_URL` (for answer generation)
+- `LLM_API_KEY`, `LLM_BASE_URL` (for answer generation with GPT-4.1-mini)
 - `DEEPINFRA_API_KEY` (for embeddings/reranker)
+
+**⚠️ Important**: For OpenRouter API (used by gpt-4.1-mini), make sure `LLM_API_KEY` is set to your OpenRouter API key (format: `sk-or-v1-xxx`). The system will look for API keys in this order:
+1. Explicit `api_key` parameter in config
+2. `LLM_API_KEY` environment variable
+3. `OPENROUTER_API_KEY` environment variable (legacy)
 
 For testing EvermemOS, please first configure the whole .env file.
 

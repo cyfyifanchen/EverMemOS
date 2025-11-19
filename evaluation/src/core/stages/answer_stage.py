@@ -98,6 +98,7 @@ async def run_answer_stage(
         print(f"Remaining: {total_qa_count - processed_count} questions")
     
     # Prepare pending tasks
+    # qa_pairs and search_results should have matching order (both use numeric sort by conversation_id)
     pending_tasks = []
     for qa, sr in zip(qa_pairs, search_results):
         if qa.question_id not in all_answer_results:
@@ -157,14 +158,32 @@ OPTIONS:
 
 IMPORTANT: This is a multiple-choice question. You MUST analyze the context and select the BEST option. In your FINAL ANSWER, return ONLY the option letter like (a), (b), (c), or (d), nothing else."""
                 
-                # Call adapter's answer method directly
-                answer = await adapter.answer(
-                    query=query,
-                    context=context,
-                    conversation_id=search_result.conversation_id,
-                )
+                # Call adapter's answer method with timeout and retry
+                max_retries = 3
+                timeout_seconds = 120.0  # 3 minutes timeout per attempt
+                answer = None
                 
-                answer = answer.strip()
+                for attempt in range(max_retries):
+                    try:
+                        answer = await asyncio.wait_for(
+                            adapter.answer(
+                                query=query,
+                                context=context,
+                                conversation_id=search_result.conversation_id,
+                            ),
+                            timeout=timeout_seconds
+                        )
+                        answer = answer.strip()
+                        break  # Success, exit retry loop
+                        
+                    except asyncio.TimeoutError:
+                        if attempt < max_retries - 1:
+                            tqdm.write(f"  ⏱️  Timeout (180s) for {qa.question_id}, retry {attempt + 1}/{max_retries}...")
+                            await asyncio.sleep(2)  # Short delay before retry
+                        else:
+                            tqdm.write(f"  ❌ Timeout after {max_retries} attempts for {qa.question_id}: {qa.question[:50]}...")
+                            answer = "Error: Answer generation timeout after retries"
+                            failed += 1
             
             except Exception as e:
                 tqdm.write(f"  ⚠️ Answer generation failed for {qa.question_id}: {e}")

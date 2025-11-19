@@ -89,8 +89,17 @@ async def run_search_stage(
             pbar.update(1)  # Update progress bar after each question
             return result
     
-    # Process by conversation
-    for idx, (conv_id, qa_list) in enumerate(sorted(conv_to_qa.items())):
+    # Process by conversation (use numeric sort for conversation IDs like "longmemeval_10")
+    def sort_key(item):
+        """Sort by numeric part of conversation_id if possible, else alphabetically."""
+        conv_id = item[0]
+        # Try to extract numeric suffix (e.g., "longmemeval_10" -> 10)
+        parts = conv_id.rsplit('_', 1)
+        if len(parts) == 2 and parts[1].isdigit():
+            return (parts[0], int(parts[1]))
+        return (conv_id, 0)
+    
+    for idx, (conv_id, qa_list) in enumerate(sorted(conv_to_qa.items(), key=sort_key)):
         # Skip already processed conversations
         if conv_id in processed_convs:
             tqdm.write(f"⏭️  Skipping Conversation ID: {conv_id} (already processed)")
@@ -128,8 +137,16 @@ async def run_search_stage(
         checkpoint_manager.delete_search_checkpoint()
     
     # Convert dict format to SearchResult object list (maintain original return format)
+    # Use same numeric sort as above to ensure consistent ordering
+    def sort_key_conv_id(conv_id):
+        """Sort by numeric part of conversation_id if possible, else alphabetically."""
+        parts = conv_id.rsplit('_', 1)
+        if len(parts) == 2 and parts[1].isdigit():
+            return (parts[0], int(parts[1]))
+        return (conv_id, 0)
+    
     all_results = []
-    for conv_id in sorted(conv_to_qa.keys()):
+    for conv_id in sorted(conv_to_qa.keys(), key=sort_key_conv_id):
         if conv_id in all_search_results_dict:
             for result_dict in all_search_results_dict[conv_id]:
                 all_results.append(SearchResult(

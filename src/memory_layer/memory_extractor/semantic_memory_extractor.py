@@ -280,7 +280,6 @@ class SemanticMemoryExtractor(MemoryExtractor):
                     vec = await vs.get_embedding(content)
                     # 创建SemanticMemoryItem对象
                     memory_item = SemanticMemoryItem(
-                        id=item.get('id', f"semantic_memory_{uuid.uuid4().hex}"),
                         content=content,
                         evidence=evidence,  # ← 添加 evidence 字段
                         start_time=item_start_time,

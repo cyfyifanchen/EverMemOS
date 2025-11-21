@@ -23,8 +23,7 @@ class SemanticMemoryRecord(DocumentBase, AuditBase):
     """
 
     # 核心字段
-    id: str = Field(..., description="语义记忆ID")
-    user_id: Optional[str] = Field(default=None, description="用户ID，个人记忆必填，群组记忆可为空")
+    user_id: Optional[str] = Field(default=None, description="用户ID，个人记忆必填，群组记忆为None")
     user_name: Optional[str] = Field(default=None, description="用户名称")
     group_id: Optional[str] = Field(default=None, description="群组ID")
     group_name: Optional[str] = Field(default=None, description="群组名称")

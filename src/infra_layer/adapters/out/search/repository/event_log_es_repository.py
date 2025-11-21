@@ -79,11 +79,12 @@ class EventLogEsRepository(BaseRepository[EventLogDoc]):
 
     async def create_and_save_event_log(
         self,
-        event_id: str,
+        id: str,
         user_id: str,
         timestamp: datetime,
         atomic_fact: str,
         search_content: List[str],
+        event_type: Optional[str] = None,
         parent_episode_id: Optional[str] = None,
         group_id: Optional[str] = None,
         group_name: str = "",
@@ -97,7 +98,7 @@ class EventLogEsRepository(BaseRepository[EventLogDoc]):
         创建并保存事件日志文档
 
         Args:
-            log_id: 日志唯一标识
+            id: 日志唯一标识
             user_id: 用户ID（必需）
             timestamp: 事件发生时间（必需）
             atomic_fact: 原子事实（必需）
@@ -129,8 +130,8 @@ class EventLogEsRepository(BaseRepository[EventLogDoc]):
 
             # 创建文档实例
             doc = EventLogDoc(
-                event_id=event_id,
-                type="Conversation",
+                id=id,
+                type=event_type,
                 user_id=user_id,
                 user_name=user_name or "",
                 timestamp=timestamp,
@@ -208,8 +209,8 @@ class EventLogEsRepository(BaseRepository[EventLogDoc]):
             if user_id and user_id != "":
                 filter_queries.append(Q("term", user_id=user_id))
             elif user_id is None or user_id == "":
-                # 只保留 user_id="" 的文档(群组记忆)
-                filter_queries.append(Q("term", user_id=""))
+                # 只保留 user_id 不存在的文档(群组记忆)
+                filter_queries.append(Q("bool", must_not=Q("exists", field="user_id")))
             if group_id and group_id != "":
                 filter_queries.append(Q("term", group_id=group_id))
             

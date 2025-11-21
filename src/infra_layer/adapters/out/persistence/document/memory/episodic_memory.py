@@ -16,7 +16,7 @@ class EpisodicMemory(DocumentBase, AuditBase):
     从 MemCell 摘要直接转存而来。
     """
 
-    user_id: str = Field(default="", description="当事人，空字符串表示群组记忆")
+    user_id: Optional[str] = Field(default=None, description="当事人，None表示群组记忆")
     user_name: Optional[str] = Field(default=None, description="当事人名称")
     group_id: Optional[str] = Field(default=None, description="群组ID")
     group_name: Optional[str] = Field(default=None, description="群组名称")

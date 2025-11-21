@@ -238,7 +238,6 @@ class SemanticMemoryItem:
 
     包含时间信息的语义记忆联想预测
     """
-    id: str 
     content: str
     evidence: Optional[str] = None  # 原始证据，支持该联想预测的具体事实（不超过30字）
     start_time: Optional[str] = None  # 事件开始时间，格式：YYYY-MM-DD
@@ -248,7 +247,6 @@ class SemanticMemoryItem:
     embedding: Optional[List[float]] = None
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "id": self.id,
             "content": self.content,
             "evidence": self.evidence,
             "start_time": self.start_time,

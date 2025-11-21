@@ -227,7 +227,12 @@ class BaseRepository(ABC, Generic[T]):
             成功创建的文档列表
         """
         try:
-            await self.model.insert_many(documents, session=session)
+            # Beanie 的 insert_many 不会自动更新传入对象的 id 属性
+            # 我们需要手动从返回的 InsertManyResult 中获取 inserted_ids 并设置
+            result = await self.model.insert_many(documents, session=session)
+            # 将 MongoDB 生成的 _id 设置回每个文档对象的 id 属性
+            for doc, inserted_id in zip(documents, result.inserted_ids):
+                doc.id = inserted_id
             logger.info(
                 "✅ 批量创建文档成功 [%s]: %d 条记录", self.model_name, len(documents)
             )

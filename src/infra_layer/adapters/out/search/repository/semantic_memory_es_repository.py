@@ -79,12 +79,13 @@ class SemanticMemoryEsRepository(BaseRepository[SemanticMemoryDoc]):
 
     async def create_and_save_semantic_memory(
         self,
-        event_id: str,
+        id: str,
         user_id: str,
         user_name: str,
         timestamp: datetime,
         content: str,
         search_content: List[str],
+        event_type: Optional[str] = None,
         parent_episode_id: Optional[str] = None,
         group_id: Optional[str] = None,
         participants: Optional[List[str]] = None,
@@ -100,7 +101,7 @@ class SemanticMemoryEsRepository(BaseRepository[SemanticMemoryDoc]):
         创建并保存语义记忆文档
 
         Args:
-            memory_id: 记忆唯一标识
+            id: 记忆唯一标识
             user_id: 用户ID（必需）
             timestamp: 事件发生时间（必需）
             content: 语义记忆内容（必需）
@@ -139,8 +140,8 @@ class SemanticMemoryEsRepository(BaseRepository[SemanticMemoryDoc]):
 
             # 创建文档实例
             doc = SemanticMemoryDoc(
-                event_id=event_id,
-                type='Conversation',
+                id=id,
+                type=event_type,
                 user_id=user_id,
                 user_name=user_name or '',
                 timestamp=timestamp,
@@ -162,12 +163,12 @@ class SemanticMemoryEsRepository(BaseRepository[SemanticMemoryDoc]):
             await doc.save(using=client)
 
             logger.debug(
-                "✅ 创建语义记忆文档成功: event_id=%s, user_id=%s", event_id, user_id
+                "✅ 创建语义记忆文档成功: id=%s, user_id=%s", id, user_id
             )
             return doc
 
         except Exception as e:
-            logger.error("❌ 创建语义记忆文档失败: event_id=%s, error=%s", event_id, e)
+            logger.error("❌ 创建语义记忆文档失败: id=%s, error=%s", id, e)
             raise
 
     # ==================== 搜索功能 ====================
@@ -216,8 +217,8 @@ class SemanticMemoryEsRepository(BaseRepository[SemanticMemoryDoc]):
             if user_id and user_id != "":
                 filter_queries.append(Q("term", user_id=user_id))
             elif user_id is None or user_id == "":
-                # 只保留 user_id="" 的文档(群组记忆)
-                filter_queries.append(Q("term", user_id=""))
+                # 只保留 user_id 不存在的文档(群组记忆)
+                filter_queries.append(Q("bool", must_not=Q("exists", field="user_id")))
             if group_id and group_id != "":
                 filter_queries.append(Q("term", group_id=group_id))
             

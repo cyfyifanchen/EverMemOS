@@ -46,12 +46,13 @@ class SemanticMemoryMilvusRepository(
 # TODO:添加 username 
     async def create_and_save_semantic_memory(
         self,
-        event_id: str,
+        id: str,
         user_id: Optional[str],
         content: str,
         parent_episode_id: str,
         vector: List[float],
         group_id: Optional[str] = None,
+        event_type: Optional[str] = None,
         participants: Optional[List[str]] = None,
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
@@ -67,7 +68,7 @@ class SemanticMemoryMilvusRepository(
         创建并保存个人语义记忆文档
 
         Args:
-            memory_id: 语义记忆唯一标识
+            id: 语义记忆唯一标识
             user_id: 用户ID（必需）
             content: 语义记忆内容（必需）
             parent_episode_id: 父情景记忆ID（必需）
@@ -109,7 +110,7 @@ class SemanticMemoryMilvusRepository(
 
             # 准备实体数据
             entity = {
-                "id": event_id,
+                "id": id,
                 "vector": vector,
                 "user_id": user_id or "",
                 "group_id": group_id or "",
@@ -120,6 +121,7 @@ class SemanticMemoryMilvusRepository(
                 "duration_days": duration_days or 0,
                 "content": content,
                 "evidence": evidence or "",
+                "event_type": event_type,
                 "search_content": json.dumps(search_content, ensure_ascii=False),
                 "metadata": json.dumps(metadata, ensure_ascii=False),
                 "created_at": int(created_at.timestamp()),
@@ -131,12 +133,12 @@ class SemanticMemoryMilvusRepository(
 
             logger.debug(
                 "✅ 创建个人语义记忆文档成功: memory_id=%s, user_id=%s",
-                event_id,
+                id,
                 user_id,
             )
 
             return {
-                "event_id": event_id,
+                "id": id,
                 "user_id": user_id,
                 "content": content,
                 "parent_episode_id": parent_episode_id,

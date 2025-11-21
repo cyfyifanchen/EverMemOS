@@ -42,7 +42,7 @@ class EventLogMilvusRepository(BaseMilvusRepository[EventLogCollection]):
 
     async def create_and_save_event_log(
         self,
-        event_id: str,
+        id: str,
         user_id: Optional[str],
         atomic_fact: str,
         parent_episode_id: str,
@@ -61,7 +61,7 @@ class EventLogMilvusRepository(BaseMilvusRepository[EventLogCollection]):
         创建并保存事件日志文档
 
         Args:
-            log_id: 事件日志唯一标识
+            id: 事件日志唯一标识
             user_id: 用户ID（必需）
             atomic_fact: 原子事实内容（必需）
             parent_episode_id: 父情景记忆ID（必需）
@@ -99,13 +99,13 @@ class EventLogMilvusRepository(BaseMilvusRepository[EventLogCollection]):
 
             # 准备实体数据
             entity = {
-                "id": event_id,
+                "id": id,
                 "vector": vector,
                 "user_id": user_id or "",
                 "group_id": group_id or "",
                 "participants": participants or [],
                 "parent_episode_id": parent_episode_id,
-                "event_type": event_type or "conversation",
+                "event_type": event_type,
                 "timestamp": int(timestamp.timestamp()),
                 "atomic_fact": atomic_fact,
                 "search_content": json.dumps(search_content, ensure_ascii=False),
@@ -118,11 +118,11 @@ class EventLogMilvusRepository(BaseMilvusRepository[EventLogCollection]):
             await self.insert(entity)
 
             logger.debug(
-                "✅ 创建事件日志文档成功: event_id=%s, user_id=%s", event_id, user_id
+                "✅ 创建事件日志文档成功: id=%s, user_id=%s", id, user_id
             )
 
             return {
-                "event_id": event_id,
+                "id": id,
                 "user_id": user_id,
                 "atomic_fact": atomic_fact,
                 "parent_episode_id": parent_episode_id,
@@ -132,7 +132,7 @@ class EventLogMilvusRepository(BaseMilvusRepository[EventLogCollection]):
             }
 
         except Exception as e:
-            logger.error("❌ 创建事件日志文档失败: event_id=%s, error=%s", event_id, e)
+            logger.error("❌ 创建事件日志文档失败: id=%s, error=%s", id, e)
             raise
 
     # ==================== 搜索功能 ====================

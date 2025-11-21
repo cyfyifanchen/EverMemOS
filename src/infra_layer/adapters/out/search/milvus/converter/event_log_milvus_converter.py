@@ -15,6 +15,7 @@ from infra_layer.adapters.out.search.milvus.memory.event_log_collection import (
 from infra_layer.adapters.out.persistence.document.memory.event_log_record import (
     EventLogRecord as MongoEventLogRecord,
 )
+from memory_layer.types import RawDataType
 
 logger = get_logger(__name__)
 
@@ -56,13 +57,13 @@ class EventLogMilvusConverter(BaseMilvusConverter[EventLogCollection]):
             # 创建 Milvus 实体字典
             milvus_entity = {
                 # 基础标识字段
-                "id": source_doc.id,
+                "id": str(source_doc.id),  # 使用 Beanie 的 id 属性
                 "user_id": source_doc.user_id or "",
                 "group_id": source_doc.group_id or "",
                 "participants": source_doc.participants if source_doc.participants else [],
                 "parent_episode_id": source_doc.parent_episode_id or "",
                 # 事件类型和时间字段
-                "event_type": source_doc.event_type or "conversation",
+                "event_type": source_doc.event_type or RawDataType.CONVERSATION.value,
                 "timestamp": timestamp,
                 # 核心内容字段
                 "atomic_fact": source_doc.atomic_fact,

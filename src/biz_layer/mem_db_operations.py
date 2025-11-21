@@ -65,6 +65,7 @@ from infra_layer.adapters.out.persistence.document.memory.semantic_memory_record
 from infra_layer.adapters.out.persistence.document.memory.event_log_record import (
     EventLogRecord,
 )
+from memory_layer.types import RawDataType
 logger = get_logger(__name__)
 import uuid
 # ==================== 时间处理函数 ====================
@@ -275,7 +276,7 @@ def _convert_episode_memory_to_doc(
             timestamp_dt = current_time
 
     return EpisodicMemory(
-        user_id=episode_memory.user_id or "",
+        user_id=episode_memory.user_id,  # 保持 None 或实际值，不转换为空字符串
         user_name=episode_memory.user_name or '',
         group_id=episode_memory.group_id,
         group_name=episode_memory.group_name,
@@ -323,7 +324,6 @@ def _convert_semantic_memory_to_doc(
         current_time = get_now_with_timezone()
 
     return SemanticMemoryRecord(
-        id=semantic_memory.id,
         user_id=getattr(semantic_memory, "user_id", None),
         user_name=getattr(
             semantic_memory, "user_name", getattr(parent_doc, "user_name", None)
@@ -375,7 +375,6 @@ def _convert_event_log_to_docs(
             vector = vector.tolist()
 
         doc = EventLogRecord(
-            id=f"atomic_fact_{uuid.uuid4().hex}",
             user_id=event_log.user_id,
             user_name=event_log.user_name or '',
             atomic_fact=fact,
@@ -388,7 +387,7 @@ def _convert_event_log_to_docs(
             participants=parent_doc.participants,
             vector=vector,
             vector_model=getattr(event_log, 'vector_model', None),
-            event_type=parent_doc.type or "conversation",
+            event_type=parent_doc.type or RawDataType.CONVERSATION.value,
             extend={},
         )
         docs.append(doc)

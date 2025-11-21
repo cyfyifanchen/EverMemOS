@@ -388,7 +388,7 @@ async def main():
     print("🔬"*40)
     
     await tester.run_comprehensive_test(
-        query="北京旅游美食推荐",
+        query="北京",
         user_id="user_001",  # 使用实际数据库中的 user_id
         group_id=None,  # 不指定 group_id
         current_time=None,  # 不传 current_time,避免过滤掉已过期的群组语义记忆
@@ -405,7 +405,7 @@ async def main():
     print("🔬"*40)
     
     await tester.run_comprehensive_test(
-        query="北京美食和旅游",
+        query="北京",
         user_id="user_001",  # 使用实际数据库中的 user_id
         group_id="chat_user_001_assistant",  # 使用实际数据库中的 group_id
         current_time=None,  # 不传 current_time,避免过滤掉已过期的群组语义记忆
@@ -424,7 +424,7 @@ async def main():
     # 测试当前有效的语义记忆
     print("\n  📅 子测试 3.1: 检索当前有效的语义记忆")
     result_current = await tester.test_retrieval(
-        query="北京美食推荐",
+        query="北京",
         data_source="semantic_memory",
         memory_scope="personal",
         retrieval_mode="rrf",
@@ -435,7 +435,7 @@ async def main():
     # 测试未来时间（应该返回更多记忆）
     print("\n  📅 子测试 3.2: 检索未来时间的语义记忆（包含更长期的预测）")
     result_future = await tester.test_retrieval(
-        query="北京美食推荐",
+        query="北京",
         data_source="semantic_memory",
         memory_scope="personal",
         retrieval_mode="rrf",
@@ -447,7 +447,7 @@ async def main():
     # 测试过去时间（应该返回较少记忆）
     print("\n  📅 子测试 3.3: 检索过去时间的语义记忆（已过期的记忆）")
     result_past = await tester.test_retrieval(
-        query="北京美食推荐",
+        query="北京",
         data_source="semantic_memory",
         memory_scope="personal",
         retrieval_mode="rrf",
@@ -488,7 +488,7 @@ async def demo_semantic_memory_evidence():
     print("   当用户查询'推荐食物'时，可以看到推荐依据")
     
     payload = {
-        "query": "给我推荐北京美食",
+        "query": "北京",
         "user_id": "robot_001",  # 使用实际数据库中的 user_id
         "data_source": "semantic_memory",
         "retrieval_mode": "rrf",

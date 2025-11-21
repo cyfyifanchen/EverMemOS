@@ -61,12 +61,8 @@ class EpisodicMemoryMilvusConverter(BaseMilvusConverter[EpisodicMemoryCollection
             # 创建 Milvus 实体字典
             milvus_entity = {
                 # 基础标识字段
-                "id": (
-                    str(source_doc.event_id)
-                    if hasattr(source_doc, 'event_id') and source_doc.event_id
-                    else ""
-                ),
-                "user_id": source_doc.user_id,
+                "id": str(source_doc.id),  # 使用 Beanie 的 id 属性
+                "user_id": source_doc.user_id or "",  # None 转换为空字符串
                 "group_id": getattr(source_doc, 'group_id', ""),
                 "participants": getattr(
                     source_doc, 'participants', []

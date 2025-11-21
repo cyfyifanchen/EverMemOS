@@ -69,7 +69,7 @@ class SemanticMemoryMilvusConverter(BaseMilvusConverter[SemanticMemoryCollection
             # 创建 Milvus 实体字典
             milvus_entity = {
                 # 基础标识字段
-                "id": source_doc.id,
+                "id": str(source_doc.id),  # 使用 Beanie 的 id 属性
                 "user_id": source_doc.user_id or "",
                 "group_id": source_doc.group_id or "",
                 "participants": source_doc.participants if source_doc.participants else [],

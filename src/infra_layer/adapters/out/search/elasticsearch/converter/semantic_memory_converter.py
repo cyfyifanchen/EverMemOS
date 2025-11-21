@@ -59,18 +59,10 @@ class SemanticMemoryConverter(BaseEsConverter[SemanticMemoryDoc]):
             if not timestamp:
                 timestamp = source_doc.created_at or datetime.now()
             
-            # 确保 event_id 不为空
-            event_id = str(source_doc.id) if source_doc.id else None
-            if not event_id:
-                # 兜底逻辑:使用 parent_episode_id + timestamp 生成唯一ID
-                import uuid
-                event_id = f"semantic_{uuid.uuid4().hex}"
-                logger.warning(f"MongoDB 文档缺少 id,生成临时 ID: {event_id}")
-            
             # 创建 ES 文档实例
+            # 通过 meta 参数传递 id,确保幂等性(MongoDB _id -> ES _id)
             es_doc = SemanticMemoryDoc(
-                # 基础标识字段
-                event_id=event_id,
+                meta={'id': str(source_doc.id)},
                 user_id=source_doc.user_id,
                 user_name=source_doc.user_name or "",
                 # 时间字段

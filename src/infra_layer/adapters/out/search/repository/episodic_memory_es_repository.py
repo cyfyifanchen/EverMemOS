@@ -243,8 +243,8 @@ class EpisodicMemoryEsRepository(BaseRepository[EpisodicMemoryDoc]):
             if user_id and user_id != "":
                 filter_queries.append(Q("term", user_id=user_id))
             elif user_id is None or user_id == "":
-                # 只保留 user_id="" 的文档(群组记忆)
-                filter_queries.append(Q("term", user_id=""))
+                # 只保留 user_id 不存在的文档(群组记忆)
+                filter_queries.append(Q("bool", must_not=Q("exists", field="user_id")))
             if group_id and group_id != "":
                 filter_queries.append(Q("term", group_id=group_id))
             if participant_user_id:

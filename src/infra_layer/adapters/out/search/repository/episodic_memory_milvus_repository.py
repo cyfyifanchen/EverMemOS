@@ -42,7 +42,7 @@ class EpisodicMemoryMilvusRepository(BaseMilvusRepository[EpisodicMemoryCollecti
 
     async def create_and_save_episodic_memory(
         self,
-        event_id: str,
+        id: str,
         user_id: str,
         timestamp: datetime,
         episode: str,
@@ -128,7 +128,7 @@ class EpisodicMemoryMilvusRepository(BaseMilvusRepository[EpisodicMemoryCollecti
 
             # 准备实体数据
             entity = {
-                "id": event_id,
+                "id": id,
                 "vector": vector,
                 "user_id": user_id or "",  # Milvus VARCHAR 不接受 None，转为空字符串
                 "group_id": group_id or "",
@@ -146,11 +146,11 @@ class EpisodicMemoryMilvusRepository(BaseMilvusRepository[EpisodicMemoryCollecti
             await self.insert(entity)
 
             logger.debug(
-                "✅ 创建情景记忆文档成功: event_id=%s, user_id=%s", event_id, user_id
+                "✅ 创建情景记忆文档成功: id=%s, user_id=%s", id, user_id
             )
 
             return {
-                "event_id": event_id,
+                "id": id,
                 "user_id": user_id,
                 "timestamp": timestamp,
                 "episode": episode,
@@ -159,7 +159,7 @@ class EpisodicMemoryMilvusRepository(BaseMilvusRepository[EpisodicMemoryCollecti
             }
 
         except Exception as e:
-            logger.error("❌ 创建情景记忆文档失败: event_id=%s, error=%s", event_id, e)
+            logger.error("❌ 创建情景记忆文档失败: id=%s, error=%s", id, e)
             raise
 
     # ==================== 搜索功能 ====================

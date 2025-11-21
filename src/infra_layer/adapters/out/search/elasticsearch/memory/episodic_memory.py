@@ -51,7 +51,7 @@ class EpisodicMemoryDoc(AliasDoc("episodic-memory", number_of_shards=3)):
 
     # 基础标识字段
     event_id = e_field.Keyword(required=True)
-    user_id = e_field.Keyword(required=True)
+    user_id = e_field.Keyword()  # 群组记忆时为 None
     user_name = e_field.Keyword()
 
     # 时间字段

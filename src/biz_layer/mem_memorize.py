@@ -121,7 +121,6 @@ def _clone_semantic_memory_item(raw_item: Any) -> Optional[SemanticMemoryItem]:
 
     if isinstance(raw_item, SemanticMemoryItem):
         return SemanticMemoryItem(
-            id=raw_item.id,
             content=raw_item.content,
             evidence=getattr(raw_item, "evidence", None),
             start_time=getattr(raw_item, "start_time", None),
@@ -133,7 +132,6 @@ def _clone_semantic_memory_item(raw_item: Any) -> Optional[SemanticMemoryItem]:
 
     if isinstance(raw_item, dict):
         return SemanticMemoryItem(
-            id=raw_item.get("id"),
             content=raw_item.get("content", ""),
             evidence=raw_item.get("evidence"),
             start_time=raw_item.get("start_time"),
@@ -848,7 +846,7 @@ async def memorize(request: MemorizeRequest) -> List[Memory]:
     group_episode_memories: List[Memory] = [
         Memory(
             memory_type=MemoryType.EPISODIC_MEMORY,
-            user_id="",
+            user_id=None,  # 群组记忆的 user_id 为 None
             timestamp=memcell.timestamp or current_time,
             ori_event_id_list=[memcell.event_id],
             subject=memcell.subject,
@@ -961,8 +959,8 @@ async def memorize(request: MemorizeRequest) -> List[Memory]:
                 for episode_mem in episodic_source_memories:
                     if not episode_mem.event_id:
                         continue
-                    # 跳过群组 Episode (user_id=""),因为群组的 semantic/eventlog 直接从 MemCell 提取
-                    if episode_mem.user_id == "":
+                    # 跳过群组 Episode (user_id=None),因为群组的 semantic/eventlog 直接从 MemCell 提取
+                    if episode_mem.user_id is None or episode_mem.user_id == "":
                         continue
                     
                     logger.info(f"🔍 为 user_id={episode_mem.user_id} 提取 {memory_type}")
@@ -1004,7 +1002,7 @@ async def memorize(request: MemorizeRequest) -> List[Memory]:
                 for raw_sem in memcell.semantic_memories:
                     sem_item = _clone_semantic_memory_item(raw_sem)
                     sem_item.parent_event_id = group_parent_event_id
-                    sem_item.user_id = ""
+                    sem_item.user_id = None  # 群组语义记忆的 user_id 为 None
                     sem_item.group_id = memcell.group_id
                     sem_item.group_name = memcell.group_name or request.group_name
                     sem_item.user_name = sem_item.group_name
@@ -1013,9 +1011,8 @@ async def memorize(request: MemorizeRequest) -> List[Memory]:
             if memcell.event_log:
                 event_log_obj = _clone_event_log(memcell.event_log)
                 if event_log_obj and event_log_obj.atomic_fact:
-                    event_log_obj.id = f"atomic_fact_{uuid.uuid4().hex}"
                     event_log_obj.parent_event_id = group_parent_event_id
-                    event_log_obj.user_id = ""
+                    event_log_obj.user_id = None  # 群组事件日志的 user_id 为 None
                     event_log_obj.group_id = memcell.group_id
                     event_log_obj.group_name = memcell.group_name or request.group_name
                     event_log_obj.user_name = event_log_obj.group_name

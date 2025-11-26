@@ -23,7 +23,7 @@
   <img alt="Milvus" src="https://img.shields.io/badge/Milvus-2.4+-00A3E0?style=flat-square" />
   <img alt="Redis" src="https://img.shields.io/badge/Redis-7.x-26A69A?style=flat-square&logo=redis&logoColor=white" />
    <a href="https://github.com/EverMind-AI/EverMemOS/releases">
-    <img alt="Release" src="https://img.shields.io/badge/release-v1.0.0-4A90E2?style=flat-square" />
+    <img alt="Release" src="https://img.shields.io/badge/release-v1.1.0-4A90E2?style=flat-square" />
   </a>
 </p>
 
@@ -48,6 +48,13 @@ On the **LoCoMo** benchmark, our approach built upon EverMemOS achieved a reason
 <table>
 <tr>
 <td width="100%" style="border: none;">
+
+**[2025-11-27] 🎉 🎉 🎉 EverMemOS v1.1.0 Released!**
+
+- 🔧 **vLLM Support**: Support vLLM deployment for Embedding and Reranker models (currently tailored for Qwen3 series)
+- 📊 **Evaluation Resources**: Full results & code for LoCoMo, LongMemEval, PersonaMem released
+
+<br/>
 
 **[2025-11-02] 🎉 🎉 🎉 EverMemOS v1.0.0 Released!**
 

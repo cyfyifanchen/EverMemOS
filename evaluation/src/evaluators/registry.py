@@ -13,6 +13,7 @@ _EVALUATOR_REGISTRY: Dict[str, Type[BaseEvaluator]] = {}
 _EVALUATOR_MODULES = {
     "llm_judge": "evaluation.src.evaluators.llm_judge",
     "exact_match": "evaluation.src.evaluators.exact_match",
+    "hybrid": "evaluation.src.evaluators.hybrid",
     # Future evaluators:
     # "bert_score": "evaluation.src.evaluators.bert_score",
 }

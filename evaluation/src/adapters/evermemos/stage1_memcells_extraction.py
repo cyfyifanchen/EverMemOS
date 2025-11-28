@@ -99,11 +99,25 @@ def raw_data_load(locomo_data_path: str) -> Dict[str, List[RawData]]:
 
                 # Process each message in this session
                 for i, msg in enumerate(session_messages):
-                    # Generate timestamp for this message (session time + message offset)
-                    msg_timestamp = session_time + timedelta(
-                        seconds=i * 30
-                    )  # 30 seconds between messages
-                    iso_timestamp = to_iso_format(msg_timestamp)
+                    # Priority 1: Use message-level timestamp if available (e.g., evermembench)
+                    if 'time' in msg and msg['time']:
+                        try:
+                            # Parse message-level timestamp
+                            # Support formats: "2025-01-07 09:15:33" or "2025-01-07T09:15:33"
+                            time_str = msg['time'].strip()
+                            if 'T' in time_str:
+                                msg_datetime = datetime.strptime(time_str, "%Y-%m-%dT%H:%M:%S")
+                            else:
+                                msg_datetime = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
+                            iso_timestamp = to_iso_format(msg_datetime)
+                        except (ValueError, AttributeError):
+                            # Fallback to session-level calculation if parsing fails
+                            msg_timestamp = session_time + timedelta(seconds=i * 30)
+                            iso_timestamp = to_iso_format(msg_timestamp)
+                    else:
+                        # Priority 2: Generate timestamp from session time (e.g., locomo)
+                        msg_timestamp = session_time + timedelta(seconds=i * 30)
+                        iso_timestamp = to_iso_format(msg_timestamp)
 
                     # Generate unique speaker_id for this conversation
                     speaker_name = msg["speaker"]
@@ -233,12 +247,26 @@ async def memcell_extraction_from_conversation(
         progress.update(task_id, completed=total_messages)
 
     if history_raw_data_list:
+        # Determine timestamp: use last memcell's timestamp if available, otherwise use last message's timestamp
+        if memcell_list:
+            last_timestamp = memcell_list[-1].timestamp
+        else:
+            # Fallback: use the last raw data's timestamp if memcell_list is empty
+            # RawData.content["timestamp"] is ISO format string, guaranteed by raw_data_load
+            last_raw_data = history_raw_data_list[-1]
+            if isinstance(last_raw_data.content, dict) and "timestamp" in last_raw_data.content:
+                # Convert ISO format string to datetime
+                last_timestamp = from_iso_format(last_raw_data.content["timestamp"])
+            else:
+                # Defensive fallback (should not happen after raw_data_load fix)
+                last_timestamp = get_now_with_timezone()
+        
         memcell = MemCell(
             type=RawDataType.CONVERSATION,
             event_id=str(uuid.uuid4()),
             user_id_list=list(speakers),
             original_data=history_raw_data_list,
-            timestamp=(memcell_list[-1].timestamp),
+            timestamp=last_timestamp,
             summary="111",
         )
         episode_request = EpisodeMemoryExtractRequest(

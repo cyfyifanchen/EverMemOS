@@ -204,7 +204,20 @@ def _convert_locomo_conversation(conversation_data: dict, conv_id: str, max_cont
         
         # Convert each message
         for msg_idx, msg in enumerate(session_messages):
-            msg_timestamp = current_session_time + timedelta(seconds=msg_idx * time_interval)
+            # Try to parse message-level timestamp first (priority 1)
+            msg_timestamp = None
+            timestamp_source = None
+            
+            if 'time' in msg and msg['time']:
+                # Priority 1: Use message-level timestamp if available
+                msg_timestamp = _parse_message_timestamp(msg['time'])
+                if msg_timestamp:
+                    timestamp_source = "message_level"
+            
+            # Fallback to session-level timestamp calculation (priority 2)
+            if msg_timestamp is None:
+                msg_timestamp = current_session_time + timedelta(seconds=msg_idx * time_interval)
+                timestamp_source = "fake" if is_fake_timestamp else "session_level"
             
             # Handle image information
             content = msg['text']
@@ -228,7 +241,7 @@ def _convert_locomo_conversation(conversation_data: dict, conv_id: str, max_cont
                     "img_url": msg.get("img_url"),
                     "blip_caption": msg.get("blip_caption"),
                     "query": msg.get("query"),
-                    "is_fake_timestamp": is_fake_timestamp,  # Mark if timestamp is fake
+                    "timestamp_source": timestamp_source,  # Mark timestamp source
                 }
             )
             messages.append(message)
@@ -295,4 +308,46 @@ def _parse_locomo_timestamp(timestamp_str: str) -> Optional[datetime]:
         # If parse fails, return None and print warning
         print(f"⚠️  Warning: Failed to parse timestamp '{timestamp_str}', no timestamp will be set")
         return None
+
+
+def _parse_message_timestamp(time_str: str) -> Optional[datetime]:
+    """
+    Parse message-level timestamp.
+    
+    This function supports datasets where each message has its own timestamp field.
+    
+    Input formats:
+        - "2025-01-07 09:15:33" (standard format)
+        - "2025-01-07T09:15:33" (ISO format)
+        - "2025-01-07 09:15:33.123456" (with microseconds)
+        - "2025-01-07T09:15:33.123456" (ISO with microseconds)
+    
+    Args:
+        time_str: Message timestamp string
+    
+    Returns:
+        datetime object or None if parsing fails
+    """
+    if not time_str or not isinstance(time_str, str):
+        return None
+    
+    time_str = time_str.strip()
+    
+    # Try common formats in order of likelihood
+    formats = [
+        "%Y-%m-%d %H:%M:%S",         # "2025-01-07 09:15:33"
+        "%Y-%m-%dT%H:%M:%S",         # "2025-01-07T09:15:33"
+        "%Y-%m-%d %H:%M:%S.%f",      # "2025-01-07 09:15:33.123456"
+        "%Y-%m-%dT%H:%M:%S.%f",      # "2025-01-07T09:15:33.123456"
+    ]
+    
+    for fmt in formats:
+        try:
+            return datetime.strptime(time_str, fmt)
+        except ValueError:
+            continue
+    
+    # If all formats fail, print warning and return None
+    print(f"⚠️  Warning: Failed to parse message timestamp '{time_str}'")
+    return None
 

@@ -198,6 +198,7 @@ IMPORTANT: This is a multiple-choice question. You MUST analyze the context and 
                 category=qa.category,
                 conversation_id=search_result.conversation_id,
                 formatted_context=context,  # Save actual context used
+                metadata=qa.metadata,  # Pass metadata (contains all_options for multiple-choice)
             )
             
             # Save result
@@ -209,6 +210,7 @@ IMPORTANT: This is a multiple-choice question. You MUST analyze the context and 
                 "category": result.category,
                 "conversation_id": result.conversation_id,
                 "formatted_context": result.formatted_context,  # Save formatted_context
+                "metadata": result.metadata,  # Save metadata (contains all_options)
             }
             
             completed += 1
@@ -271,6 +273,7 @@ IMPORTANT: This is a multiple-choice question. You MUST analyze the context and 
                 conversation_id=result_dict.get("conversation_id", ""),
                 formatted_context=result_dict.get("formatted_context", ""),
                 search_results=result_dict.get("search_results", []),
+                metadata=result_dict.get("metadata", {}),  # Restore metadata
             ))
     
     return results

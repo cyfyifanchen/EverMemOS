@@ -552,7 +552,7 @@ class FetchMemoryServiceImpl(FetchMemoryServiceInterface):
                         memories = []
                 case MemoryType.FORESIGHT:
                     # 前瞻：每个用户只有一个前瞻文档
-                    foresight = await self._foresight_repo.get_by_user_id(user_id)
+                    foresight = await self._foresight_record_repo.get_by_user_id(user_id)
                     if foresight:
                         memories = [
                             await self._convert_foresight(foresight)
@@ -754,7 +754,7 @@ class FetchMemoryServiceImpl(FetchMemoryServiceInterface):
             match memory_type:
                 case MemoryType.FORESIGHT:
                     # 前瞻通过用户ID查询
-                    foresight = await self._foresight_repo.get_by_user_id(
+                    foresight = await self._foresight_record_repo.get_by_user_id(
                         memory_id
                     )
                     if foresight:

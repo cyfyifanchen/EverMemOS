@@ -17,6 +17,7 @@ from core.observation.logger import get_logger
 from common_utils.datetime_utils import get_now_with_timezone
 from core.di.decorators import repository
 
+
 logger = get_logger(__name__)
 
 # Milvus 检索配置（None 表示不启用半径过滤）

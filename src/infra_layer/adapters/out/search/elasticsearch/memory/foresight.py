@@ -3,6 +3,9 @@ from elasticsearch.dsl import field as e_field
 from core.tenants.tenantize.oxm.es.tenant_aware_async_document import (
     TenantAwareAliasDoc,
 )
+from core.tenants.tenantize.oxm.es.tenant_aware_async_document import (
+    TenantAwareAliasDoc,
+)
 from core.oxm.es.analyzer import (
     completion_analyzer,
     lower_keyword_analyzer,

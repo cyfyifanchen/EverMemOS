@@ -226,8 +226,6 @@ def from_iso_format(
     """
     if strict:
         # Strict mode: raise exception on failure
-        if isinstance(create_time, str) and not create_time:
-            raise ValueError(f"Invalid time string: {create_time}")
         return _parse_datetime_core(create_time, target_timezone)
     else:
         # Lenient mode: return current time on failure

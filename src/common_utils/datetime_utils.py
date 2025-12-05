@@ -29,7 +29,6 @@ def to_timezone(dt: datetime.datetime, tz: ZoneInfo = None) -> datetime.datetime
 
 def to_iso_format(
     time_value: datetime.datetime | int | float | str | None,
-    allow_none: bool = True,
 ) -> str | None:
     """Convert time value to ISO format string with timezone.
     
@@ -37,43 +36,37 @@ def to_iso_format(
     
     Args:
         time_value: Time value to convert.
-        allow_none: If True, None returns None; if False, raises ValueError.
         
     Returns:
         ISO format string (e.g. 2025-09-16T20:20:06+08:00), or None.
         
     Raises:
         TypeError: If time_value is not a supported type.
-        ValueError: If allow_none=False and time_value is None, or invalid timestamp.
+        ValueError: If timestamp is invalid.
     """
-    # Validate type first
-    supported_types = (datetime.datetime, int, float, str, type(None))
-    if not isinstance(time_value, supported_types):
-        raise TypeError(
-            f"Unsupported type: {type(time_value).__name__}. "
-            f"Expected: datetime, int, float, str, or None."
-        )
 
     if time_value is None:
-        if allow_none:
+        return None
+
+    value_type = type(time_value)
+    
+    if value_type is str:
+        if not time_value:
             return None
-        raise ValueError("time_value cannot be None when allow_none=False")
-
-    # String: return as-is (assume already ISO format)
-    if isinstance(time_value, str):
-        return time_value if time_value else None
-
-    # Timestamp: convert to datetime
-    if isinstance(time_value, (int, float)):
+        # Validate and parse ISO format string
+        time_str = time_value.replace("Z", "+00:00") if time_value.endswith("Z") else time_value
+        dt = datetime.datetime.fromisoformat(time_str)
+    elif value_type in (int, float):
         if time_value <= 0:
             raise ValueError(f"Invalid timestamp: {time_value}. Must be positive.")
-        try:
-            dt = from_timestamp(time_value)
-        except (ValueError, OSError) as e:
-            raise ValueError(f"Failed to convert timestamp {time_value}: {e}") from e
-    else:
-        # datetime.datetime
+        dt = from_timestamp(time_value)
+    elif value_type is datetime.datetime:
         dt = time_value
+    else:
+        raise TypeError(
+            f"Unsupported type: {value_type.__name__}. "
+            f"Expected: datetime, int, float, str, or None."
+        )
 
     # Ensure timezone and convert to local
     if dt.tzinfo is None:

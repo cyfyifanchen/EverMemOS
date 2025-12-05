@@ -64,7 +64,6 @@ class EventLogExtractor:
         """
         self.llm_provider = llm_provider
         
-        # 使用 PromptManager 获取提示词（根据 MEMORY_LANGUAGE 环境变量自动选择）
         self.event_log_prompt = get_prompt_by("EVENT_LOG_PROMPT")
 
     def _parse_timestamp(self, timestamp) -> datetime:

@@ -74,7 +74,6 @@ class ConvMemCellExtractor(MemCellExtractor):
         super().__init__(RawDataType.CONVERSATION, llm_provider)
         self.llm_provider = llm_provider
         
-        # 使用 PromptManager 获取提示词（根据 MEMORY_LANGUAGE 环境变量自动选择）
         self.conv_boundary_detection_prompt = get_prompt_by("CONV_BOUNDARY_DETECTION_PROMPT")
 
     def shutdown(self) -> None:

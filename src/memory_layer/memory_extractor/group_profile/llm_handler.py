@@ -132,7 +132,6 @@ class GroupProfileLLMHandler:
 
         Only passes topics-related info to LLM, excluding evidences (but keeping confidence).
         """
-        # 通过 PromptManager 获取提示词（根据 MEMORY_LANGUAGE 环境变量自动选择）
         from memory_layer.prompts import get_prompt_by
         CONTENT_ANALYSIS_PROMPT = get_prompt_by("CONTENT_ANALYSIS_PROMPT")
 
@@ -188,7 +187,6 @@ class GroupProfileLLMHandler:
 
         Only passes roles info to LLM, excluding evidences (but keeping confidence).
         """
-        # 通过 PromptManager 获取提示词（根据 MEMORY_LANGUAGE 环境变量自动选择）
         from memory_layer.prompts import get_prompt_by
         BEHAVIOR_ANALYSIS_PROMPT = get_prompt_by("BEHAVIOR_ANALYSIS_PROMPT")
 

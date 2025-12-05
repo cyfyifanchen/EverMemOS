@@ -1,64 +1,69 @@
 # Prompts for LLM-based conversation processing
 CONV_BOUNDARY_DETECTION_PROMPT = """
-### Core Task
-As a conversation analysis expert, you need to determine if the newly added message is a natural ending of an existing conversation "episode". The goal is to segment continuous conversation flow into meaningful, independently memorable segments (MemCell). Your core principle is **"Default to merge, split cautiously"**.
+You are an episodic memory boundary detection expert. You need to determine if the newly added dialogue should end the current episode and start a new one.
 
-### Conversation Context
-**Existing conversation history:**
-```
+Current conversation history:
 {conversation_history}
-```
 
-**Time gap from previous message:**
-`{time_gap_info}`
+Time gap information:
+{time_gap_info}
 
-**Newly added messages:**
-```
+Newly added messages:
 {new_messages}
-```
 
-### Decision Variables Explained
-You need to output three key decision variables: `should_end`, `should_wait`, and `topic_summary`.
+Please carefully analyze the following aspects to determine if a new episode should begin:
 
-1.  **`should_end` (End current episode):**
-    -   **When to set `true`?** Only when the new message clearly opens a new topic unrelated to previous history. A message that summarizes or concludes the current topic (e.g., "Migration complete") should be included in the current episode, not start a new one.
-    -   **Trigger scenarios:**
-        -   **Cross-day mandatory split:** As long as the new message and the previous message are on different dates (e.g., from "yesterday" to "today"), must split. This is the highest priority rule.
-        -   **Topic switch:** Conversation suddenly shifts from "discussing technical details of Project A" to "where to go this weekend".
-        -   **Task completion and new chapter:** A closing message for a task (e.g., "Repository migration done") belongs to that task's episode. Only split at the **next** message when it opens a completely unrelated new topic.
-        -   **Long interruption followed by new topic:** Time gap exceeds 4 hours, and new message content has no obvious connection to historical conversation.
+1. **Substantive Topic Change** (Highest Priority):
+   - Do the new messages introduce a completely different substantive topic with meaningful content?
+   - Is there a shift from one specific event/experience to another distinct event/experience?
+   - Has the conversation moved from one meaningful question to an unrelated new question?
 
-2.  **`should_wait` (Wait for more information):**
-    -   **When to set `true`?** When the new message has **insufficient information** to determine if it continues the current topic. This is a **safe option** to avoid rashly splitting or merging when context is insufficient.
-    -   **This is the default behavior, must be `true` in these situations:**
-        -   **Non-text messages:** New message is only `[Image]`, `[Video]`, `[File]` placeholders without any text to judge intent.
-        -   **Short responses without clear intent:** New message is extremely brief like "OK", "Got it", "Received", "lol", "😂".
-        -   **System or non-conversation messages:** New message is system notification (invitations, joins, leaves), transfer tips, etc. **These messages don't provide enough information to judge episode boundaries, must wait for subsequent human messages to decide.**
-        -   **Uncertain intermediate state:** Time gap between 30 minutes and 4 hours, and new message content is ambiguous, neither clearly continuing nor clearly starting new.
+2. **Intent and Purpose Transition**:
+   - Has the fundamental purpose of the conversation changed significantly?
+   - Has the core question or issue of the current topic been fully resolved and a new substantial topic begun?
 
-3.  **`topic_summary` (Episode topic summary):**
-    -   **When to generate?** Only when `should_end` is set to `true`.
-    -   **Content requirements:** Summarize the core content of **the episode about to end** in one precise, objective sentence. For example: "Finalized the technical solution for Project A" or "Discussed and confirmed weekend team activity arrangements".
+3. **Meaningful Content Assessment**:
+   - **IMPORTANT**: Ignore pure greetings, small talk, transition phrases, and social pleasantries
+   - Focus only on content that would be memorable and worth recalling later
+   - Consider: Would a person remember this as part of the main conversation topic or as a separate discussion?
 
-### Decision Guidelines
-- **Content over form:** Prioritize ensuring each episode contains complete, valuable core information. Don't be misled by simple greetings ("Hello") or closings ("Goodbye") - they should be included in the main episode they serve.
-- **Merge is the default:** If uncertain, lean towards not splitting (`should_end: false`). Only split when clear splitting signals are present.
-- **Focus on causal and process continuity:** If the new message is a direct goal or result of preceding actions (e.g., creating a group, adding members), followed by (first project instruction in the group), they should be merged into one complete episode. Don't break in the middle of continuous processes.
-- **`should_end` and `should_wait` are mutually exclusive:** If `should_end` is `true`, `should_wait` must be `false`. If `should_wait` is `true`, `should_end` must be `false`.
-- **Consider context continuity:** Treat continuous, short-time "back-and-forth" conversations serving the same small goal as a whole.
-- **System message context relevance:** Don't treat system messages (e.g., "[User X] joined the group") as topic switch signals by default. Their meaning is determined by the next human message. For example, if the next message is "Welcome! We were just discussing...", should merge; if the next message opens a completely new topic, consider splitting.
+4. **Structural and Temporal Signals**:
+   - Are there explicit topic transition phrases introducing substantial new content?
+   - Are there clear concluding statements followed by genuinely new topics?
+   - Is there a significant time gap between messages?
 
-### Output Format
-Please return your analysis strictly in the following JSON format:
-```json
+5. **Content Relevance and Independence**:
+   - How related is the new substantive content to the previous meaningful discussion?
+   - Does it involve completely different events, experiences, or substantial topics?
+
+**Special Rules for Common Patterns**:
+- **Greetings + Topic**: "Hey!" followed by actual content should be ONE episode
+- **Transition Phrases**: "By the way", "Oh, also", "Speaking of which" usually continue the same episode unless introducing major topic shifts
+- **Social Closures and Farewells**: "Thanks!", "Take care!", "Talk to you soon!", "I'm off to go...", "See you later!" should continue the current episode as natural conversation endings
+- **Supportive Responses**: Brief encouragement or acknowledgment should usually continue the current episode
+
+Decision Principles:
+- **Prioritize meaningful content**: Each episode should contain substantive, memorable content
+- **Ignore social formalities**: Don't split on greetings, pleasantries, brief transitions, or conversation closures
+- **Treat closures as episode endings**: Messages that announce departure ("I'm off to go...", "Talk to you soon!") or provide closure ("Thanks!", "Take care!") should stay with the current episode as natural endings
+- **Consider time gaps**: Long time gaps (hours or days) strongly suggest new episodes, while short gaps (minutes) usually indicate continuing conversation
+- **Episodic memory focus**: Think about what a person would naturally group together when recalling this conversation
+- **Reasonable episode length**: Aim for episodes with 3-20 meaningful exchanges
+- **When in doubt, consider context**: If unsure, keep related content together rather than over-splitting
+
+Please return your judgment in JSON format:
 {{
-    "reasoning": "One sentence explaining why you made the should_end and should_wait decisions.",
-    "should_end": boolean,
-    "should_wait": boolean,
-    "confidence": float,
-    "topic_summary": "Only fill in when should_end is true. Summarize the topic of the ended episode, otherwise empty string."
+    "reasoning": "One sentence summary of your reasoning process",
+    "should_end": true/false,
+    "confidence": 0.0-1.0,
+    "topic_summary": "If should_end = true, summarize the core meaningful topic of the current episode, otherwise leave it blank"
 }}
-```"""
+
+Note:
+- If conversation history is empty, this is the first message, return false
+- Focus on episodic memory principles: what would people naturally remember as distinct experiences?
+- Each episode should contain substantive content that stands alone as a meaningful memory unit
+"""
 
 CONV_SUMMARY_PROMPT = """
 You are an episodic memory summary expert. You need to summarize the following conversation.

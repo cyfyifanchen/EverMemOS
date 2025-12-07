@@ -30,6 +30,7 @@ class TenantConfig:
         """初始化租户配置"""
         self._non_tenant_mode: Optional[bool] = None
         self._single_tenant_id: Optional[str] = None
+        self._app_ready: bool = False  # 应用启动完成状态，用于严格租户检查
 
     @property
     def non_tenant_mode(self) -> bool:
@@ -82,16 +83,59 @@ class TenantConfig:
 
         return self._single_tenant_id
 
+    @property
+    def app_ready(self) -> bool:
+        """
+        获取应用启动完成状态
+
+        此状态用于严格租户检查模式：
+        - False: 应用启动中，允许无租户上下文的操作（使用 fallback）
+        - True: 应用已就绪，租户模式下必须有租户上下文，否则直接报错
+
+        这是一个兜底机制，用于在生产环境中捕获遗漏租户上下文的代码错误。
+
+        Returns:
+            bool: True 表示应用已就绪，False 表示应用启动中
+        """
+        return self._app_ready
+
+    def mark_app_ready(self) -> None:
+        """
+        标记应用启动完成
+
+        此方法应在所有 lifespan providers 启动完成后调用。
+        调用后，租户模式下如果缺少租户上下文将直接报错，而不是走 fallback 逻辑。
+
+        注意：此方法只能设置一次，重复调用会记录警告日志。
+        """
+        if self._app_ready:
+            logger.warning("⚠️ 应用已处于就绪状态，重复调用 mark_app_ready()")
+            return
+
+        self._app_ready = True
+        logger.info("✅ 应用启动完成，租户严格检查模式已开启")
+
     def reload(self):
         """
         重新加载配置
 
         清除缓存的配置项，强制从环境变量重新读取。
         通常在测试或配置变更后使用。
+
+        注意：reload 不会重置 app_ready 状态，因为它反映的是运行时状态而非配置。
         """
         self._non_tenant_mode = None
         self._single_tenant_id = None
         logger.info("🔄 租户配置已重新加载")
+
+    def reset_app_ready(self) -> None:
+        """
+        重置应用就绪状态（仅用于测试）
+
+        警告：此方法仅应在测试场景中使用，生产环境中不应调用。
+        """
+        self._app_ready = False
+        logger.warning("⚠️ 应用就绪状态已重置（仅用于测试）")
 
 
 @lru_cache(maxsize=1)

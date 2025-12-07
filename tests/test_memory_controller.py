@@ -22,6 +22,9 @@ Memory Controller API 测试脚本
     python tests/test_memory_controller.py --except-test-method memorize
     python tests/test_memory_controller.py --except-test-method memorize,fetch_episodic
     python tests/test_memory_controller.py --except-test-method save_meta,patch_meta
+    
+    # 关闭同步模式（使用后台模式）
+    python tests/test_memory_controller.py --sync-mode false
 """
 
 import argparse
@@ -51,6 +54,7 @@ class MemoryControllerTester:
         organization_id: str = None,
         space_id: str = None,
         timeout: int = 180,
+        sync_mode: bool = True,
     ):
         """
         初始化测试器
@@ -62,6 +66,7 @@ class MemoryControllerTester:
             organization_id: 组织ID（默认: test_memory_api_organization）
             space_id: 空间ID（默认: test_memory_api_space）
             timeout: 请求超时时间(秒)，默认180秒(3分钟)
+            sync_mode: 是否启用同步模式（默认: True，关闭后台模式以保证时序测试效果）
         """
         self.base_url = base_url
         self.api_prefix = "/api/v1/memories"
@@ -70,6 +75,7 @@ class MemoryControllerTester:
         self.organization_id = organization_id or self.DEFAULT_ORGANIZATION_ID
         self.space_id = space_id or self.DEFAULT_SPACE_ID
         self.timeout = timeout
+        self.sync_mode = sync_mode
 
     def get_tenant_headers(self) -> dict:
         """
@@ -129,6 +135,17 @@ class MemoryControllerTester:
         print(f"  {title}")
         print("=" * 80)
 
+    def _get_sync_mode_params(self) -> dict:
+        """
+        获取同步模式的查询参数
+
+        Returns:
+            dict: 包含 sync_mode 参数的字典（如果启用了同步模式）
+        """
+        if self.sync_mode:
+            return {"sync_mode": "true"}
+        return {}
+
     def call_post_api(self, endpoint: str, data: dict):
         """
         调用 POST API 并打印结果
@@ -147,13 +164,17 @@ class MemoryControllerTester:
 
         url = f"{self.base_url}{self.api_prefix}{endpoint}"
         headers = self.get_tenant_headers()
+        params = self._get_sync_mode_params()
+
         print(f"\n📍 URL: POST {url}")
+        if params:
+            print(f"📤 查询参数: {params}")
         print("📤 请求数据:")
         print(json.dumps(data, indent=2, ensure_ascii=False))
 
         try:
             response = requests.post(
-                url, json=data, headers=headers, timeout=self.timeout
+                url, json=data, headers=headers, params=params, timeout=self.timeout
             )
             print(f"\n📥 响应状态码: {response.status_code}")
             print("📥 响应数据:")
@@ -177,14 +198,20 @@ class MemoryControllerTester:
         """
         url = f"{self.base_url}{self.api_prefix}{endpoint}"
         headers = self.get_tenant_headers()
-        print(f"\n📍 URL: GET {url}")
+
+        # 合并同步模式参数
+        merged_params = self._get_sync_mode_params()
         if params:
+            merged_params.update(params)
+
+        print(f"\n📍 URL: GET {url}")
+        if merged_params:
             print("📤 查询参数:")
-            print(json.dumps(params, indent=2, ensure_ascii=False))
+            print(json.dumps(merged_params, indent=2, ensure_ascii=False))
 
         try:
             response = requests.get(
-                url, params=params, headers=headers, timeout=self.timeout
+                url, params=merged_params, headers=headers, timeout=self.timeout
             )
             print(f"\n📥 响应状态码: {response.status_code}")
             print("📥 响应数据:")
@@ -210,14 +237,23 @@ class MemoryControllerTester:
         """
         url = f"{self.base_url}{self.api_prefix}{endpoint}"
         headers = self.get_tenant_headers()
+        params = self._get_sync_mode_params()
+
         print(f"\n📍 URL: GET {url} (with body)")
+        if params:
+            print(f"📤 查询参数: {params}")
         print("📤 请求数据:")
         print(json.dumps(data, indent=2, ensure_ascii=False))
 
         try:
             # GET 请求带 body（requests 库支持，但不常用）
             response = requests.request(
-                "GET", url, json=data, headers=headers, timeout=self.timeout
+                "GET",
+                url,
+                json=data,
+                headers=headers,
+                params=params,
+                timeout=self.timeout,
             )
             print(f"\n📥 响应状态码: {response.status_code}")
             print("📥 响应数据:")
@@ -241,13 +277,17 @@ class MemoryControllerTester:
         """
         url = f"{self.base_url}{self.api_prefix}{endpoint}"
         headers = self.get_tenant_headers()
+        params = self._get_sync_mode_params()
+
         print(f"\n📍 URL: PATCH {url}")
+        if params:
+            print(f"📤 查询参数: {params}")
         print("📤 请求数据:")
         print(json.dumps(data, indent=2, ensure_ascii=False))
 
         try:
             response = requests.patch(
-                url, json=data, headers=headers, timeout=self.timeout
+                url, json=data, headers=headers, params=params, timeout=self.timeout
             )
             print(f"\n📥 响应状态码: {response.status_code}")
             print("📥 响应数据:")
@@ -879,6 +919,7 @@ class MemoryControllerTester:
         print(f"  测试群组: {self.group_id}")
         print(f"  组织ID: {self.organization_id}")
         print(f"  空间ID: {self.space_id}")
+        print(f"  同步模式: {self.sync_mode}")
         print(f"  测试方法: {test_method}")
         if except_test_methods:
             print(f"  排除方法: {except_test_methods}")
@@ -988,8 +1029,11 @@ def parse_args():
   python tests/test_memory_controller.py --except-test-method memorize,fetch_episodic
   python tests/test_memory_controller.py --except-test-method save_meta,patch_meta
 
+  # 关闭同步模式（使用后台模式）
+  python tests/test_memory_controller.py --sync-mode false
+
   # 指定所有参数
-  python tests/test_memory_controller.py --base-url http://dev-server:1995 --user-id test_user --group-id test_group --organization-id my_org --space-id my_space --timeout 60
+  python tests/test_memory_controller.py --base-url http://dev-server:1995 --user-id test_user --group-id test_group --organization-id my_org --space-id my_space --timeout 60 --sync-mode true
         """,
     )
 
@@ -1043,6 +1087,13 @@ def parse_args():
         help="指定要排除的测试方法（用逗号分隔），运行除了这些方法之外的所有测试。例如: --except-test-method memorize,fetch_episodic",
     )
 
+    parser.add_argument(
+        "--sync-mode",
+        type=lambda x: x.lower() in ("true", "1", "yes"),
+        default=True,
+        help="是否启用同步模式 (默认: true)。设置为 true 关闭后台模式，保证时序测试效果；设置为 false 使用后台模式",
+    )
+
     return parser.parse_args()
 
 
@@ -1091,6 +1142,7 @@ def main():
         organization_id=organization_id,
         space_id=space_id,
         timeout=args.timeout,
+        sync_mode=args.sync_mode,
     )
 
     # 运行测试（根据参数决定运行全部还是单个，或者排除某些测试）

@@ -163,7 +163,7 @@ async def _trigger_clustering(
     scene: Optional[str] = None,
     config: MemorizeConfig = DEFAULT_MEMORIZE_CONFIG,
 ) -> None:
-    """异步触发 MemCell 聚类（后台任务，不阻塞主流程）
+    """触发 MemCell 聚类
 
     Args:
         group_id: 群组ID
@@ -490,7 +490,7 @@ async def process_memory_extraction(
 ):
     """
     记忆提取主流程
-    
+
     从 MemCell 开始，提取 Episode、Foresight、EventLog 等所有记忆类型。
     """
     # 1. 初始化状态
@@ -613,7 +613,7 @@ async def _update_memcell_and_cluster(state: ExtractionState):
     except Exception as e:
         logger.error(f"[MemCell处理] ❌ 更新 MemCell 失败: {e}")
 
-    # 异步触发聚类
+    # 触发聚类
     try:
         memcell_for_clustering = MemCell(
             event_id=state.memcell.event_id,
@@ -627,12 +627,10 @@ async def _update_memcell_and_cluster(state: ExtractionState):
             type=state.memcell.type,
             episode=state.group_episode.episode,
         )
-        asyncio.create_task(
-            _trigger_clustering(
-                state.request.group_id, memcell_for_clustering, state.scene
-            )
+        await _trigger_clustering(
+            state.request.group_id, memcell_for_clustering, state.scene
         )
-        logger.info(f"[MemCell处理] 异步触发聚类 (scene={state.scene})")
+        logger.info(f"[MemCell处理] ✅ 聚类完成 (scene={state.scene})")
     except Exception as e:
         logger.error(f"[MemCell处理] ❌ 触发聚类失败: {e}")
 
@@ -652,10 +650,14 @@ async def _process_memories(state: ExtractionState, memory_manager: MemoryManage
         await _save_episodes(state, episodes_to_save, episodic_source)
 
     if episodic_source:
-        foresight_memories, event_logs = await _extract_foresight_and_eventlog(state, memory_manager, episodic_source)
+        foresight_memories, event_logs = await _extract_foresight_and_eventlog(
+            state, memory_manager, episodic_source
+        )
         await _save_foresight_and_eventlog(state, foresight_memories, event_logs)
-    
-    await update_status_after_memcell(state.request, state.memcell, state.current_time, state.request.raw_data_type)
+
+    await update_status_after_memcell(
+        state.request, state.memcell, state.current_time, state.request.raw_data_type
+    )
 
 
 def _clone_episodes_for_users(state: ExtractionState) -> List[Memory]:
@@ -698,13 +700,13 @@ async def _save_episodes(
 
 
 async def _extract_foresight_and_eventlog(
-    state: ExtractionState,
-    memory_manager: MemoryManager,
-    episodic_source: List[Memory]
+    state: ExtractionState, memory_manager: MemoryManager, episodic_source: List[Memory]
 ) -> Tuple[List[ForesightItem], List[EventLog]]:
     """提取 Foresight 和 EventLog"""
-    logger.info(f"[MemCell处理] 提取 Foresight/EventLog，共 {len(episodic_source)} 个 Episode")
-    
+    logger.info(
+        f"[MemCell处理] 提取 Foresight/EventLog，共 {len(episodic_source)} 个 Episode"
+    )
+
     tasks = []
     metadata = []
 
@@ -713,18 +715,18 @@ async def _extract_foresight_and_eventlog(
             continue
         tasks.append(
             memory_manager.extract_memory(
-                memcell=state.memcell, 
+                memcell=state.memcell,
                 memory_type=MemoryType.FORESIGHT,
-                user_id=ep.user_id, 
+                user_id=ep.user_id,
                 episode_memory=ep,
             )
         )
         metadata.append({'type': MemoryType.FORESIGHT, 'ep': ep})
         tasks.append(
             memory_manager.extract_memory(
-                memcell=state.memcell, 
+                memcell=state.memcell,
                 memory_type=MemoryType.EVENT_LOG,
-                user_id=ep.user_id, 
+                user_id=ep.user_id,
                 episode_memory=ep,
             )
         )
@@ -734,7 +736,7 @@ async def _extract_foresight_and_eventlog(
         return [], []
 
     results = await asyncio.gather(*tasks, return_exceptions=True)
-    
+
     foresight_memories = []
     event_logs = []
 
@@ -758,22 +760,24 @@ async def _extract_foresight_and_eventlog(
             result.group_name = ep.group_name
             result.user_name = ep.user_name
             event_logs.append(result)
-    
+
     return foresight_memories, event_logs
 
 
 async def _save_foresight_and_eventlog(
     state: ExtractionState,
     foresight_memories: List[ForesightItem],
-    event_logs: List[EventLog]
+    event_logs: List[EventLog],
 ):
     """保存 Foresight 和 EventLog"""
     foresight_docs = []
     for mem in foresight_memories:
         parent_doc = state.parent_docs_map.get(str(mem.parent_event_id))
         if parent_doc:
-            foresight_docs.append(_convert_foresight_to_doc(mem, parent_doc, state.current_time))
-    
+            foresight_docs.append(
+                _convert_foresight_to_doc(mem, parent_doc, state.current_time)
+            )
+
     event_log_docs = []
     for el in event_logs:
         parent_doc = state.parent_docs_map.get(str(el.parent_event_id))
@@ -784,20 +788,34 @@ async def _save_foresight_and_eventlog(
 
     # assistant 场景：复制给每个用户
     if state.is_assistant_scene:
-        user_ids = [u for u in state.participants if "robot" not in u.lower() and "assistant" not in u.lower()]
-        foresight_docs.extend([
-            doc.model_copy(update={"user_id": uid, "user_name": uid})
-            for doc in foresight_docs for uid in user_ids
-        ])
-        event_log_docs.extend([
-            doc.model_copy(update={"user_id": uid, "user_name": uid})
-            for doc in event_log_docs for uid in user_ids
-        ])
+        user_ids = [
+            u
+            for u in state.participants
+            if "robot" not in u.lower() and "assistant" not in u.lower()
+        ]
+        foresight_docs.extend(
+            [
+                doc.model_copy(update={"user_id": uid, "user_name": uid})
+                for doc in foresight_docs
+                for uid in user_ids
+            ]
+        )
+        event_log_docs.extend(
+            [
+                doc.model_copy(update={"user_id": uid, "user_name": uid})
+                for doc in event_log_docs
+                for uid in user_ids
+            ]
+        )
         logger.info(f"[MemCell处理] 复制 Foresight/EventLog 给 {len(user_ids)} 个用户")
-    
+
     payloads = []
-    payloads.extend(MemoryDocPayload(MemoryType.FORESIGHT, doc) for doc in foresight_docs)
-    payloads.extend(MemoryDocPayload(MemoryType.EVENT_LOG, doc) for doc in event_log_docs)
+    payloads.extend(
+        MemoryDocPayload(MemoryType.FORESIGHT, doc) for doc in foresight_docs
+    )
+    payloads.extend(
+        MemoryDocPayload(MemoryType.EVENT_LOG, doc) for doc in event_log_docs
+    )
     if payloads:
         await save_memory_docs(payloads)
 
@@ -1236,18 +1254,19 @@ async def memorize(request: MemorizeRequest) -> Optional[str]:
     memcell = await _save_memcell_to_database(memcell, current_time)
     logger.info(f"[mem_memorize] 成功保存 MemCell: {memcell.event_id}")
 
-    # 提交到 Worker 队列，异步处理
-    from biz_layer.memorize_worker_service import MemorizeWorkerService
+    # 获取当前 request_id
+    from core.context.context import get_current_app_info
 
+    app_info = get_current_app_info()
+    request_id = app_info.get('request_id')
+
+    # 直接执行记忆提取（阻塞/异步逻辑由 middleware 层面的 request_process 控制）
     try:
-        worker = get_bean_by_type(MemorizeWorkerService)
-        request_id = await worker.submit_memcell(memcell, request, current_time)
-        logger.info(
-            f"[mem_memorize] ✅ MemCell 已提交到 Worker 队列, request_id={request_id}"
-        )
+        await process_memory_extraction(memcell, request, memory_manager, current_time)
+        logger.info(f"[mem_memorize] ✅ 记忆提取完成, request_id={request_id}")
         return request_id
     except Exception as e:
-        logger.error(f"[mem_memorize] ❌ 提交失败: {e}")
+        logger.error(f"[mem_memorize] ❌ 记忆提取失败: {e}")
         traceback.print_exc()
         return None
 

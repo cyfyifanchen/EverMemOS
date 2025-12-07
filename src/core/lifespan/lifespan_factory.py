@@ -4,7 +4,8 @@
 提供动态获取和创建生命周期的工厂方法
 """
 
-from typing import List, Optional
+from typing import List
+from abc import abstractmethod, ABC
 from core.di.utils import get_beans_by_type, get_bean
 from core.di.decorators import component
 from .lifespan_interface import LifespanProvider
@@ -13,6 +14,34 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 logger = get_logger(__name__)
+
+
+class AppReadyListener(ABC):
+    """
+    应用就绪监听器协议
+
+    实现此协议的组件会在所有 lifespan providers 启动完成后被调用。
+    这是一个解耦的钩子机制，通过 DI 容器自动发现和调用所有监听器。
+
+    使用方式：
+        1. 创建一个类实现 on_app_ready() 方法
+        2. 使用 @component 装饰器注册到 DI 容器
+        3. lifespan 会自动发现并调用
+
+    Example:
+        >>> from core.di.decorators import component
+        >>> from core.lifespan.lifespan_factory import AppReadyListener
+        >>>
+        >>> @component(name="my_app_ready_listener")
+        >>> class MyAppReadyListener(AppReadyListener):
+        ...     def on_app_ready(self) -> None:
+        ...         print("应用已就绪，执行我的逻辑")
+    """
+
+    @abstractmethod
+    def on_app_ready(self) -> None:
+        """应用就绪时调用"""
+        ...
 
 
 def create_lifespan_with_providers(providers: list[LifespanProvider]):
@@ -46,6 +75,16 @@ def create_lifespan_with_providers(providers: list[LifespanProvider]):
 
             # 将数据存储到app.state，方便获取
             app.state.lifespan_data = lifespan_data
+
+            # 通过 DI 获取所有应用就绪监听器并调用（解耦设计）
+            listeners = get_beans_by_type(AppReadyListener)
+            for listener in listeners:
+                try:
+                    listener.on_app_ready()
+                except Exception as e:
+                    logger.error(
+                        "应用就绪监听器执行失败: %s - %s", type(listener).__name__, e
+                    )
 
             yield  # 应用运行期间
 

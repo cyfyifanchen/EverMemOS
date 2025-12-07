@@ -106,6 +106,15 @@ def get_or_compute_tenant_cache(
         # 步骤 2: 获取租户信息
         tenant_info = get_current_tenant()
         if not tenant_info:
+            # 严格检查模式：应用启动完成后，租户模式下必须有租户上下文
+            if config.app_ready:
+                raise RuntimeError(
+                    f"🚨 严格租户检查失败：应用已就绪但缺少租户上下文！"
+                    f"这通常表示代码存在严重问题，请检查调用链路。"
+                    f"[cache_key={patch_key.value}, cache_description={cache_description}]"
+                )
+
+            # 应用启动中，允许使用 fallback
             fallback_value = _resolve_fallback(fallback, cache_description)
             if fallback_value is None:
                 raise RuntimeError(

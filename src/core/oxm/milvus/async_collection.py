@@ -1,22 +1,28 @@
 import asyncio
+import contextvars
 from functools import wraps
 from typing import Any, Callable, Optional, TypeVar, Union, List, Dict
 
 from pymilvus import Collection, SearchResult
 from pymilvus.orm.mutation import MutationResult
-from pymilvus.client.abstract import BaseRanker
 from pymilvus.client.types import CompactionPlans, CompactionState, Replica
 
 T = TypeVar('T')
 
 
 def async_wrap(func: Callable[..., T]) -> Callable[..., asyncio.Future[T]]:
-    """将同步方法包装成异步方法的装饰器"""
+    """将同步方法包装成异步方法的装饰器
+
+    注意：使用 contextvars.copy_context() 确保线程池中的线程能访问到 contextvar
+    （如租户上下文等），因为 run_in_executor 默认不会传递 asyncio Context。
+    """
 
     @wraps(func)
     async def run(*args, **kwargs) -> T:
         loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(None, lambda: func(*args, **kwargs))
+        # 复制当前 context，确保线程池中能访问 contextvar
+        ctx = contextvars.copy_context()
+        return await loop.run_in_executor(None, lambda: ctx.run(func, *args, **kwargs))
 
     return run
 

@@ -34,6 +34,7 @@ from infra_layer.adapters.out.persistence.repository.conversation_meta_raw_repos
     ConversationMetaRawRepository,
 )
 from component.redis_provider import RedisProvider
+from component.timeout_background import timeout_to_background
 
 logger = logging.getLogger(__name__)
 
@@ -177,6 +178,7 @@ class MemoryController(BaseController):
             },
         },
     )
+    @timeout_to_background()
     async def memorize_single_message(
         self, fastapi_request: FastAPIRequest
     ) -> Dict[str, Any]:
@@ -333,6 +335,7 @@ class MemoryController(BaseController):
             },
         },
     )
+    @timeout_to_background()
     async def fetch_memories(self, fastapi_request: FastAPIRequest) -> Dict[str, Any]:
         """
         获取用户记忆数据
@@ -492,6 +495,7 @@ class MemoryController(BaseController):
             },
         },
     )
+    @timeout_to_background()
     async def search_memories(self, fastapi_request: FastAPIRequest) -> Dict[str, Any]:
         """
         检索相关记忆数据
@@ -563,6 +567,7 @@ class MemoryController(BaseController):
         - 如果只需要更新部分字段，请使用 PATCH /conversation-meta 接口
         """,
     )
+    @timeout_to_background()
     async def save_conversation_meta(
         self, fastapi_request: FastAPIRequest
     ) -> Dict[str, Any]:
@@ -803,6 +808,7 @@ class MemoryController(BaseController):
             },
         },
     )
+    @timeout_to_background()
     async def patch_conversation_meta(
         self, fastapi_request: FastAPIRequest
     ) -> Dict[str, Any]:

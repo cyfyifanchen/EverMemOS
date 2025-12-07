@@ -1,7 +1,10 @@
 from contextvars import ContextVar, Token
-from typing import Optional, Dict, Any, TypedDict
+from typing import Optional, Dict, Any, TypedDict, TYPE_CHECKING
 from sqlmodel.ext.asyncio.session import AsyncSession
 import logging
+
+if TYPE_CHECKING:
+    from fastapi import Request
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +22,11 @@ user_info_context: ContextVar[Optional[Dict[str, Any]]] = ContextVar(
 # 🔧 应用信息上下文变量，用于存储 task_id 等应用级别的上下文信息
 app_info_context: ContextVar[Optional[Dict[str, Any]]] = ContextVar(
     "app_info_context", default=None
+)
+
+# 🔧 请求上下文变量，用于存储当前请求对象
+request_context: ContextVar[Optional["Request"]] = ContextVar(
+    "request_context", default=None
 )
 
 
@@ -131,3 +139,40 @@ def clear_current_app_info(token: Optional[Token] = None) -> None:
         app_info_context.reset(token)
     else:
         app_info_context.set(None)
+
+
+# 🔧 请求上下文相关函数
+def get_current_request() -> Optional["Request"]:
+    """
+    获取当前请求对象
+
+    Returns:
+        Optional[Request]: 当前请求对象，如果未设置则返回 None
+    """
+    return request_context.get()
+
+
+def set_current_request(request: "Request") -> Token:
+    """
+    设置当前请求对象到上下文变量
+
+    Args:
+        request: FastAPI 请求对象
+
+    Returns:
+        Token: 上下文变量token，用于后续清理
+    """
+    return request_context.set(request)
+
+
+def clear_current_request(token: Optional[Token] = None) -> None:
+    """
+    清理当前请求上下文变量
+
+    Args:
+        token: 上下文变量token
+    """
+    if token is not None:
+        request_context.reset(token)
+    else:
+        request_context.set(None)

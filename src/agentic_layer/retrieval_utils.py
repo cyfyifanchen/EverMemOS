@@ -461,7 +461,7 @@ async def rerank_candidates(
 
         # Convert format: from rerank returned format to (doc, score) format
         if reranked_hits:
-            # reranked_hits format: [{"index": ..., "relevance_score": ...}, ...]
+            # reranked_hits format: [{"index": ..., "score": ...}, ...]
             # candidates format: [(doc, score), ...]
 
             reranked_results = []
@@ -469,7 +469,7 @@ async def rerank_candidates(
                 # Extract index
                 if isinstance(hit, dict):
                     idx = hit.get("index", hit.get("global_index", 0))
-                    new_score = hit.get("relevance_score", 0.0)
+                    new_score = hit.get("score", 0.0)
                 else:
                     # If returned is tuple, format is wrong, skip
                     logger.warning(f"Unexpected rerank result type: {type(hit)}")

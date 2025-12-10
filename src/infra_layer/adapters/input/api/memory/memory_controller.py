@@ -8,7 +8,9 @@ Provides complete memory management RESTful API routes, including:
 - Memory search (search): Support three retrieval methods: keyword, vector, and hybrid
 """
 
+import json
 import logging
+from contextlib import suppress
 from typing import Any, Dict
 from fastapi import HTTPException, Request as FastAPIRequest
 
@@ -218,14 +220,12 @@ class MemoryController(BaseController):
             # 4. Convert to MemorizeRequest object and call memory_manager
             logger.info("Starting to process memory request")
             memorize_request = await handle_conversation_format(memorize_input)
-            memories = await self.memory_manager.memorize(memorize_request)
+            # memorize returns count of extracted memories (int)
+            memory_count = await self.memory_manager.memorize(memorize_request)
 
             # 5. Return unified response format
-            # Ensure saved_memories always returns a list (empty or with data), never None
-            saved_memories = memories if memories else []
-            memory_count = len(saved_memories)
             logger.info(
-                "Memory request processing completed, saved %s memories", memory_count
+                "Memory request processing completed, extracted %s memories", memory_count
             )
 
             # Optimize return message to help users understand runtime status
@@ -238,7 +238,7 @@ class MemoryController(BaseController):
                 "status": ErrorStatus.OK.value,
                 "message": message,
                 "result": {
-                    "saved_memories": saved_memories,
+                    "saved_memories": [],  # Memories saved to DB, fetch via API
                     "count": memory_count,
                     "status_info": "accumulated" if memory_count == 0 else "extracted",
                 },
@@ -521,26 +521,33 @@ class MemoryController(BaseController):
             HTTPException: When request processing fails
         """
         try:
-            # Get JSON body from request
-            body = await fastapi_request.json()
-            query = body.get("query")
+            # Get params from query params first
+            query_params = dict(fastapi_request.query_params)
+            
+            # Also try to get params from body (for GET + body requests like Elasticsearch)
+            if body := await fastapi_request.body():
+                with suppress(json.JSONDecodeError, TypeError):
+                    if isinstance(body_data := json.loads(body), dict):
+                        query_params.update(body_data)
+            
+            query = query_params.get("query")
             logger.info(
-                "Received search request: user_id=%s, query=%s",
-                body.get("user_id"),
-                query,
+                "Received search request: user_id=%s, query=%s, retrieve_method=%s", 
+                query_params.get("user_id"), query, query_params.get("retrieve_method")
             )
 
             # Directly use converter to transform
-            retrieve_request = convert_dict_to_retrieve_mem_request(body, query=query)
+            retrieve_request = convert_dict_to_retrieve_mem_request(query_params, query=query)
+            logger.info(f"After conversion: retrieve_method={retrieve_request.retrieve_method}")
 
-            # Use retrieve_mem method (supports keyword and hybrid)
+            # Use retrieve_mem method (supports keyword, vector, hybrid)
             response = await self.memory_manager.retrieve_mem(retrieve_request)
 
             # Return unified response format
             group_count = len(response.memories) if response.memories else 0
             logger.info(
-                "Search request processing completed: user_id=%s, returned %s groups",
-                body.get("user_id"),
+                "Search request complete: user_id=%s, returned %s groups",
+                query_params.get("user_id"),
                 group_count,
             )
             return {

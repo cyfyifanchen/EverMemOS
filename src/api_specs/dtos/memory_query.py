@@ -46,7 +46,8 @@ class FetchMemResponse:
 class RetrieveMemRequest:
     """Memory retrieval request"""
 
-    user_id: str
+    user_id: Optional[str] = None
+    group_id: Optional[str] = None  # Group ID for group memory retrieval
     memory_types: List[MemoryType] = field(default_factory=list)
     top_k: int = 40
     filters: Dict[str, Any] = field(default_factory=dict)

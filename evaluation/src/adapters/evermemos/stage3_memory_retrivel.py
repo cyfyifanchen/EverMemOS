@@ -1095,13 +1095,13 @@ async def reranker_search(
     # Step 4: Sort by reranker score and return Top-N
     sorted_results = sorted(
         all_rerank_results, 
-        key=lambda x: x["relevance_score"], 
+        key=lambda x: x["score"], 
         reverse=True
     )[:top_n]
     
     # Map back to original documents
     final_results = [
-        (results[original_indices[item["global_index"]]][0], item["relevance_score"])
+        (results[original_indices[item["global_index"]]][0], item["score"])
         for item in sorted_results
     ]
     

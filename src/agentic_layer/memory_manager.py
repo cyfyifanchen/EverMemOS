@@ -11,7 +11,7 @@ import time
 from typing import Dict, Any
 from dataclasses import dataclass
 
-from api_specs.memory_types import BaseMemory, EpisodeMemory, RawDataType
+from api_specs.memory_types import BaseMemory, EpisodeMemory, EventLog, Foresight, RawDataType
 from biz_layer.mem_memorize import memorize
 from api_specs.dtos.memory_command import MemorizeRequest
 from .fetch_mem_service import get_fetch_memory_service
@@ -25,6 +25,12 @@ from api_specs.dtos.memory_query import (
 from core.di import get_bean_by_type
 from infra_layer.adapters.out.search.repository.episodic_memory_es_repository import (
     EpisodicMemoryEsRepository,
+)
+from infra_layer.adapters.out.search.repository.foresight_es_repository import (
+    ForesightEsRepository,
+)
+from infra_layer.adapters.out.search.repository.event_log_es_repository import (
+    EventLogEsRepository,
 )
 from core.observation.tracing.decorators import trace_logger
 from core.nlp.stopwords_utils import filter_stopwords
@@ -42,9 +48,15 @@ from infra_layer.adapters.out.persistence.document.memory.user_profile import (
 from infra_layer.adapters.out.search.repository.episodic_memory_milvus_repository import (
     EpisodicMemoryMilvusRepository,
 )
+from infra_layer.adapters.out.search.repository.foresight_milvus_repository import (
+    ForesightMilvusRepository,
+)
+from infra_layer.adapters.out.search.repository.event_log_milvus_repository import (
+    EventLogMilvusRepository,
+)
 from .vectorize_service import get_vectorize_service
 from .rerank_service import get_rerank_service
-from api_specs.memory_models import MemoryType
+from api_specs.memory_models import MemoryType, RetrieveMethod
 
 logger = logging.getLogger(__name__)
 
@@ -82,15 +94,18 @@ class MemoryManager:
 
     # --------- Write path (raw data -> memorize) ---------
     @trace_logger(operation_name="agentic_layer memory storage")
-    async def memorize(self, memorize_request: MemorizeRequest) -> List[BaseMemory]:
+    async def memorize(self, memorize_request: MemorizeRequest) -> int:
         """Memorize a heterogeneous list of raw items.
 
         Accepts list[Any], where each item can be one of the typed raw dataclasses
         (ChatRawData / EmailRawData / MemoRawData / LincDocRawData) or any dict-like
         object. Each item is stored as a MemoryCell with a synthetic key.
+        
+        Returns:
+            int: Number of memories extracted (0 if no boundary detected)
         """
-        memories = await memorize(memorize_request)
-        return memories
+        count = await memorize(memorize_request)
+        return count
 
     # --------- Read path (query -> fetch_mem) ---------
     # Memory reading based on key-value, including static and dynamic memory
@@ -238,7 +253,7 @@ class MemoryManager:
 
             # Use generic grouping processing strategy
             memories, scores, importance_scores, original_data, total_count = (
-                await self.group_by_groupid_stratagy(search_results, source_type="es")
+                await self.group_by_groupid_stratagy(search_results, source_type=RetrieveMethod.KEYWORD.value)
             )
 
             logger.debug(
@@ -300,11 +315,17 @@ class MemoryManager:
             top_k = retrieve_mem_request.top_k
             query = retrieve_mem_request.query
             user_id = retrieve_mem_request.user_id
+            group_id = retrieve_mem_request.group_id
             start_time = retrieve_mem_request.start_time
             end_time = retrieve_mem_request.end_time
+            memory_types = retrieve_mem_request.memory_types
 
-            # Get EpisodicMemoryEsRepository instance
-            es_repo = get_bean_by_type(EpisodicMemoryEsRepository)
+            # MemoryType -> ES Repository mapping
+            ES_REPO_MAP = {
+                MemoryType.FORESIGHT: ForesightEsRepository,
+                MemoryType.EVENT_LOG: EventLogEsRepository,
+                MemoryType.EPISODIC_MEMORY: EpisodicMemoryEsRepository,
+            }
 
             # Convert query string to search word list
             # Use jieba for search mode word segmentation, then filter stopwords
@@ -323,18 +344,38 @@ class MemoryManager:
             if end_time is not None:
                 date_range["lte"] = end_time
 
-            # Call multi_search method, supports filtering by memory_types
-            search_results = await es_repo.multi_search(
+            # Take the first memory_type, default episodic_memory
+            mem_type = memory_types[0] if memory_types else MemoryType.EPISODIC_MEMORY
+            
+            repo_class = ES_REPO_MAP.get(mem_type)
+            if not repo_class:
+                logger.warning(f"Unsupported memory_type: {mem_type}")
+                return []
+            
+            es_repo = get_bean_by_type(repo_class)
+            logger.debug(f"Using {repo_class.__name__} for {mem_type}")
+            
+            results = await es_repo.multi_search(
                 query=query_words,
                 user_id=user_id,
+                group_id=group_id,
                 size=top_k,
                 from_=0,
                 date_range=date_range,
             )
-            return search_results
+            
+            # Mark memory_type, search_source, and unified score
+            if results:
+                for r in results:
+                    r['memory_type'] = mem_type.value
+                    r['_search_source'] = RetrieveMethod.KEYWORD.value
+                    r['id'] = r.get('_id', '')  # Unify ES '_id' to 'id'
+                    r['score'] = r.get('_score', 0.0)  # Unified score field
+            
+            return results or []
         except Exception as e:
             logger.error(f"Error in get_keyword_search_results: {e}")
-            return {}
+            return []
 
     # Vector-based memory retrieval
     @trace_logger(operation_name="agentic_layer vector memory retrieval")
@@ -364,12 +405,13 @@ class MemoryManager:
                 raise ValueError("query is required for retrieve_mem_vector")
 
             user_id = retrieve_mem_request.user_id
+            group_id = retrieve_mem_request.group_id
             top_k = retrieve_mem_request.top_k
             start_time = retrieve_mem_request.start_time
             end_time = retrieve_mem_request.end_time
 
             logger.debug(
-                f"retrieve_mem_vector called with query: {query}, user_id: {user_id}, top_k: {top_k}"
+                f"retrieve_mem_vector called with query: {query}, user_id: {user_id}, group_id: {group_id}, top_k: {top_k}"
             )
 
             # Get vectorization service
@@ -383,21 +425,17 @@ class MemoryManager:
                 f"Query text vectorization completed, vector dimension: {len(query_vector_list)}"
             )
 
-            if MemoryType.FORESIGHT in retrieve_mem_request.memory_types:
-                from infra_layer.adapters.out.search.repository.foresight_milvus_repository import (
-                    ForesightMilvusRepository,
-                )
-
-                milvus_repo = get_bean_by_type(ForesightMilvusRepository)
-            elif MemoryType.EVENT_LOG in retrieve_mem_request.memory_types:
-                from infra_layer.adapters.out.search.repository.event_log_milvus_repository import (
-                    EventLogMilvusRepository,
-                )
-
-                milvus_repo = get_bean_by_type(EventLogMilvusRepository)
-            else:
-                milvus_repo = get_bean_by_type(EpisodicMemoryMilvusRepository)
-
+            # Select Milvus repository based on memory type
+            mem_type = retrieve_mem_request.memory_types[0] if retrieve_mem_request.memory_types else MemoryType.EPISODIC_MEMORY
+            match mem_type:
+                case MemoryType.FORESIGHT:
+                    milvus_repo = get_bean_by_type(ForesightMilvusRepository)
+                case MemoryType.EVENT_LOG:
+                    milvus_repo = get_bean_by_type(EventLogMilvusRepository)
+                case MemoryType.EPISODIC_MEMORY:
+                    milvus_repo = get_bean_by_type(EpisodicMemoryMilvusRepository)
+                case _:
+                    raise ValueError(f"Unsupported memory type: {mem_type}")
             # Handle time range filter conditions
             start_time_dt = None
             end_time_dt = None
@@ -418,7 +456,7 @@ class MemoryManager:
                     end_time_dt = end_time
 
             # Handle foresight time range (only valid for foresight)
-            if MemoryType.FORESIGHT in retrieve_mem_request.memory_types:
+            if mem_type == MemoryType.FORESIGHT:
                 if retrieve_mem_request.start_time:
                     foresight_start_dt = from_iso_format(retrieve_mem_request.start_time)
                 if retrieve_mem_request.end_time:
@@ -429,11 +467,12 @@ class MemoryManager:
                     )
 
             # Call Milvus vector search (pass different parameters based on memory type)
-            if MemoryType.FORESIGHT in retrieve_mem_request.memory_types:
+            if mem_type == MemoryType.FORESIGHT:
                 # Foresight: supports time range and validity filtering, supports radius parameter
                 search_results = await milvus_repo.vector_search(
                     query_vector=query_vector_list,
                     user_id=user_id,
+                    group_id=group_id,
                     start_time=foresight_start_dt,
                     end_time=foresight_end_dt,
                     current_time=current_time_dt,
@@ -446,6 +485,7 @@ class MemoryManager:
                 search_results = await milvus_repo.vector_search(
                     query_vector=query_vector_list,
                     user_id=user_id,
+                    group_id=group_id,
                     start_time=start_time_dt,
                     end_time=end_time_dt,
                     limit=top_k,
@@ -455,10 +495,19 @@ class MemoryManager:
 
             logger.debug(f"Milvus vector search returned {len(search_results)} results")
 
+            # Add memory_type, search_source to results (Milvus already has 'score')
+            mem_type_value = retrieve_mem_request.memory_types[0].value if retrieve_mem_request.memory_types else 'episodic_memory'
+            for r in search_results:
+                r['memory_type'] = mem_type_value
+                r['_search_source'] = RetrieveMethod.VECTOR.value
+                r['id'] = r.get('id', '')  # Ensure id field exists
+                r['score'] = r.get('score')  # Unified score field
+                # Milvus already uses 'score', no need to rename
+
             # Use generic grouping processing strategy
             memories, scores, importance_scores, original_data, total_count = (
                 await self.group_by_groupid_stratagy(
-                    search_results, source_type="milvus"
+                    search_results, source_type=RetrieveMethod.VECTOR.value
                 )
             )
 
@@ -523,12 +572,13 @@ class MemoryManager:
                 raise ValueError("query is required for retrieve_mem_vector")
 
             user_id = retrieve_mem_request.user_id
+            group_id = retrieve_mem_request.group_id
             top_k = retrieve_mem_request.top_k
             start_time = retrieve_mem_request.start_time
             end_time = retrieve_mem_request.end_time
 
             logger.debug(
-                f"retrieve_mem_vector called with query: {query}, user_id: {user_id}, top_k: {top_k}"
+                f"retrieve_mem_vector called with query: {query}, user_id: {user_id}, group_id: {group_id}, top_k: {top_k}"
             )
 
             # Get vectorization service
@@ -542,21 +592,17 @@ class MemoryManager:
                 f"Query text vectorization completed, vector dimension: {len(query_vector_list)}"
             )
 
-            # Select corresponding Milvus Repository based on memory_types
-            if MemoryType.FORESIGHT in retrieve_mem_request.memory_types:
-                from infra_layer.adapters.out.search.repository.foresight_milvus_repository import (
-                    ForesightMilvusRepository,
-                )
-
-                milvus_repo = get_bean_by_type(ForesightMilvusRepository)
-            elif MemoryType.EVENT_LOG in retrieve_mem_request.memory_types:
-                from infra_layer.adapters.out.search.repository.event_log_milvus_repository import (
-                    EventLogMilvusRepository,
-                )
-
-                milvus_repo = get_bean_by_type(EventLogMilvusRepository)
-            else:
-                milvus_repo = get_bean_by_type(EpisodicMemoryMilvusRepository)
+            # Select Milvus repository based on memory type
+            mem_type = retrieve_mem_request.memory_types[0]
+            match mem_type:
+                case MemoryType.FORESIGHT:
+                    milvus_repo = get_bean_by_type(ForesightMilvusRepository)
+                case MemoryType.EVENT_LOG:
+                    milvus_repo = get_bean_by_type(EventLogMilvusRepository)
+                case MemoryType.EPISODIC_MEMORY:
+                    milvus_repo = get_bean_by_type(EpisodicMemoryMilvusRepository)
+                case _:
+                    raise ValueError(f"Unsupported memory type: {mem_type}")
 
             # Handle time range filter conditions
             start_time_dt = None
@@ -576,7 +622,7 @@ class MemoryManager:
                     end_time_dt = end_time
 
             # Handle foresight time range (only valid for foresight)
-            if MemoryType.FORESIGHT in retrieve_mem_request.memory_types:
+            if mem_type == MemoryType.FORESIGHT:
                 if retrieve_mem_request.start_time:
                     start_time_dt = from_iso_format(retrieve_mem_request.start_time)
                 if retrieve_mem_request.end_time:
@@ -585,33 +631,43 @@ class MemoryManager:
                     current_time_dt = from_iso_format(retrieve_mem_request.current_time)
 
             # Call Milvus vector search (pass different parameters based on memory type)
-            if MemoryType.FORESIGHT in retrieve_mem_request.memory_types:
+            if mem_type == MemoryType.FORESIGHT:
                 # Foresight: supports time range and validity filtering, supports radius parameter
                 search_results = await milvus_repo.vector_search(
                     query_vector=query_vector_list,
                     user_id=user_id,
+                    group_id=group_id,
                     start_time=start_time_dt,
                     end_time=end_time_dt,
                     current_time=current_time_dt,
                     limit=top_k,
                     score_threshold=0.0,
-                    radius=retrieve_mem_request.radius,  # Get similarity threshold parameter from request object
+                    radius=retrieve_mem_request.radius,
                 )
             else:
                 # Episodic memory and event log: use timestamp filtering, supports radius parameter
                 search_results = await milvus_repo.vector_search(
                     query_vector=query_vector_list,
                     user_id=user_id,
+                    group_id=group_id,
                     start_time=start_time_dt,
                     end_time=end_time_dt,
                     limit=top_k,
                     score_threshold=0.0,
-                    radius=retrieve_mem_request.radius,  # Get similarity threshold parameter from request object
+                    radius=retrieve_mem_request.radius,
                 )
+            
+            # Add memory_type, _search_source markers (Milvus already has 'score')
+            mem_type_value = retrieve_mem_request.memory_types[0].value if retrieve_mem_request.memory_types else 'episodic_memory'
+            for r in search_results:
+                r['memory_type'] = mem_type_value
+                r['_search_source'] = RetrieveMethod.VECTOR.value
+                # Milvus already uses 'score', no need to rename
+            
             return search_results
         except Exception as e:
             logger.error(f"Error in get_vector_search_results: {e}")
-            return {}
+            return []
 
     # Hybrid memory retrieval
     @trace_logger(operation_name="agentic_layer hybrid memory retrieval")
@@ -717,20 +773,6 @@ class MemoryManager:
                 ),
             )
 
-    def _extract_score_from_hit(self, hit: Dict[str, Any]) -> float:
-        """Extract score from hit
-
-        Args:
-            hit: Search result hit
-
-        Returns:
-            Score
-        """
-        if '_score' in hit:
-            return hit['_score']
-        elif 'score' in hit:
-            return hit['score']
-        return 1.0
 
     async def _merge_and_rerank_search_results(
         self,
@@ -791,12 +833,12 @@ class MemoryManager:
             logger.error(f"Rerank service failed, falling back to simple sorting: {e}")
             # If rerank fails, fall back to simple score sorting
             reranked_hits = sorted(
-                all_hits, key=self._extract_score_from_hit, reverse=True
+                all_hits, key=lambda x: x.get('score', 0), reverse=True
             )[:top_k]
 
         # Group process reranked results
         memories, scores, importance_scores, original_data, total_count = (
-            await self.group_by_groupid_stratagy(reranked_hits, source_type="hybrid")
+            await self.group_by_groupid_stratagy(reranked_hits, source_type=RetrieveMethod.HYBRID.value)
         )
 
         # Build final result
@@ -929,46 +971,86 @@ class MemoryManager:
         )
         return profiles
 
+    def _get_type_str(self, val) -> str:
+        """Extract string value of type field"""
+        if isinstance(val, RawDataType):
+            return val.value
+        return str(val) if val else ''
+
+    def _extract_hit_fields_from_es(self, hit: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract fields from ES search result"""
+        source = hit.get('_source', {})
+        return {
+            'hit_id': source.get('event_id', ''),
+            'user_id': source.get('user_id', ''),
+            'group_id': source.get('group_id', ''),
+            'timestamp_raw': source.get('timestamp', ''),
+            'episode': source.get('episode', ''),
+            'memcell_event_id_list': source.get('memcell_event_id_list', []),
+            'subject': source.get('subject', ''),
+            'summary': source.get('summary', ''),
+            'participants': source.get('participants', []),
+            'event_type': source.get('type', ''),
+            'atomic_fact': source.get('atomic_fact', ''),
+            'foresight': source.get('foresight', ''),
+            'evidence': source.get('evidence', ''),
+            'extend_data': source.get('extend', {}) or {},
+            'search_source': 'keyword',
+        }
+
+    def _extract_hit_fields_from_milvus(self, hit: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract fields from Milvus search result"""
+        metadata = hit.get('metadata', {})
+        timestamp_val = hit.get('timestamp') or hit.get('start_time')
+        return {
+            'hit_id': hit.get('id', ''),
+            'user_id': hit.get('user_id', ''),
+            'group_id': hit.get('group_id', ''),
+            'timestamp_raw': timestamp_val,
+            'episode': hit.get('episode', ''),
+            'memcell_event_id_list': metadata.get('memcell_event_id_list', []),
+            'subject': metadata.get('subject', ''),
+            'summary': metadata.get('summary', ''),
+            'participants': metadata.get('participants', []),
+            'event_type': self._get_type_str(hit.get('type') or hit.get('event_type')),
+            'atomic_fact': hit.get('atomic_fact', ''),
+            'foresight': hit.get('content', ''),  # Milvus foresight uses 'content' field
+            'evidence': hit.get('evidence', ''),
+            'extend_data': metadata.get('extend', {}) or {},
+            'search_source': 'vector',
+        }
+
+    def _extract_hit_fields(self, hit: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract fields from search result based on _search_source"""
+        search_source = hit.get('_search_source')
+        match search_source:
+            case RetrieveMethod.KEYWORD.value:
+                return self._extract_hit_fields_from_es(hit)
+            case RetrieveMethod.VECTOR.value:
+                return self._extract_hit_fields_from_milvus(hit)
+            case _:
+                raise ValueError(f"Unknown _search_source: {search_source}")
     async def group_by_groupid_stratagy(
-        self, search_results: List[Dict[str, Any]], source_type: str = "milvus"
+        self, search_results: List[Dict[str, Any]], source_type: str = RetrieveMethod.VECTOR.value
     ) -> tuple:
         """Generic search result grouping processing strategy
 
         Args:
             search_results: List of search results
-            source_type: Data source type, supports "es" or "milvus"
+            source_type: Retrieval method (keyword/vector/hybrid)
 
         Returns:
             tuple: (memories, scores, importance_scores, original_data, total_count)
         """
-        # Step 1: Collect all data that needs to be queried
+        # Step 1: Collect all data needed for queries
         all_memcell_event_ids = []
         all_user_group_pairs = []
 
         for hit in search_results:
-            # Extract memcell_event_id_list
-            if source_type == "es":
-                source = hit.get('_source', {})
-                memcell_event_id_list = source.get('memcell_event_id_list', [])
-                user_id = source.get('user_id', '')
-                group_id = source.get('group_id', '')
-            elif source_type == "hybrid":
-                search_source = hit.get('_search_source', 'unknown')
-                if search_source == 'keyword':
-                    source = hit.get('_source', {})
-                    memcell_event_id_list = source.get('memcell_event_id_list', [])
-                    user_id = source.get('user_id', '')
-                    group_id = source.get('group_id', '')
-                else:
-                    metadata = hit.get('metadata', {})
-                    memcell_event_id_list = metadata.get('memcell_event_id_list', [])
-                    user_id = hit.get('user_id', '')
-                    group_id = hit.get('group_id', '')
-            else:  # milvus
-                metadata = hit.get('metadata', {})
-                memcell_event_id_list = metadata.get('memcell_event_id_list', [])
-                user_id = hit.get('user_id', '')
-                group_id = hit.get('group_id', '')
+            fields = self._extract_hit_fields(hit)
+            memcell_event_id_list = fields['memcell_event_id_list']
+            user_id = fields['user_id']
+            group_id = fields['group_id']
 
             if memcell_event_id_list:
                 all_memcell_event_ids.extend(memcell_event_id_list)
@@ -977,7 +1059,7 @@ class MemoryManager:
             if user_id and group_id:
                 all_user_group_pairs.append((user_id, group_id))
 
-        # Step 2: Concurrently execute two batch query tasks
+        # Step 2: Execute two batch query tasks concurrently
         memcells_task = asyncio.create_task(
             self._batch_get_memcells(all_memcell_event_ids)
         )
@@ -991,81 +1073,35 @@ class MemoryManager:
         )
 
         # Step 3: Process search results
-        memories_by_group = (
-            {}
-        )  # {group_id: {'memories': [Memory], 'scores': [float], 'importance_evidence': dict}}
+        memories_by_group = {}  # {group_id: {'memories': [Memory], 'scores': [float], 'importance_evidence': dict}}
         original_data_by_group = {}
 
         for hit in search_results:
-            # Extract data based on data source type
-            if source_type == "es":
-                # ES search result format
-                source = hit.get('_source', {})
-                score = hit.get('_score', 1.0)
-                user_id = source.get('user_id', '')
-                group_id = source.get('group_id', '')
-                timestamp_raw = source.get('timestamp', '')
-                episode = source.get('episode', '')
-                memcell_event_id_list = source.get('memcell_event_id_list', [])
-                subject = source.get('subject', '')
-                summary = source.get('summary', '')
-                participants = source.get('participants', [])
-                hit_id = source.get('event_id', '')
-                search_source = hit.get(
-                    '_search_source', 'keyword'
-                )  # Default to keyword retrieval
-                event_type = source.get('type', '')
-            elif source_type == "hybrid":
-                # Hybrid retrieval result format, need to determine based on _search_source field
-                search_source = hit.get('_search_source', 'unknown')
-                if search_source == 'keyword':
-                    # Keyword retrieval result format
-                    source = hit.get('_source', {})
-                    score = hit.get('_score', 1.0)
-                    user_id = source.get('user_id', '')
-                    group_id = source.get('group_id', '')
-                    timestamp_raw = source.get('timestamp', '')
-                    episode = source.get('episode', '')
-                    memcell_event_id_list = source.get('memcell_event_id_list', [])
-                    subject = source.get('subject', '')
-                    summary = source.get('summary', '')
-                    participants = source.get('participants', [])
-                    hit_id = source.get('event_id', '')
-                    event_type = source.get('type', '')
-                else:
-                    # Vector retrieval result format
-                    hit_id = hit.get('id', '')
-                    score = hit.get('score', 1.0)
-                    user_id = hit.get('user_id', '')
-                    group_id = hit.get('group_id', '')
-                    timestamp_raw = hit.get('timestamp')
-                    episode = hit.get('episode', '')
-                    metadata = hit.get('metadata', {})
-                    memcell_event_id_list = metadata.get('memcell_event_id_list', [])
-                    subject = metadata.get('subject', '')
-                    summary = metadata.get('summary', '')
-                    participants = metadata.get('participants', [])
-                    event_type = hit.get('type', '')
-            else:
-                # Milvus search result format
-                hit_id = hit.get('id', '')
-                score = hit.get('score', 1.0)
-                user_id = hit.get('user_id', '')
-                group_id = hit.get('group_id', '')
-                timestamp_raw = hit.get('timestamp')
-                episode = hit.get('episode', '')
-                metadata = hit.get('metadata', {})
-                memcell_event_id_list = metadata.get('memcell_event_id_list', [])
-                subject = metadata.get('subject', '')
-                summary = metadata.get('summary', '')
-                participants = metadata.get('participants', [])
-                search_source = 'vector'  # Default to vector retrieval
-                event_type = hit.get('event_type', '')
-
+            # Extract fields
+            fields = self._extract_hit_fields(hit)
+            # Get score (each retrieval method uses its own score field)
+            score = hit.get('score', 0.0)
+            
+            hit_id = fields['hit_id']
+            user_id = fields['user_id']
+            group_id = fields['group_id']
+            timestamp_raw = fields['timestamp_raw']
+            memcell_event_id_list = fields['memcell_event_id_list']
+            episode = fields['episode']
+            subject = fields['subject']
+            summary = fields['summary']
+            participants = fields['participants']
+            event_type = fields['event_type']
+            atomic_fact = fields['atomic_fact']
+            foresight = fields['foresight']
+            evidence = fields['evidence']
+            extend_data = fields['extend_data']
+            search_source = fields['search_source']
             # Process timestamp
             timestamp = from_iso_format(timestamp_raw)
 
-            # Get memcell data from cache
+            # Get memcell data from cache (foresight doesn't need this)
+            memory_type_value = hit.get('memory_type', 'episodic_memory')
             memcells = []
             if memcell_event_id_list:
                 # Get memcells from cache in original order
@@ -1074,34 +1110,43 @@ class MemoryManager:
                     if memcell:
                         memcells.append(memcell)
                     else:
-                        logger.warning(f"Memcell not found: event_id={event_id}")
+                        logger.debug(f"Memcell not found: event_id={event_id}")
                         continue
 
-            # Add original data for each memcell
+            # Add raw data for each memcell
             for memcell in memcells:
                 if group_id not in original_data_by_group:
                     original_data_by_group[group_id] = []
                 original_data_by_group[group_id].append(memcell.original_data)
 
-            # Create EpisodeMemory object
-            memory = EpisodeMemory(
-                memory_type=MemoryType.EPISODIC_MEMORY,
+            # Create object based on memory type
+            base_kwargs = dict(
+                memory_type=memory_type_value,
                 user_id=user_id,
                 timestamp=timestamp,
                 ori_event_id_list=[hit_id],
-                subject=subject,
-                summary=summary,
-                episode=episode,
                 group_id=group_id,
                 participants=participants,
                 memcell_event_id_list=memcell_event_id_list,
                 type=RawDataType.from_string(event_type),
                 extend={
-                    '_search_source': search_source
-                },  # Add search source information to extend field
+                    '_search_source': search_source,
+                    'parent_episode_id': extend_data.get('parent_episode_id'),
+                },
             )
+            
+            match memory_type_value:
+                case MemoryType.EVENT_LOG.value:
+                    memory = EventLog(**base_kwargs, atomic_fact=atomic_fact)
+                case MemoryType.FORESIGHT.value:
+                    memory = Foresight(**base_kwargs, foresight=foresight, evidence=evidence)
+                case MemoryType.EPISODIC_MEMORY.value:
+                    # EpisodeMemory has additional fields: subject, summary, episode
+                    memory = EpisodeMemory(**base_kwargs, subject=subject, summary=summary, episode=episode)
+                case _:
+                    raise ValueError(f"Unsupported memory type: {memory_type_value}")
 
-            # Read group_importance_evidence from group_user_profile_memory cache
+            # Get group_importance_evidence from cache
             group_importance_evidence = None
             if user_id and group_id:
                 group_user_profile = profiles_cache.get((user_id, group_id))
@@ -1157,7 +1202,7 @@ class MemoryManager:
         # Sort groups by importance score
         group_scores.sort(key=lambda x: x[1], reverse=True)
 
-        # Build final result
+        # Build final results
         memories = []
         scores = []
         importance_scores = []
@@ -1283,21 +1328,16 @@ class MemoryManager:
             embedding_count = 0
 
             if retrieval_mode in ["embedding", "rrf"]:
-                # Select corresponding Milvus Repository based on data_source
-                if data_source == "foresight":
-                    from infra_layer.adapters.out.search.repository.foresight_milvus_repository import (
-                        ForesightMilvusRepository,
-                    )
-
-                    milvus_repo = get_bean_by_type(ForesightMilvusRepository)
-                elif data_source == "event_log":
-                    from infra_layer.adapters.out.search.repository.event_log_milvus_repository import (
-                        EventLogMilvusRepository,
-                    )
-
-                    milvus_repo = get_bean_by_type(EventLogMilvusRepository)
-                else:  # "episode"
-                    milvus_repo = get_bean_by_type(EpisodicMemoryMilvusRepository)
+                # Select Milvus repository based on data_source
+                match data_source:
+                    case MemoryType.FORESIGHT.value:
+                        milvus_repo = get_bean_by_type(ForesightMilvusRepository)
+                    case MemoryType.EVENT_LOG.value:
+                        milvus_repo = get_bean_by_type(EventLogMilvusRepository)
+                    case MemoryType.EPISODIC_MEMORY.value:
+                        milvus_repo = get_bean_by_type(EpisodicMemoryMilvusRepository)
+                    case _:
+                        raise ValueError(f"Unsupported memory type: {data_source}")
 
                 vectorize_service = get_vectorize_service()
 
@@ -1357,25 +1397,16 @@ class MemoryManager:
             bm25_count = 0
 
             if retrieval_mode in ["bm25", "rrf"]:
-                # Select corresponding ES Repository based on data_source
-                if data_source == "foresight":
-                    from infra_layer.adapters.out.search.repository.foresight_es_repository import (
-                        ForesightEsRepository,
-                    )
-
-                    es_repo = get_bean_by_type(ForesightEsRepository)
-                elif data_source == "event_log":
-                    from infra_layer.adapters.out.search.repository.event_log_es_repository import (
-                        EventLogEsRepository,
-                    )
-
-                    es_repo = get_bean_by_type(EventLogEsRepository)
-                else:  # "episode"
-                    es_repo = get_bean_by_type(EpisodicMemoryEsRepository)
-
-                # Use jieba for word segmentation and filter stopwords
-                import jieba
-                from core.nlp.stopwords_utils import filter_stopwords
+                # Select ES repository based on data_source
+                match data_source:
+                    case MemoryType.FORESIGHT.value:
+                        es_repo = get_bean_by_type(ForesightEsRepository)
+                    case MemoryType.EVENT_LOG.value:
+                        es_repo = get_bean_by_type(EventLogEsRepository)
+                    case MemoryType.EPISODIC_MEMORY.value:
+                        es_repo = get_bean_by_type(EpisodicMemoryEsRepository)
+                    case _:
+                        raise ValueError(f"Unsupported memory type: {data_source}")
 
                 raw_query_words = list(jieba.cut(query))
                 query_words = filter_stopwords(raw_query_words, min_length=2)
@@ -1788,7 +1819,7 @@ class MemoryManager:
                     if 0 <= idx < len(round1_memories):
                         mem = round1_memories[idx]
                         # Convert to (candidate, score) format for LLM use
-                        top5_for_llm.append((mem, hit.get("relevance_score", 0)))
+                        top5_for_llm.append((mem, hit.get("score", 0)))
 
                 metadata["round1_reranked_count"] = len(top5_for_llm)
                 logger.info(
@@ -1959,7 +1990,7 @@ class MemoryManager:
                     idx = hit.get("index", 0)
                     if 0 <= idx < len(combined_memories):
                         mem = combined_memories[idx].copy()
-                        mem["score"] = hit.get("relevance_score", mem.get("score", 0))
+                        mem["score"] = hit.get("score", mem.get("score", 0))
                         final_memories.append(mem)
 
                 logger.info(f"Rerank: Final Top {len(final_memories)} selected")

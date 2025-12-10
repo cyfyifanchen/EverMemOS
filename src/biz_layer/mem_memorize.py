@@ -105,8 +105,6 @@ class MemoryDocPayload:
     doc: Any
 
 
-
-
 def _clone_event_log(raw_event_log: Any) -> Optional[EventLog]:
     """Convert any structured event log into an EventLog instance"""
     if raw_event_log is None:
@@ -687,7 +685,9 @@ async def _save_episodes(
 
 
 async def _extract_foresight_and_eventlog(
-    state: ExtractionState, memory_manager: MemoryManager, episodic_source: List[EpisodeMemory]
+    state: ExtractionState,
+    memory_manager: MemoryManager,
+    episodic_source: List[EpisodeMemory],
 ) -> Tuple[List[Foresight], List[EventLog]]:
     """Extract Foresight and EventLog"""
     logger.info(
@@ -734,14 +734,14 @@ async def _extract_foresight_and_eventlog(
         ep = meta['ep']
         if meta['type'] == MemoryType.FORESIGHT:
             for mem in result:
-                mem.parent_episode_id = ep.event_id
+                mem.parent_episode_id = ep.id
                 mem.user_id = ep.user_id
                 mem.group_id = ep.group_id
                 mem.group_name = ep.group_name
                 mem.user_name = ep.user_name
                 foresight_memories.append(mem)
         elif meta['type'] == MemoryType.EVENT_LOG:
-            result.parent_episode_id = ep.event_id
+            result.parent_episode_id = ep.id
             result.user_id = ep.user_id
             result.group_id = ep.group_id
             result.group_name = ep.group_name

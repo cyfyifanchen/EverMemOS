@@ -40,14 +40,13 @@ class TenantConfig:
         Get the non-tenant mode switch
 
         Read configuration from environment variable TENANT_NON_TENANT_MODE:
-        - "true", "1", "yes", "on" (case-insensitive) -> True
-        - Other values or unset -> False (tenant mode enabled by default)
+        - "false", "0", "no", "off" (case-insensitive) -> False (enable tenant mode)
 
         Returns:
             bool: True means tenant mode is disabled, False means tenant mode is enabled
         """
         if self._non_tenant_mode is None:
-            env_value = os.getenv("TENANT_NON_TENANT_MODE", "false").lower()
+            env_value = os.getenv("TENANT_NON_TENANT_MODE", "true").lower()
             self._non_tenant_mode = env_value in ("true", "1", "yes", "on")
 
             if self._non_tenant_mode:

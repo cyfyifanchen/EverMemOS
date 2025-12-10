@@ -48,7 +48,9 @@ from infra_layer.adapters.out.persistence.repository.foresight_record_repository
 from infra_layer.adapters.out.persistence.document.memory.foresight_record import (
     ForesightRecordProjection,
 )
-
+from infra_layer.adapters.out.persistence.repository.user_profile_raw_repository import (
+    UserProfileRawRepository,
+)
 from api_specs.dtos.memory_query import FetchMemResponse
 
 from api_specs.memory_models import (
@@ -174,6 +176,7 @@ class FetchMemoryServiceImpl(FetchMemoryServiceInterface):
         self._conversation_meta_repo = None
         self._event_log_repo = None
         self._foresight_record_repo = None
+        self._user_profile_repo = None
         logger.info("FetchMemoryServiceImpl initialized")
 
     def _get_repositories(self):
@@ -196,6 +199,8 @@ class FetchMemoryServiceImpl(FetchMemoryServiceInterface):
             self._event_log_repo = get_bean_by_type(EventLogRecordRawRepository)
         if self._foresight_record_repo is None:
             self._foresight_record_repo = get_bean_by_type(ForesightRecordRawRepository)
+        if self._user_profile_repo is None:
+            self._user_profile_repo = get_bean_by_type(UserProfileRawRepository)
 
     async def _get_employee_metadata(
         self,
@@ -550,13 +555,12 @@ class FetchMemoryServiceImpl(FetchMemoryServiceInterface):
                         memories = []
                 case MemoryType.FORESIGHT:
                     # Foresight: each user has only one foresight document
-                    foresight = await self._foresight_record_repo.get_by_user_id(
-                        user_id
-                    )
-                    if foresight:
-                        memories = [await self._convert_foresight(foresight)]
-                    else:
-                        memories = []
+                    foresight_records = await self._foresight_record_repo.get_by_user_id(user_id, limit=limit)
+
+                    memories = [
+                        self._convert_foresight_record(record)
+                        for record in foresight_records
+                    ]
 
                 case MemoryType.EPISODIC_MEMORY:
                     # Episodic memory: list of events sorted by time
@@ -593,29 +597,25 @@ class FetchMemoryServiceImpl(FetchMemoryServiceInterface):
                         memories = []
 
                 case MemoryType.PROFILE:
-                    # Profile: extract personal characteristics from core memory
-                    core_memory = await self._core_repo.get_by_user_id(user_id)
-                    if core_memory:
-                        profile_info = self._core_repo.get_profile(core_memory)
-                        memories = [
-                            ProfileModel(
-                                id=str(core_memory.id),
-                                user_id=core_memory.user_id,
-                                name=profile_info.get('personality', 'Unknown'),
-                                age=profile_info.get('age', 0),
-                                gender=profile_info.get('gender', ''),
-                                occupation=profile_info.get('occupation', ''),
-                                interests=profile_info.get('interests', []),
-                                personality_traits=profile_info.get(
-                                    'personality_traits', {}
-                                ),
-                                created_at=core_memory.created_at,
-                                updated_at=core_memory.updated_at,
-                                metadata=profile_info,
-                            )
-                        ]
-                    else:
-                        memories = []
+                    # Profile: get user profiles from user_profile_repo
+                    user_profiles = await self._user_profile_repo.get_all_by_user(user_id, limit)
+                    
+                    memories = []
+                    for up in user_profiles:
+                        memories.append({
+                            "id": str(up.id),
+                            "user_id": up.user_id,
+                            "group_id": up.group_id,
+                            "profile_data": up.profile_data,
+                            "scenario": up.scenario,
+                            "confidence": up.confidence,
+                            "version": up.version,
+                            "cluster_ids": up.cluster_ids,
+                            "memcell_count": up.memcell_count,
+                            "last_updated_cluster": up.last_updated_cluster,
+                            "created_at": up.created_at.isoformat() if up.created_at else None,
+                            "updated_at": up.updated_at.isoformat() if up.updated_at else None,
+                        })
 
                 case MemoryType.PREFERENCE:
                     # Preferences: extract preference settings from core memory
@@ -679,18 +679,6 @@ class FetchMemoryServiceImpl(FetchMemoryServiceInterface):
                     )
                     memories = [
                         self._convert_event_log(event_log) for event_log in event_logs
-                    ]
-
-                case MemoryType.FORESIGHT:
-                    # Personal foresight: foresight information extracted from episodic memory
-                    foresight_records = (
-                        await self._foresight_record_repo.get_by_user_id(
-                            user_id, model=ForesightRecordProjection, limit=limit
-                        )
-                    )
-                    memories = [
-                        self._convert_foresight_record(record)
-                        for record in foresight_records
                     ]
 
             # Create metadata containing employee information
@@ -793,14 +781,6 @@ class FetchMemoryServiceImpl(FetchMemoryServiceInterface):
                     )
                     if event_log:
                         return self._convert_event_log(event_log)
-
-                case MemoryType.FORESIGHT:
-                    # Personal foresight queried by ID
-                    foresight_record = await self._foresight_record_repo.get_by_id(
-                        memory_id
-                    )
-                    if foresight_record:
-                        return self._convert_foresight_record(foresight_record)
 
             return None
 

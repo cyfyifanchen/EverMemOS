@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from core.di import get_bean, service
+from api_specs.memory_models import MemoryType
 
 logger = logging.getLogger(__name__)
 
@@ -322,7 +323,7 @@ class RerankService(RerankServiceInterface):
         results = []
         for rank, (original_index, score) in enumerate(indexed_scores):
             results.append(
-                {"index": original_index, "relevance_score": score, "rank": rank}
+                {"index": original_index, "score": score, "rank": rank}
             )
 
         return {
@@ -341,47 +342,50 @@ class RerankService(RerankServiceInterface):
         return str(memory)
 
     def _extract_text_from_hit(self, hit: Dict[str, Any]) -> str:
+        """Extract and concatenate text based on memory_type"""
         source = hit.get('_source', hit)
-        if source.get('episode'):
-            return source['episode']
-        if source.get('summary'):
-            return source['summary']
-        if source.get('subject'):
-            return source['subject']
+        memory_type = hit.get('memory_type', '')
+        
+        # Debug: log first hit's structure
+        if not hasattr(self, '_debug_logged'):
+            self._debug_logged = True
+            logger.info(f"[DEBUG] _extract_text_from_hit: memory_type={memory_type!r}, hit_keys={list(hit.keys())[:10]}, source_keys={list(source.keys())[:10]}")
+        
+        # Extract text based on memory_type
+        match memory_type:
+            case MemoryType.EPISODIC_MEMORY.value:
+                episode = source.get('episode', '')
+                if episode:
+                    return f"Episode Memory: {episode}"
+            case MemoryType.FORESIGHT.value:
+                foresight = source.get('foresight', '') or source.get('content', '')
+                evidence = source.get('evidence', '')
+                if foresight:
+                    if evidence:
+                        return f"Foresight: {foresight} (Evidence: {evidence})"
+                    return f"Foresight: {foresight}"
+            case MemoryType.EVENT_LOG.value:
+                atomic_fact = source.get('atomic_fact', '')
+                if atomic_fact:
+                    return f"Atomic Fact: {atomic_fact}"
+        
+        # Generic fallback - also log when we hit this
+        logger.debug(f"[DEBUG] Fallback extraction: memory_type={memory_type!r}")
+        if source.get('episode'): return source['episode']
+        if source.get('atomic_fact'): return source['atomic_fact']
+        if source.get('foresight'): return source['foresight']
+        if source.get('content'): return source['content']
+        if source.get('summary'): return source['summary']
+        if source.get('subject'): return source['subject']
         return str(hit)
 
     async def rerank_memories(
         self, query: str, retrieve_response: Any, instruction: str = None
     ) -> Union[RerankMemResponse, List[Dict[str, Any]]]:
 
-        # 1. Handle List of hits (raw dicts)
+        # 1. Handle List of hits (raw dicts) - delegate to _rerank_all_hits
         if isinstance(retrieve_response, list):
-            all_hits = retrieve_response
-            if not all_hits:
-                return []
-            all_texts = [self._extract_text_from_hit(hit) for hit in all_hits]
-
-            try:
-                rerank_result = await self._make_rerank_request(
-                    query, all_texts, instruction
-                )
-
-                results_meta = rerank_result.get("results", [])
-
-                reranked_hits = []
-                for item in results_meta:
-                    idx = item["index"]
-                    score = item["relevance_score"]
-                    if 0 <= idx < len(all_hits):
-                        hit = all_hits[idx].copy()
-                        hit['_rerank_score'] = score
-                        reranked_hits.append(hit)
-
-                return reranked_hits
-
-            except Exception as e:
-                logger.error(f"Rerank list failed: {e}")
-                return all_hits
+            return await self._rerank_all_hits(query, retrieve_response, instruction=instruction)
 
         # 2. Handle RetrieveMemResponse object
         if not hasattr(retrieve_response, 'memories') or not retrieve_response.memories:
@@ -413,7 +417,7 @@ class RerankService(RerankServiceInterface):
 
             for item in results_meta:
                 original_idx = item["index"]
-                score = item["relevance_score"]
+                score = item["score"]
 
                 group_idx, group_id, mem_idx, memory = all_memories_meta[original_idx]
 
@@ -489,7 +493,7 @@ class RerankService(RerankServiceInterface):
             instruction: Optional reranking instruction
 
         Returns:
-            Reranked hit list, each hit contains relevance_score and _rerank_score fields
+            Reranked hit list, each hit contains unified score field
         """
         if not all_hits:
             return []
@@ -522,47 +526,32 @@ class RerankService(RerankServiceInterface):
             reranked_hits = []
             for item in results_meta:
                 original_idx = item.get("index", 0)
-                score = item.get("relevance_score", 0.0)
+                score = item.get("score", 0.0)
                 if 0 <= original_idx < len(all_hits):
-                    hit = all_hits[
-                        original_idx
-                    ].copy()  # Copy hit to avoid modifying original data
-                    # Add reranking score to hit (provide both fields for compatibility with different callers)
-                    hit['_rerank_score'] = score
-                    hit['relevance_score'] = score
+                    hit = all_hits[original_idx].copy()
+                    hit['score'] = score  # Unified score field
                     reranked_hits.append(hit)
 
             # If top_k is specified, return only the top_k results
             if top_k is not None and top_k > 0:
                 reranked_hits = reranked_hits[:top_k]
 
-            logger.debug(f"Reranking completed, returning {len(reranked_hits)} results")
+            # Print top 3 result scores for debugging
+            if reranked_hits:
+                top_scores = [f"{h.get('score', 0):.4f}" for h in reranked_hits[:3]]
+                logger.info(f"Reranking completed: {len(reranked_hits)} results, top scores: {top_scores}")
             return reranked_hits
 
         except Exception as e:
             logger.error(f"Error during reranking all_hits: {e}")
             # If reranking fails, return original results (sorted by original score)
             sorted_hits = sorted(
-                all_hits, key=self._extract_score_from_hit, reverse=True
+                all_hits, key=lambda x: x.get('score', 0), reverse=True
             )
             if top_k is not None and top_k > 0:
                 sorted_hits = sorted_hits[:top_k]
             return sorted_hits
 
-    def _extract_score_from_hit(self, hit: Dict[str, Any]) -> float:
-        """Extract score from hit
-
-        Args:
-            hit: Search result hit
-
-        Returns:
-            Score
-        """
-        if '_score' in hit:
-            return hit['_score']
-        elif 'score' in hit:
-            return hit['score']
-        return 1.0
 
 
 def get_rerank_service() -> RerankServiceInterface:

@@ -57,6 +57,8 @@ from common_utils.datetime_utils import (
     from_timestamp,
 )
 from core.observation.logger import get_logger
+from core.events import ApplicationEventPublisher
+from infra_layer.adapters.out.event.memcell_created import MemCellCreatedEvent
 from infra_layer.adapters.out.persistence.document.memory.foresight_record import (
     ForesightRecord,
 )
@@ -918,23 +920,6 @@ def _convert_memcell_to_document(
             extend=(
                 extend_dict if extend_dict else None
             ),  # ✅ Add extend (contains embedding)
-            # EmailMemCell extension fields
-            clips=email_fields.get("clips") or linkdoc_fields.get("clips"),
-            email_address=email_fields.get("email_address"),
-            thread_id=email_fields.get("thread_id"),
-            is_read=email_fields.get("is_read"),
-            importance=email_fields.get("importance"),
-            body_type=email_fields.get("body_type"),
-            email_type=email_fields.get("email_type"),
-            # LinkDocMemCell extension fields
-            file_name=linkdoc_fields.get("file_name"),
-            file_type=linkdoc_fields.get("file_type"),
-            source_type=linkdoc_fields.get("source_type"),
-            file_id=linkdoc_fields.get("file_id"),
-            third_party_user_id=linkdoc_fields.get("third_party_user_id"),
-            download_url=linkdoc_fields.get("download_url"),
-            size=linkdoc_fields.get("size"),
-            parent_ids=linkdoc_fields.get("parent_ids"),
         )
 
         return doc_memcell
@@ -990,6 +975,21 @@ async def _save_memcell_to_database(
             logger.info(
                 f"[mem_db_operations] MemCell saved successfully: {memcell.event_id}"
             )
+            # Publish MemCellCreatedEvent
+            try:
+                publisher = get_bean_by_type(ApplicationEventPublisher)
+                event = MemCellCreatedEvent(
+                    memcell_id=memcell.event_id,
+                    timestamp=int(current_time.timestamp() * 1000),
+                )
+                await publisher.publish(event)
+                logger.debug(
+                    f"[mem_db_operations] MemCellCreatedEvent published: {memcell.event_id}"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"[mem_db_operations] Failed to publish MemCellCreatedEvent: {e}"
+                )
         else:
             logger.info(f"[mem_db_operations] MemCell save failed: {memcell.event_id}")
 

@@ -16,24 +16,24 @@ CRITICAL RULES FOR TRANSLATION:
 
 Usage:
     # Translate commands
-    python -m devops_scripts.i18n.i18n_tool translate
-    python -m devops_scripts.i18n.i18n_tool translate --dry-run
-    python -m devops_scripts.i18n.i18n_tool translate --directory tests
-    python -m devops_scripts.i18n.i18n_tool translate --directory src tests
+    python -m src.devops_scripts.i18n.i18n_tool translate
+    python -m src/devops_scripts.i18n.i18n_tool translate --dry-run
+    python -m src/devops_scripts.i18n.i18n_tool translate --directory tests
+    python -m src/devops_scripts.i18n.i18n_tool translate --directory src tests
 
     # Check commands
-    python -m devops_scripts.i18n.i18n_tool check
-    python -m devops_scripts.i18n.i18n_tool check --directory tests
+    python -m src/devops_scripts.i18n.i18n_tool check
+    python -m src/devops_scripts.i18n.i18n_tool check --directory tests
 
     # Review commands
-    python -m devops_scripts.i18n.i18n_tool review
-    python -m devops_scripts.i18n.i18n_tool review --commit abc123
-    python -m devops_scripts.i18n.i18n_tool review --commit HEAD~3..HEAD
-    python -m devops_scripts.i18n.i18n_tool review --reset  # Clear progress and start fresh
+    python -m src/devops_scripts.i18n.i18n_tool review
+    python -m src/devops_scripts.i18n.i18n_tool review --commit abc123
+    python -m src/devops_scripts.i18n.i18n_tool review --commit HEAD~3..HEAD
+    python -m src/devops_scripts.i18n.i18n_tool review --reset  # Clear progress and start fresh
 
     # Hook commands (for pre-commit)
-    python -m devops_scripts.i18n.i18n_tool hook file1.py file2.py
-    python -m devops_scripts.i18n.i18n_tool hook --commit-msg .git/COMMIT_EDITMSG
+    python -m src/devops_scripts.i18n.i18n_tool hook file1.py file2.py
+    python -m src/devops_scripts.i18n.i18n_tool hook --commit-msg .git/COMMIT_EDITMSG
 """
 
 from __future__ import annotations
@@ -1316,12 +1316,12 @@ def _hook_format_translation_command(files: list[str]) -> str:
     rel_files = [_hook_get_relative_path(f) for f in files]
 
     if len(rel_files) == 1:
-        return (
-            f"python -m devops_scripts.i18n.i18n_tool translate --files {rel_files[0]}"
-        )
+        return f"python -m src.devops_scripts.i18n.i18n_tool translate --files {rel_files[0]}"
     else:
         files_str = " ".join(rel_files)
-        return f"python -m devops_scripts.i18n.i18n_tool translate --files {files_str}"
+        return (
+            f"python -m src.devops_scripts.i18n.i18n_tool translate --files {files_str}"
+        )
 
 
 def _hook_check_files(

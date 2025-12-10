@@ -20,7 +20,7 @@ from typing import Dict, Any, Optional
 from common_utils.datetime_utils import from_iso_format
 from zoneinfo import ZoneInfo
 from core.observation.logger import get_logger
-
+from api_specs.memory_models import RetrieveMethod, MemoryType
 logger = get_logger(__name__)
 
 
@@ -94,23 +94,25 @@ def convert_dict_to_retrieve_mem_request(
         ValueError: When required fields are missing or have incorrect types
     """
     try:
-        # Validate required fields
-        if "user_id" not in data:
-            raise ValueError("user_id is a required field")
+        # Validate required fields: user_id or group_id at least one is required
+        # if not data.get("user_id") and not data.get("group_id"):
+        #     raise ValueError("user_id or group_id at least one is required")
 
         # Handle retrieve_method, use default keyword if not provided
-        from api_specs.memory_models import RetrieveMethod
+        
 
         retrieve_method_str = data.get("retrieve_method", "keyword")
+        logger.debug(f"[DEBUG] retrieve_method_str from data: {retrieve_method_str!r}")
 
         # Convert string to RetrieveMethod enum
         try:
             retrieve_method = RetrieveMethod(retrieve_method_str)
+            logger.debug(f"[DEBUG] converted to: {retrieve_method}")
         except ValueError:
-            logger.warning(
-                f"Invalid retrieve_method: {retrieve_method_str}, using default keyword"
+            raise ValueError(
+                f"Invalid retrieve_method: {retrieve_method_str}. "
+                f"Supported methods: {[m.value for m in RetrieveMethod]}"
             )
-            retrieve_method = RetrieveMethod.KEYWORD
 
         # Convert top_k to integer type (all obtained from query_params are strings)
         top_k = data.get("top_k", 10)
@@ -127,11 +129,27 @@ def convert_dict_to_retrieve_mem_request(
         if radius is not None and isinstance(radius, str):
             radius = float(radius)
 
+        # Convert memory_types string list to MemoryType enum list
+        raw_memory_types = data.get("memory_types", [])
+        # Handle comma-separated string (from query_params)
+        if isinstance(raw_memory_types, str):
+            raw_memory_types = [mt.strip() for mt in raw_memory_types.split(",") if mt.strip()]
+        memory_types = []
+        for mt in raw_memory_types:
+            if isinstance(mt, str):
+                try:
+                    memory_types.append(MemoryType(mt))
+                except ValueError:
+                    logger.error(f"Invalid memory_type: {mt}, skipping")
+            elif isinstance(mt, MemoryType):
+                memory_types.append(mt)
+
         return RetrieveMemRequest(
             retrieve_method=retrieve_method,
-            user_id=data["user_id"],
+            user_id=data.get("user_id", None),
+            group_id=data.get("group_id", None),  # Group ID
             query=query or data.get("query", None),
-            memory_types=data.get("memory_types", []),
+            memory_types=memory_types,
             top_k=top_k,
             filters=data.get("filters", {}),
             include_metadata=include_metadata,

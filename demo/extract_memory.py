@@ -2,7 +2,6 @@ import asyncio
 import json
 from pathlib import Path
 import httpx
-
 from demo.tools.clear_all_data import clear_all_memories
 from common_utils.language_utils import get_prompt_language
 
@@ -102,7 +101,7 @@ async def test_v3_memorize_api():
     
     profile_scene = "assistant"
     
-    print(f"\n📤 Sending {len(test_messages)} messages to V3 API")
+    print(f"\n📤 Sending {len(test_messages)} messages to V1 API")
     print(f"   URL: {memorize_url}")
     print(f"   Profile scene: {profile_scene}")
     print()
@@ -145,6 +144,11 @@ async def test_v3_memorize_api():
                         # Compatible with old versions or other statuses
                         total_accumulated += 1
                         print(f"   ⏳ Queued")
+                elif response.status_code == 202:
+                    result = response.json()
+                    total_processing += 1
+                    request_id = result.get("request_id", "")
+                    print(f"   🔄 Processing (request_id: {request_id[:8]})")
                 else:
                     print(f"   ✗ Failed: HTTP {response.status_code}")
                     print(f"      {response.text[:200]}")
@@ -187,4 +191,4 @@ async def test_v3_memorize_api():
     return True
 
 if __name__ == "__main__":
-    asyncio.run(test_v3_memorize_api())
+    asyncio.run(test_memorize_api())

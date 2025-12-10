@@ -113,6 +113,15 @@ class UserProfileRawRepository(BaseRepository[UserProfile]):
             )
             return []
 
+    async def get_all_by_user(self, user_id: str, limit: int = 40) -> List[UserProfile]:
+        try:
+            return await self.model.find(
+                UserProfile.user_id == user_id
+            ).sort([("version", -1)]).limit(limit).to_list()
+        except Exception as e:
+            logger.error(f"Failed to get user profile: user_id={user_id}, error={e}")
+            return []
+    
     async def upsert(
         self,
         user_id: str,

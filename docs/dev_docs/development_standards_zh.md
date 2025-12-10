@@ -64,6 +64,9 @@ make dev-setup              # 一键配置开发环境（同步依赖 + 安装 h
 **📄 文档规范**  
 使用 markdown 格式，放 docs 目录下。小问题不需要生成文档，只需在代码中添加注释
 
+**🌍 国际化规范**  
+为了国际化团队的交流与合作，代码的注释和文档都应该是英文的
+
 ### 📖 快速导航
 
 - 不知道怎么装依赖？→ [依赖管理规范](#依赖管理规范)
@@ -100,6 +103,7 @@ make dev-setup              # 一键配置开发环境（同步依赖 + 安装 h
   - [优先使用绝对导入](#优先使用绝对导入)
   - [__init__.py 使用规范](#__init__py-使用规范)
 - [模块介绍文件命名规范](#模块介绍文件命名规范)
+- [国际化规范](#国际化规范)
 - [分支管理规范](#分支管理规范)
 - [MR 规范](#-mr-规范)
 - [Code Review 流程](#code-review-流程)
@@ -1926,6 +1930,116 @@ result = instance.do_something()
 - [相关文档1](./path/to/doc1.md)
 - [相关文档2](./path/to/doc2.md)
 ```
+
+---
+
+## 🌍 国际化规范
+
+### 核心原则
+
+**💡 重要提示：代码注释和文档应使用英文**
+
+为了国际化团队的交流与合作，所有代码注释和文档都应该使用英文编写，以确保来自不同语言背景的团队成员都能理解并参与项目。
+
+### 语言要求
+
+#### 1. 代码注释
+
+所有代码注释必须使用英文编写：
+
+```python
+# ✅ 推荐：英文注释
+def calculate_memory_score(memory: Memory, query: str) -> float:
+    """
+    Calculate relevance score between memory and query.
+    
+    Args:
+        memory: The memory object to evaluate
+        query: The search query string
+    
+    Returns:
+        A float score between 0 and 1 indicating relevance
+    """
+    # Calculate base similarity score using cosine similarity
+    base_score = cosine_similarity(memory.embedding, query_embedding)
+    
+    # Apply time decay factor: newer memories have higher weight
+    time_decay = calculate_time_decay(memory.created_at)
+    
+    return base_score * time_decay
+
+# ❌ 不推荐：非英文注释
+def calculate_memory_score(memory: Memory, query: str) -> float:
+    """
+    计算记忆与查询的相关性得分。
+    """
+    # 计算基础相似度得分
+    base_score = cosine_similarity(memory.embedding, query_embedding)
+    ...
+```
+
+#### 2. 文档
+
+所有文档文件都应该使用英文编写：
+
+- 技术文档
+- API 文档
+- 模块介绍文件（`introduction.md`）
+- 开发指南
+- 架构文档
+
+**注意**：中文文档可以作为补充参考版本（`*_zh.md`），但英文应该是主版本。
+
+#### 3. Commit Message
+
+Git commit message 应该使用英文编写：
+
+```bash
+# ✅ 推荐：英文 commit message
+git commit -m "feat: add user authentication endpoint"
+git commit -m "fix: resolve memory leak in cache manager"
+git commit -m "docs: update API documentation for search endpoint"
+
+# ❌ 不推荐：非英文 commit message
+git commit -m "功能: 添加用户认证接口"
+```
+
+#### 4. 代码命名
+
+变量名、函数名、类名等标识符应该使用英文：
+
+```python
+# ✅ 推荐：英文命名
+class MemoryManager:
+    def __init__(self):
+        self.cache_size = 1000
+        self.max_retries = 3
+    
+    async def fetch_user_memories(self, user_id: str) -> list[Memory]:
+        ...
+
+# ❌ 不推荐：非英文或混合命名
+class JiyiGuanliqi:  # 拼音命名
+    def __init__(self):
+        self.huancun_daxiao = 1000  # 拼音变量名
+```
+
+### 好处
+
+- **全球协作**：让全球的团队成员都能理解和贡献代码
+- **行业标准**：与国际软件开发实践保持一致
+- **工具兼容**：IDE、代码检查工具和文档生成器支持更好
+- **知识共享**：更容易与开源社区分享代码和文档
+
+### 检查清单
+
+在提交代码前，确认以下事项：
+
+- [ ] 所有代码注释都使用英文编写
+- [ ] 文档字符串（docstring）使用英文编写
+- [ ] Commit message 使用英文编写
+- [ ] 变量名和函数名使用英文
+- [ ] 新文档使用英文编写（可选中文补充版本）
 
 ---
 

@@ -45,7 +45,7 @@ class MemoryControllerTester:
     # Default tenant information
     DEFAULT_ORGANIZATION_ID = "test_memory_api_organization"
     DEFAULT_SPACE_ID = "test_memory_api_space"
-    DEFAULT_API_KEY = "test_memory_api_key"
+    DEFAULT_HASH_KEY = "test_memory_api_hash_key"
 
     def __init__(
         self,
@@ -54,7 +54,7 @@ class MemoryControllerTester:
         group_id: str,
         organization_id: str = None,
         space_id: str = None,
-        api_key: str = None,
+        hash_key: str = None,
         timeout: int = 180,
         sync_mode: bool = True,
     ):
@@ -67,7 +67,7 @@ class MemoryControllerTester:
             group_id: Test group ID
             organization_id: Organization ID (default: test_memory_api_organization)
             space_id: Space ID (default: test_memory_api_space)
-            api_key: API key (default: test_memory_api_key)
+            hash_key: Hash key (default: test_memory_api_hash_key)
             timeout: Request timeout in seconds, default 180 seconds (3 minutes)
             sync_mode: Whether to enable sync mode (default: True, disable background mode to ensure sequential test effectiveness)
         """
@@ -77,7 +77,7 @@ class MemoryControllerTester:
         self.group_id = group_id
         self.organization_id = organization_id or self.DEFAULT_ORGANIZATION_ID
         self.space_id = space_id or self.DEFAULT_SPACE_ID
-        self.api_key = api_key or self.DEFAULT_API_KEY
+        self.hash_key = hash_key or self.DEFAULT_HASH_KEY
         self.timeout = timeout
         self.sync_mode = sync_mode
 
@@ -86,14 +86,14 @@ class MemoryControllerTester:
         Get tenant-related request headers
 
         Returns:
-            dict: Dictionary containing X-Organization-Id, X-Space-Id, and optional X-API-Key
+            dict: Dictionary containing X-Organization-Id, X-Space-Id, and optional X-Hash-Key
         """
         headers = {
             "X-Organization-Id": self.organization_id,
             "X-Space-Id": self.space_id,
         }
-        if self.api_key:
-            headers["X-API-Key"] = self.api_key
+        if self.hash_key:
+            headers["X-Hash-Key"] = self.hash_key
         return headers
 
     def init_database(self) -> bool:
@@ -115,7 +115,9 @@ class MemoryControllerTester:
         print(
             f"📤 Tenant Info: organization_id={self.organization_id}, space_id={self.space_id}"
         )
-        print(f"📤 Request Headers: {json.dumps(headers, indent=2, ensure_ascii=False)}")
+        print(
+            f"📤 Request Headers: {json.dumps(headers, indent=2, ensure_ascii=False)}"
+        )
 
         try:
             response = requests.post(url, headers=headers, timeout=self.timeout)
@@ -191,7 +193,9 @@ class MemoryControllerTester:
             response_json = response.json()
             print(json.dumps(response_json, indent=2, ensure_ascii=False))
             return response.status_code, response_json
-        except Exception as e:  # noqa: BLE001 Need to catch all exceptions to ensure script continues
+        except (
+            Exception
+        ) as e:  # noqa: BLE001 Need to catch all exceptions to ensure script continues
             print(f"\n❌ Request failed: {e}")
             return None, None
 
@@ -228,7 +232,9 @@ class MemoryControllerTester:
             response_json = response.json()
             print(json.dumps(response_json, indent=2, ensure_ascii=False))
             return response.status_code, response_json
-        except Exception as e:  # noqa: BLE001 Need to catch all exceptions to ensure script continues
+        except (
+            Exception
+        ) as e:  # noqa: BLE001 Need to catch all exceptions to ensure script continues
             print(f"\n❌ Request failed: {e}")
             return None, None
 
@@ -270,7 +276,9 @@ class MemoryControllerTester:
             response_json = response.json()
             print(json.dumps(response_json, indent=2, ensure_ascii=False))
             return response.status_code, response_json
-        except Exception as e:  # noqa: BLE001 Need to catch all exceptions to ensure script continues
+        except (
+            Exception
+        ) as e:  # noqa: BLE001 Need to catch all exceptions to ensure script continues
             print(f"\n❌ Request failed: {e}")
             return None, None
 
@@ -304,7 +312,9 @@ class MemoryControllerTester:
             response_json = response.json()
             print(json.dumps(response_json, indent=2, ensure_ascii=False))
             return response.status_code, response_json
-        except Exception as e:  # noqa: BLE001 Need to catch all exceptions to ensure script continues
+        except (
+            Exception
+        ) as e:  # noqa: BLE001 Need to catch all exceptions to ensure script continues
             print(f"\n❌ Request failed: {e}")
             return None, None
 
@@ -391,8 +401,12 @@ class MemoryControllerTester:
 
         # Send messages one by one
         print("\n📨 Starting to send conversation sequence...")
-        print("💡 Strategy Explanation: First 4 messages form complete scenario 1 (coffee preference discussion)")
-        print("💡 5th message triggers boundary detection via 5-hour time gap + new topic")
+        print(
+            "💡 Strategy Explanation: First 4 messages form complete scenario 1 (coffee preference discussion)"
+        )
+        print(
+            "💡 5th message triggers boundary detection via 5-hour time gap + new topic"
+        )
         print("💡 This ensures memory from scenario 1 is successfully extracted")
 
         last_response = None
@@ -427,7 +441,9 @@ class MemoryControllerTester:
         assert "status_info" in result, "result should contain status_info field"
 
         # Validate saved_memories is a list
-        assert isinstance(result["saved_memories"], list), "saved_memories should be a list"
+        assert isinstance(
+            result["saved_memories"], list
+        ), "saved_memories should be a list"
         assert result["count"] >= 0, "count should be >= 0"
         assert result["status_info"] in [
             "accumulated",
@@ -437,7 +453,9 @@ class MemoryControllerTester:
         # If there are extracted memories, validate each memory's structure
         if result["count"] > 0:
             print(f"\n✅ Successfully extracted {result['count']} memories!")
-            print(f"✅ Boundary detection successful: triggered by time gap (5 hours) + topic switch")
+            print(
+                f"✅ Boundary detection successful: triggered by time gap (5 hours) + topic switch"
+            )
             for idx, memory in enumerate(result["saved_memories"], 1):
                 assert isinstance(memory, dict), f"Memory {idx} should be a dictionary"
                 # Note: Different memory types may have different field structures
@@ -451,9 +469,15 @@ class MemoryControllerTester:
             print(
                 f"\n⚠️  Messages accumulated, waiting for boundary detection (status_info: {result['status_info']})"
             )
-            print(f"   Sent {len(messages)} messages, but boundary detection conditions may not be met")
-            print(f"   💡 Tip: Boundary detection requires one of the following conditions:")
-            print(f"      1. Cross-day (new message date differs from previous message)")
+            print(
+                f"   Sent {len(messages)} messages, but boundary detection conditions may not be met"
+            )
+            print(
+                f"   💡 Tip: Boundary detection requires one of the following conditions:"
+            )
+            print(
+                f"      1. Cross-day (new message date differs from previous message)"
+            )
             print(f"      2. Long interruption (over 4 hours) + topic switch")
             print(f"      3. Clear scene/topic switch signal")
 
@@ -513,7 +537,9 @@ class MemoryControllerTester:
                 f"✅ Fetch Episodic successful, returned {result['total_count']} episodic memories, deep structure validated"
             )
         else:
-            print(f"✅ Fetch Episodic successful, returned {result['total_count']} episodic memories")
+            print(
+                f"✅ Fetch Episodic successful, returned {result['total_count']} episodic memories"
+            )
 
         return status_code, response
 
@@ -619,7 +645,9 @@ class MemoryControllerTester:
         if result["total_count"] > 0 and len(result["memories"]) > 0:
             for idx, memory in enumerate(result["memories"]):
                 assert isinstance(memory, dict), f"Memory {idx} should be a dictionary"
-                assert "atomic_fact" in memory, f"Memory {idx} should contain atomic_fact"
+                assert (
+                    "atomic_fact" in memory
+                ), f"Memory {idx} should contain atomic_fact"
                 assert "timestamp" in memory, f"Memory {idx} should contain timestamp"
                 assert "user_id" in memory, f"Memory {idx} should contain user_id"
                 assert (
@@ -630,7 +658,9 @@ class MemoryControllerTester:
                 f"✅ Fetch Event Log successful, returned {result['total_count']} event logs, deep structure validated"
             )
         else:
-            print(f"✅ Fetch Event Log successful, returned {result['total_count']} event logs")
+            print(
+                f"✅ Fetch Event Log successful, returned {result['total_count']} event logs"
+            )
 
         return status_code, response
 
@@ -694,18 +724,26 @@ class MemoryControllerTester:
 
                     # Validate basic fields for each memory
                     for mem_idx, mem in enumerate(memory_list):
-                        assert isinstance(mem, dict), f"Memory {mem_idx} should be a dictionary"
+                        assert isinstance(
+                            mem, dict
+                        ), f"Memory {mem_idx} should be a dictionary"
                         assert (
                             "memory_type" in mem
                         ), f"Memory {mem_idx} should contain memory_type"
-                        assert "user_id" in mem, f"Memory {mem_idx} should contain user_id"
+                        assert (
+                            "user_id" in mem
+                        ), f"Memory {mem_idx} should contain user_id"
                         assert (
                             "timestamp" in mem
                         ), f"Memory {mem_idx} should contain timestamp"
 
-            print(f"✅ Search Keyword successful, returned {result['total_count']} groups of memories")
+            print(
+                f"✅ Search Keyword successful, returned {result['total_count']} groups of memories"
+            )
         else:
-            print(f"✅ Search Keyword successful, returned {result['total_count']} groups of memories")
+            print(
+                f"✅ Search Keyword successful, returned {result['total_count']} groups of memories"
+            )
 
         return status_code, response
 
@@ -745,7 +783,9 @@ class MemoryControllerTester:
                 result["importance_scores"], list
             ), "importance_scores should be a list"
 
-        print(f"✅ Search Vector successful, returned {result['total_count']} groups of memories")
+        print(
+            f"✅ Search Vector successful, returned {result['total_count']} groups of memories"
+        )
 
         return status_code, response
 
@@ -794,7 +834,9 @@ class MemoryControllerTester:
                 metadata.get("source") == "hybrid_retrieval"
             ), "Hybrid search source should be hybrid_retrieval"
 
-        print(f"✅ Search Hybrid successful, returned {result['total_count']} groups of memories")
+        print(
+            f"✅ Search Hybrid successful, returned {result['total_count']} groups of memories"
+        )
 
         return status_code, response
 
@@ -847,7 +889,9 @@ class MemoryControllerTester:
         # Validate value correctness
         assert result["group_id"] == self.group_id, "Returned group_id should match"
         assert result["scene"] == "assistant", "Returned scene should match"
-        assert result["name"] == "Test Project Discussion Group", "Returned name should match"
+        assert (
+            result["name"] == "Test Project Discussion Group"
+        ), "Returned name should match"
 
         print(f"✅ Save Conversation Meta successful, id={result['id']}")
 
@@ -877,7 +921,9 @@ class MemoryControllerTester:
             result = response["result"]
             assert "id" in result, "result should contain id field"
             assert "group_id" in result, "result should contain group_id field"
-            assert "updated_fields" in result, "result should contain updated_fields field"
+            assert (
+                "updated_fields" in result
+            ), "result should contain updated_fields field"
 
             # Validate updated fields
             assert result["group_id"] == self.group_id, "Returned group_id should match"
@@ -929,7 +975,7 @@ class MemoryControllerTester:
         print(f"  Test Group: {self.group_id}")
         print(f"  Organization ID: {self.organization_id}")
         print(f"  Space ID: {self.space_id}")
-        print(f"  API Key: {self.api_key}")
+        print(f"  Hash Key: {self.hash_key}")
         print(f"  Sync Mode: {self.sync_mode}")
         print(f"  Test Method: {test_method}")
         if except_test_methods:
@@ -960,7 +1006,9 @@ class MemoryControllerTester:
             excluded_list = [m.strip() for m in except_test_methods.split(",")]
             for method_name in excluded_list:
                 if method_name not in test_methods:
-                    print(f"\n⚠️  Warning: Unknown test method '{method_name}', will be ignored")
+                    print(
+                        f"\n⚠️  Warning: Unknown test method '{method_name}', will be ignored"
+                    )
                 else:
                     excluded_methods.add(method_name)
 
@@ -1007,7 +1055,9 @@ class MemoryControllerTester:
             print("\n✅ All interface structure validations passed!")
         else:
             print(f"\n✅ Test method [{test_method}] validation passed!")
-        print("💡 Tip: If an interface fails, check if input/output structure has changed\n")
+        print(
+            "💡 Tip: If an interface fails, check if input/output structure has changed\n"
+        )
 
 
 def parse_args():
@@ -1044,10 +1094,10 @@ Usage Examples:
   python tests/test_memory_controller.py --sync-mode false
 
   # Specify API Key for authentication
-  python tests/test_memory_controller.py --api-key your_api_key_here
+  python tests/test_memory_controller.py --hash-key your_hash_key_here
 
   # Specify all parameters
-  python tests/test_memory_controller.py --base-url http://dev-server:1995 --user-id test_user --group-id test_group --organization-id my_org --space-id my_space --api-key your_api_key --timeout 60 --sync-mode true
+  python tests/test_memory_controller.py --base-url http://dev-server:1995 --user-id test_user --group-id test_group --organization-id my_org --space-id my_space --hash-key your_hash_key --timeout 60 --sync-mode true
         """,
     )
 
@@ -1057,9 +1107,13 @@ Usage Examples:
         help="API base URL (default: http://localhost:1995)",
     )
 
-    parser.add_argument("--user-id", default=None, help="Test user ID (default: randomly generated)")
+    parser.add_argument(
+        "--user-id", default=None, help="Test user ID (default: randomly generated)"
+    )
 
-    parser.add_argument("--group-id", default=None, help="Test group ID (default: randomly generated)")
+    parser.add_argument(
+        "--group-id", default=None, help="Test group ID (default: randomly generated)"
+    )
 
     parser.add_argument(
         "--organization-id",
@@ -1074,13 +1128,16 @@ Usage Examples:
     )
 
     parser.add_argument(
-        "--api-key",
+        "--hash-key",
         default=None,
-        help=f"API key for authentication (default: {MemoryControllerTester.DEFAULT_API_KEY})",
+        help=f"Hash key for authentication (default: {MemoryControllerTester.DEFAULT_HASH_KEY})",
     )
 
     parser.add_argument(
-        "--timeout", type=int, default=180, help="Request timeout in seconds (default: 180)"
+        "--timeout",
+        type=int,
+        default=180,
+        help="Request timeout in seconds (default: 180)",
     )
 
     parser.add_argument(
@@ -1127,7 +1184,9 @@ def main():
         print("❌ Error: Cannot use both --test-method and --except-test-method")
         print("   Please choose one:")
         print("   - Use --test-method to specify a single test to run")
-        print("   - Use --except-test-method to specify tests to exclude (run all others)")
+        print(
+            "   - Use --except-test-method to specify tests to exclude (run all others)"
+        )
         return
 
     # If user_id not provided, generate randomly
@@ -1153,9 +1212,9 @@ def main():
         print(
             f"⚠️  --space-id not provided, using default: {MemoryControllerTester.DEFAULT_SPACE_ID}"
         )
-    if not args.api_key:
+    if not args.hash_key:
         print(
-            f"⚠️  --api-key not provided, using default: {MemoryControllerTester.DEFAULT_API_KEY}"
+            f"⚠️  --hash-key not provided, using default: {MemoryControllerTester.DEFAULT_HASH_KEY}"
         )
 
     # Create tester instance
@@ -1165,7 +1224,7 @@ def main():
         group_id=group_id,
         organization_id=organization_id,
         space_id=space_id,
-        api_key=args.api_key,
+        hash_key=args.hash_key,
         timeout=args.timeout,
         sync_mode=args.sync_mode,
     )

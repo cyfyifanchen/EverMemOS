@@ -117,7 +117,7 @@ async def test_rerank():
     # Print results
     print("Rerank results:")
     for r in results:
-        score = r.get('_rerank_score', 0)
+        score = r.get('score', 0)
         text = r['episode']
         print(f"  {score:.4f} - {text}")
 

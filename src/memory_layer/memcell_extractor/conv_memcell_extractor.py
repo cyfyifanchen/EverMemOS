@@ -5,19 +5,16 @@ This module provides a simple and extensible base class for detecting
 boundaries in various types of content (conversations, emails, notes, etc.).
 """
 
-import time
-import os
-from typing import Dict, Any, Optional, List, Tuple, ClassVar
+from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime
 from dataclasses import dataclass
 import uuid
 import json, re
 import asyncio
-import tiktoken
+from core.di.utils import get_bean, get_bean_by_type
+from component.llm.tokenizer.tokenizer_factory import TokenizerFactory
 from common_utils.datetime_utils import (
     from_iso_format as dt_from_iso_format,
-    from_timestamp as dt_from_timestamp,
-    get_now_with_timezone,
 )
 from memory_layer.llm.llm_provider import LLMProvider
 from api_specs.memory_types import RawDataType
@@ -69,20 +66,15 @@ class ConvMemCellExtractor(MemCellExtractor):
     - Controlled by MEMORY_LANGUAGE env var: 'zh' (Chinese) or 'en' (English), default 'en'
     """
 
-    # Class variable: shared tokenizer across all instances (lazy loaded)
-    _tokenizer: ClassVar[Optional[tiktoken.Encoding]] = None
-
     # Default limits for force splitting
     DEFAULT_HARD_TOKEN_LIMIT = 8192
     DEFAULT_HARD_MESSAGE_LIMIT = 50
 
-    # TODO: @Hui to optimize tiktoken cache
     @classmethod
-    def _get_tokenizer(cls) -> tiktoken.Encoding:
-        """Get or create the shared tokenizer (lazy loading, only once)."""
-        if cls._tokenizer is None:
-            cls._tokenizer = tiktoken.get_encoding("o200k_base")
-        return cls._tokenizer
+    def _get_tokenizer(cls):
+        """Get the shared tokenizer from tokenizer factory (with caching)."""
+        tokenizer_factory: TokenizerFactory = get_bean_by_type(TokenizerFactory)
+        return tokenizer_factory.get_tokenizer_from_tiktoken("o200k_base")
 
     def __init__(
         self,

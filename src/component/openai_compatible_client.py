@@ -6,15 +6,15 @@ from core.di.decorators import component
 from core.observation.logger import get_logger
 from component.config_provider import ConfigProvider
 
-from component.llm_adapter.llm.message import ChatMessage
-from component.llm_adapter.llm.completion import (
+from component.llm.llm_adapter.message import ChatMessage
+from component.llm.llm_adapter.completion import (
     ChatCompletionRequest,
     ChatCompletionResponse,
 )
-from component.llm_adapter.llm.llm_backend_adapter import LLMBackendAdapter
-from component.llm_adapter.llm.openai_adapter import OpenAIAdapter
-from component.llm_adapter.llm.anthropic_adapter import AnthropicAdapter
-from component.llm_adapter.llm.gemini_adapter import GeminiAdapter
+from component.llm.llm_adapter.llm_backend_adapter import LLMBackendAdapter
+from component.llm.llm_adapter.openai_adapter import OpenAIAdapter
+from component.llm.llm_adapter.anthropic_adapter import AnthropicAdapter
+from component.llm.llm_adapter.gemini_adapter import GeminiAdapter
 
 logger = get_logger(__name__)
 

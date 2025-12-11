@@ -6,10 +6,11 @@ from fastapi import FastAPI
 from typing import Dict, Any
 
 from core.observation.logger import get_logger
-from core.di.utils import get_beans_by_type
+from core.di.utils import get_bean_by_type, get_beans_by_type, get_bean
 from core.di.decorators import component
 from core.interface.controller.base_controller import BaseController
 from core.capability.app_capability import ApplicationCapability
+from component.llm.tokenizer.tokenizer_factory import TokenizerFactory
 from .lifespan_interface import LifespanProvider
 
 logger = get_logger(__name__)
@@ -40,6 +41,10 @@ class BusinessLifespanProvider(LifespanProvider):
             Dict[str, Any]: Business initialization information
         """
         logger.info("Initializing business logic...")
+
+        # 0. Preload tokenizers to avoid blocking requests
+        tokenizer_factory: TokenizerFactory = get_bean_by_type(TokenizerFactory)
+        tokenizer_factory.load_default_encodings()
 
         # 1. Create business graph structure
         graphs = self._register_graphs(app)

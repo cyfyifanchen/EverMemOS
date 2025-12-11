@@ -15,9 +15,9 @@ def get_timezone() -> ZoneInfo:
 timezone = get_timezone()
 
 
-def get_now_with_timezone() -> datetime.datetime:
+def get_now_with_timezone(tz: ZoneInfo = None) -> datetime.datetime:
     """Get current time with local timezone."""
-    return datetime.datetime.now(tz=timezone)
+    return datetime.datetime.now(tz=tz or timezone)
 
 
 def to_timezone(dt: datetime.datetime, tz: ZoneInfo = None) -> datetime.datetime:
@@ -31,15 +31,15 @@ def to_iso_format(
     time_value: datetime.datetime | int | float | str | None,
 ) -> str | None:
     """Convert time value to ISO format string with timezone.
-    
+
     Supports: datetime, int/float (unix timestamp), str, None.
-    
+
     Args:
         time_value: Time value to convert.
-        
+
     Returns:
         ISO format string (e.g. 2025-09-16T20:20:06+08:00), or None.
-        
+
     Raises:
         TypeError: If time_value is not a supported type.
         ValueError: If timestamp is invalid.
@@ -49,12 +49,16 @@ def to_iso_format(
         return None
 
     value_type = type(time_value)
-    
+
     if value_type is str:
         if not time_value:
             return None
         # Validate and parse ISO format string
-        time_str = time_value.replace("Z", "+00:00") if time_value.endswith("Z") else time_value
+        time_str = (
+            time_value.replace("Z", "+00:00")
+            if time_value.endswith("Z")
+            else time_value
+        )
         dt = datetime.datetime.fromisoformat(time_str)
     elif value_type in (int, float):
         if time_value <= 0:
@@ -96,7 +100,7 @@ def to_timestamp_ms(dt: datetime.datetime) -> int:
 
 def to_timestamp_ms_universal(time_value) -> int:
     """Convert any time format to milliseconds timestamp.
-    
+
     Supports: int/float (timestamp), str (ISO format), datetime, None.
     Returns 0 on failure or None input.
     """

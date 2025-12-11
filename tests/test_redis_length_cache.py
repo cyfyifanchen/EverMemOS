@@ -17,6 +17,8 @@ Test coverage:
 import asyncio
 import time
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
+from common_utils.datetime_utils import get_now_with_timezone
 from core.di.utils import get_bean
 from core.observation.logger import get_logger
 
@@ -90,7 +92,9 @@ async def test_basic_operations():
 
     # 3. Verify queue size
     size = await cache.get_queue_size(test_key)
-    assert size == len(test_data), f"Queue size mismatch: expected {len(test_data)}, actual {size}"
+    assert size == len(
+        test_data
+    ), f"Queue size mismatch: expected {len(test_data)}, actual {size}"
     logger.info("Queue size verification passed: %d", size)
 
     # 4. Get queue statistics
@@ -162,7 +166,9 @@ async def test_length_cleanup():
     logger.info("Manually triggering cleanup, should delete 2 oldest items...")
     cleaned_count = await cache.cleanup_excess(test_key)
     logger.info("Manual cleanup completed, cleaned count: %d", cleaned_count)
-    assert cleaned_count == 2, f"Expected to clean 2 items, actually cleaned {cleaned_count}"
+    assert (
+        cleaned_count == 2
+    ), f"Expected to clean 2 items, actually cleaned {cleaned_count}"
 
     # 6. Verify data after cleanup
     final_size = await cache.get_queue_size(test_key)
@@ -224,18 +230,20 @@ async def test_timestamp_compatibility():
     assert success, "Failed to append with integer timestamp"
 
     # Use datetime object (naive)
-    dt_naive = datetime.now()
+    dt_naive = get_now_with_timezone()
     success = await cache.append(test_key, "data_datetime_naive", timestamp=dt_naive)
     assert success, "Failed to append with datetime object"
 
     # Use datetime object (with timezone)
-    dt_with_tz = datetime.now(timezone.utc)
+    dt_with_tz = get_now_with_timezone(ZoneInfo("UTC"))
     success = await cache.append(test_key, "data_datetime_tz", timestamp=dt_with_tz)
     assert success, "Failed to append with timezone-aware datetime object"
 
     # 3. Verify all data was correctly stored
     size = await cache.get_queue_size(test_key)
-    assert size == 4, f"Timestamp compatibility test data count mismatch: expected 4, actual {size}"
+    assert (
+        size == 4
+    ), f"Timestamp compatibility test data count mismatch: expected 4, actual {size}"
 
     # 4. Get statistics to verify timestamps
     stats = await cache.get_queue_stats(test_key)
@@ -286,7 +294,9 @@ async def test_timestamp_range_query():
 
     # 3. Test getting all data (no time range limit)
     all_data = await cache.get_by_timestamp_range(test_key)
-    assert len(all_data) == 10, f"Failed to get all data, expected 10, actual {len(all_data)}"
+    assert (
+        len(all_data) == 10
+    ), f"Failed to get all data, expected 10, actual {len(all_data)}"
     logger.info("Successfully retrieved all data: %d items", len(all_data))
 
     # 4. Test filtering by start time (get data after the 5th item)
@@ -299,8 +309,12 @@ async def test_timestamp_range_query():
     ), f"Start time filtering failed, expected 6, actual {len(filtered_data)}"  # data_4 to data_9
 
     # Verify data order (newest first)
-    assert filtered_data[0]["data"]["index"] == 9, "Data sorting error, newest should be first"
-    assert filtered_data[-1]["data"]["index"] == 4, "Data sorting error, oldest should be last"
+    assert (
+        filtered_data[0]["data"]["index"] == 9
+    ), "Data sorting error, newest should be first"
+    assert (
+        filtered_data[-1]["data"]["index"] == 4
+    ), "Data sorting error, oldest should be last"
     logger.info("Start time filtering test passed")
 
     # 5. Test filtering by end time (get data before the 5th item)
@@ -339,7 +353,9 @@ async def test_timestamp_range_query():
 
     # 7. Test limiting number of results
     limited_data = await cache.get_by_timestamp_range(test_key, limit=3)
-    assert len(limited_data) == 3, f"Limiting count failed, expected 3, actual {len(limited_data)}"
+    assert (
+        len(limited_data) == 3
+    ), f"Limiting count failed, expected 3, actual {len(limited_data)}"
     logger.info("Limit count test passed")
 
     # 8. Test using datetime objects as timestamps
@@ -429,7 +445,9 @@ async def test_json_pickle_mixed_data():
     # 5. Verify total data count
     total_count = len(json_data) + len(pickle_data)
     size = await cache.get_queue_size(test_key)
-    assert size == total_count, f"Total data count mismatch: expected {total_count}, actual {size}"
+    assert (
+        size == total_count
+    ), f"Total data count mismatch: expected {total_count}, actual {size}"
     logger.info(
         "Data addition completed, total: %d items (JSON: %d, Pickle: %d)",
         total_count,
@@ -457,7 +475,9 @@ async def test_json_pickle_mixed_data():
             if original["type"] == "json"
         ):
             json_count += 1
-            logger.debug("JSON data verification successful: %s", str(retrieved_data)[:50])
+            logger.debug(
+                "JSON data verification successful: %s", str(retrieved_data)[:50]
+            )
 
         # Check Pickle data
         elif isinstance(retrieved_data, NonSerializableTestClass):
@@ -465,10 +485,14 @@ async def test_json_pickle_mixed_data():
             # Verify Pickle object functionality
             doubled = retrieved_data.get_doubled_value()
             expected = retrieved_data.value * retrieved_data.multiplier
-            assert doubled == expected, f"Pickle object function error: {doubled} != {expected}"
+            assert (
+                doubled == expected
+            ), f"Pickle object function error: {doubled} != {expected}"
 
             # Verify complex data
-            assert "set_data" in retrieved_data.complex_data, "Pickle object missing set data"
+            assert (
+                "set_data" in retrieved_data.complex_data
+            ), "Pickle object missing set data"
             assert (
                 "bytes_data" in retrieved_data.complex_data
             ), "Pickle object missing bytes data"
@@ -485,8 +509,13 @@ async def test_json_pickle_mixed_data():
             pickle_count += 1
             # Verify dictionary containing set and bytes
             assert isinstance(retrieved_data["complex_set"], set), "Set data type error"
-            assert isinstance(retrieved_data["bytes_data"], bytes), "Bytes data type error"
-            logger.debug("Verification of dictionary with complex data successful: %s", retrieved_data["name"])
+            assert isinstance(
+                retrieved_data["bytes_data"], bytes
+            ), "Bytes data type error"
+            logger.debug(
+                "Verification of dictionary with complex data successful: %s",
+                retrieved_data["name"],
+            )
 
         else:
             logger.warning("Unrecognized data type: %s", type(retrieved_data))
@@ -500,7 +529,9 @@ async def test_json_pickle_mixed_data():
     ), f"Pickle data count mismatch: expected {len(pickle_data)}, actual {pickle_count}"
 
     logger.info(
-        "Data type verification completed: JSON data %d items, Pickle data %d items", json_count, pickle_count
+        "Data type verification completed: JSON data %d items, Pickle data %d items",
+        json_count,
+        pickle_count,
     )
 
     # 9. Test timestamp range query support for mixed data
@@ -509,13 +540,17 @@ async def test_json_pickle_mixed_data():
     first_half = await cache.get_by_timestamp_range(
         test_key, end_timestamp=mid_timestamp
     )
-    assert len(first_half) >= len(json_data) // 2, "Timestamp range query support for mixed data abnormal"
+    assert (
+        len(first_half) >= len(json_data) // 2
+    ), "Timestamp range query support for mixed data abnormal"
 
     # Get second half data (mainly Pickle data)
     second_half = await cache.get_by_timestamp_range(
         test_key, start_timestamp=mid_timestamp
     )
-    assert len(second_half) >= len(pickle_data), "Timestamp range query support for Pickle data abnormal"
+    assert len(second_half) >= len(
+        pickle_data
+    ), "Timestamp range query support for Pickle data abnormal"
 
     logger.info(
         "Mixed data timestamp range query test passed: first half %d items, second half %d items",
@@ -553,7 +588,9 @@ async def test_pickle_error_handling():
 
     retrieved = data_list[0]["data"]
     assert isinstance(retrieved, NonSerializableTestClass), "Pickle data type error"
-    assert retrieved.name == "normal" and retrieved.value == 42, "Pickle data content error"
+    assert (
+        retrieved.name == "normal" and retrieved.value == 42
+    ), "Pickle data content error"
     assert retrieved.get_doubled_value() == 84, "Pickle object function error"
 
     logger.info("Normal Pickle data processing verification passed")
@@ -587,7 +624,9 @@ async def test_pickle_error_handling():
         1 for item in all_data if isinstance(item["data"], NonSerializableTestClass)
     )
 
-    assert json_count >= 2, f"JSON data count abnormal: {json_count}"  # At least dict and string
+    assert (
+        json_count >= 2
+    ), f"JSON data count abnormal: {json_count}"  # At least dict and string
     assert (
         pickle_count >= 3
     ), f"Pickle data count abnormal: {pickle_count}"  # 3 NonSerializableTestClass objects
@@ -639,7 +678,9 @@ async def test_stress_operations():
         # Check size every 100 items
         if (i + 1) % 100 == 0:
             current_size = await cache.get_queue_size(test_key)
-            logger.info("Appended %d items, current queue size: %d", i + 1, current_size)
+            logger.info(
+                "Appended %d items, current queue size: %d", i + 1, current_size
+            )
 
     elapsed = time.time() - start_time
     logger.info("Data append completed, elapsed time: %.2f seconds", elapsed)
@@ -650,7 +691,9 @@ async def test_stress_operations():
 
     # If queue size exceeds significantly, manually trigger cleanup to verify cleanup mechanism
     if final_size > 120:  # Allow some excess range
-        logger.info("Queue size exceeds significantly, manually triggering cleanup test...")
+        logger.info(
+            "Queue size exceeds significantly, manually triggering cleanup test..."
+        )
         cleaned_count = await cache.cleanup_excess(test_key)
         logger.info("Manual cleanup completed, cleaned %d items", cleaned_count)
 
@@ -714,7 +757,9 @@ async def test_expiry_mechanism():
 
     # 5. Verify data has expired
     expired_size = await cache.get_queue_size(test_key)
-    assert expired_size == 0, f"Data did not expire correctly, queue size: {expired_size}"
+    assert (
+        expired_size == 0
+    ), f"Data did not expire correctly, queue size: {expired_size}"
 
     expired_stats = await cache.get_queue_stats(test_key)
     assert expired_stats["total_count"] == 0, "Statistics should be 0 after expiration"
@@ -745,7 +790,7 @@ async def test_compatibility_layer():
     assert stats["total_count"] == 1, "Statistics error in backward compatibility layer"
 
     # 3. Test append with timestamp
-    dt = datetime.now()
+    dt = get_now_with_timezone()
     success = await default_manager.append(test_key, "datetime_test", timestamp=dt)
     assert success, "Failed to append datetime in backward compatibility layer"
 
@@ -769,7 +814,9 @@ async def test_compatibility_layer():
 
     # Test limit count
     limited_data = await default_manager.get_by_timestamp_range(test_key, limit=2)
-    assert len(limited_data) == 2, "Limit count function in backward compatibility layer failed"
+    assert (
+        len(limited_data) == 2
+    ), "Limit count function in backward compatibility layer failed"
 
     logger.info("New method test in backward compatibility layer passed")
 

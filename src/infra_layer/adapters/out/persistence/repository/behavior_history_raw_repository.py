@@ -1,13 +1,12 @@
-from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from pymongo.asynchronous.client_session import AsyncClientSession
-from beanie import PydanticObjectId
 from core.oxm.mongo.base_repository import BaseRepository
 from infra_layer.adapters.out.persistence.document.memory.behavior_history import (
     BehaviorHistory,
 )
 from core.observation.logger import get_logger
 from core.di.decorators import repository
+from common_utils.datetime_utils import get_now_with_timezone
 
 logger = get_logger(__name__)
 
@@ -138,7 +137,7 @@ class BehaviorHistoryRawRepository(BaseRepository[BehaviorHistory]):
     ) -> List[BehaviorHistory]:
         """Get user's behavior history from the recent N hours"""
         try:
-            current_timestamp = int(datetime.now().timestamp())
+            current_timestamp = int(get_now_with_timezone().timestamp())
             start_timestamp = current_timestamp - (hours * 3600)
 
             results = (

@@ -75,7 +75,7 @@ def test_group_profile_creation():
     print("Starting GroupProfile model creation test...")
 
     current_time = get_now_with_timezone()
-    current_timestamp = int(datetime.now().timestamp() * 1000)
+    current_timestamp = int(get_now_with_timezone().timestamp() * 1000)
 
     # Create test topics
     topics = [
@@ -166,8 +166,8 @@ def test_timezone_handling():
     print("Starting timezone handling test...")
 
     # Create times in different timezones
-    utc_time = datetime.now(ZoneInfo("UTC"))
-    tokyo_time = datetime.now(ZoneInfo("Asia/Tokyo"))
+    utc_time = get_now_with_timezone(ZoneInfo("UTC"))
+    tokyo_time = get_now_with_timezone(ZoneInfo("Asia/Tokyo"))
     shanghai_time = get_now_with_timezone()
 
     print(f"UTC time: {to_iso_format(utc_time)}")
@@ -199,7 +199,7 @@ def test_timezone_handling():
     # Create group
     group_profile = GroupProfile(
         group_id="timezone_test_group",
-        timestamp=int(datetime.now().timestamp() * 1000),
+        timestamp=int(get_now_with_timezone().timestamp() * 1000),
         topics=topics,
     )
 
@@ -257,7 +257,8 @@ def test_validation():
     )
 
     valid_group = GroupProfile(
-        group_id="valid_group", timestamp=int(datetime.now().timestamp() * 1000)
+        group_id="valid_group",
+        timestamp=int(get_now_with_timezone().timestamp() * 1000),
     )
 
     print("✅ Valid data creation passed")

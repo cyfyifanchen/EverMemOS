@@ -17,6 +17,7 @@ from core.longjob.interfaces import (
     ErrorHandler,
     MessageBatch,
 )
+from common_utils.datetime_utils import get_now_with_timezone
 
 
 class DefaultErrorHandler(ErrorHandler):
@@ -99,7 +100,7 @@ class RecycleConsumerBase(LongJobInterface, ABC):
             # Start consumption loop
             self._task = asyncio.create_task(self._consume_loop())
             self.status = LongJobStatus.RUNNING
-            self.stats['start_time'] = datetime.now()
+            self.stats['start_time'] = get_now_with_timezone()
 
             self.logger.info("Consumer %s started successfully", self.job_id)
 
@@ -196,7 +197,7 @@ class RecycleConsumerBase(LongJobInterface, ABC):
                 # Error handling
                 context = {
                     'job_id': self.job_id,
-                    'timestamp': datetime.now().isoformat(),
+                    'timestamp': get_now_with_timezone().isoformat(),
                     'stats': self.stats.copy(),
                 }
 
@@ -234,7 +235,7 @@ class RecycleConsumerBase(LongJobInterface, ABC):
             await asyncio.wait_for(self._process_single_message(), timeout=timeout)
 
             self.stats['total_processed'] += 1
-            self.stats['last_processed_time'] = datetime.now()
+            self.stats['last_processed_time'] = get_now_with_timezone()
 
         except asyncio.TimeoutError:
             self.stats['total_timeouts'] += 1
@@ -249,7 +250,7 @@ class RecycleConsumerBase(LongJobInterface, ABC):
                 'job_id': self.job_id,
                 'error_type': 'timeout',
                 'timeout': timeout,
-                'timestamp': datetime.now().isoformat(),
+                'timestamp': get_now_with_timezone().isoformat(),
             }
 
             try:
@@ -394,7 +395,7 @@ class RecycleConsumerBase(LongJobInterface, ABC):
         stats['uptime'] = None
 
         if stats['start_time']:
-            uptime = datetime.now() - stats['start_time']
+            uptime = get_now_with_timezone() - stats['start_time']
             stats['uptime'] = uptime.total_seconds()
 
         return stats

@@ -13,6 +13,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from common_utils.datetime_utils import get_now_with_timezone
 from common_utils.project_path import CURRENT_DIR
 from pymongo import MongoClient
 
@@ -162,7 +163,7 @@ class Backward:
             FileExistsError: If migration file already exists
         """
         # Generate timestamp
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        timestamp = get_now_with_timezone().strftime("%Y%m%d%H%M%S")
         filename = f"{timestamp}_{migration_name}.py"
         filepath = self.migrations_path / filename
 
@@ -173,7 +174,7 @@ class Backward:
         # Generate migration content
         content = self.MIGRATION_TEMPLATE.format(
             description=migration_name.replace("_", " ").title(),
-            created_at=datetime.now().isoformat(),
+            created_at=get_now_with_timezone().isoformat(),
         )
 
         # Write file

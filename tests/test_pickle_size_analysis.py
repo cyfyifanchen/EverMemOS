@@ -14,11 +14,11 @@ import asyncio
 import pickle
 import sys
 import time
-from datetime import datetime, timedelta
-from typing import Dict, List, Any
+from datetime import timedelta
 from core.di.utils import get_bean
 from core.observation.logger import get_logger
 from core.cache.redis_cache_queue.redis_data_processor import RedisDataProcessor
+from common_utils.datetime_utils import get_now_with_timezone
 
 logger = get_logger(__name__)
 
@@ -38,7 +38,7 @@ class ComplexTestObject:
 
     def __init__(self, name: str, data_size: int):
         self.name = name
-        self.created_at = datetime.now()
+        self.created_at = get_now_with_timezone()
         self.id = id(self)
         self.data = list(range(data_size))
         self.metadata = {
@@ -48,7 +48,7 @@ class ComplexTestObject:
             "nested": {
                 "level1": {"level2": {"level3": "deep_data"}},
                 "timestamps": [
-                    datetime.now() + timedelta(seconds=i) for i in range(10)
+                    get_now_with_timezone() + timedelta(seconds=i) for i in range(10)
                 ],
             },
         }
@@ -84,7 +84,7 @@ class LargeDataContainer:
         }
         self.metadata = {
             "size_mb": size_mb,
-            "created": datetime.now(),
+            "created": get_now_with_timezone(),
             "type": "large_container",
         }
 
@@ -240,7 +240,9 @@ async def test_large_data_structures():
             )
 
         except MemoryError:
-            logger.warning("%-8s MB | Insufficient memory, skipping test", f"{size_mb:.1f}")
+            logger.warning(
+                "%-8s MB | Insufficient memory, skipping test", f"{size_mb:.1f}"
+            )
         except Exception as e:
             logger.error("%-8s MB | Test failed: %s", f"{size_mb:.1f}", str(e))
 
@@ -277,7 +279,7 @@ async def test_function_and_class_objects():
         def __init__(self, name, data):
             self.name = name
             self.data = data
-            self.timestamp = datetime.now()
+            self.timestamp = get_now_with_timezone()
 
         def method1(self):
             return len(self.data)
@@ -439,7 +441,10 @@ async def test_redis_storage_efficiency():
     # Test data
     test_data = [
         ("Small JSON object", {"name": "test", "value": 123}),
-        ("Large JSON object", {"data": list(range(1000)), "metadata": {"type": "large"}}),
+        (
+            "Large JSON object",
+            {"data": list(range(1000)), "metadata": {"type": "large"}},
+        ),
         ("Small Pickle object", ComplexTestObject("small", 10)),
         ("Large Pickle object", ComplexTestObject("large", 1000)),
     ]

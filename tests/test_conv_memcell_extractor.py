@@ -12,10 +12,11 @@ Usage:
 
 import pytest
 import asyncio
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import List, Dict, Any
 
 # Import dependency injection related modules
+from common_utils.datetime_utils import get_now_with_timezone
 from core.di.utils import get_bean_by_type
 from core.observation.logger import get_logger
 
@@ -26,8 +27,6 @@ from memory_layer.memcell_extractor.conv_memcell_extractor import (
 )
 from memory_layer.memcell_extractor.base_memcell_extractor import RawData, MemCell
 from memory_layer.llm.llm_provider import LLMProvider
-from memory_layer.llm.openai_provider import OpenAIProvider
-from memory_layer.memory_manager import RawDataType
 
 # Get logger
 logger = get_logger(__name__)
@@ -49,7 +48,7 @@ class TestConvMemCellExtractor:
 
     def setup_method(self):
         """Setup before each test method"""
-        self.base_time = datetime.now() - timedelta(hours=1)
+        self.base_time = get_now_with_timezone() - timedelta(hours=1)
 
     def create_test_messages(
         self,
@@ -102,7 +101,11 @@ class TestConvMemCellExtractor:
                 "content": "The frontend also has some updates to share",
                 "offset": 4,
             },
-            {"speaker_name": "Alice", "content": "Great, Bob you go first", "offset": 6},
+            {
+                "speaker_name": "Alice",
+                "content": "Great, Bob you go first",
+                "offset": 6,
+            },
             {
                 "speaker_name": "Bob",
                 "content": "Backend API is 80% complete, database design is basically finalized",
@@ -173,7 +176,9 @@ class TestConvMemCellExtractor:
         extractor = ConvMemCellExtractor(llm_provider)
 
         # Create test data
-        history_messages = self.create_test_messages(3, "Alice", 0, "Historical message")
+        history_messages = self.create_test_messages(
+            3, "Alice", 0, "Historical message"
+        )
         new_messages = self.create_test_messages(2, "Bob", 30, "New message")
 
         history_raw_data = self.create_raw_data_list(history_messages)
@@ -298,7 +303,9 @@ class TestConvMemCellExtractor:
                 assert "charlie" in memcell.user_id_list
                 assert memcell.group_id == "project_team"
             else:
-                print("   - MemCell is None, conversation may not have complete boundary")
+                print(
+                    "   - MemCell is None, conversation may not have complete boundary"
+                )
 
             print(f"\n📊 Boundary detection status:")
             print(f"   - should_wait: {status_result.should_wait}")
@@ -446,30 +453,42 @@ class TestConvMemCellExtractor:
                 assert memcell.event_id is not None
                 assert len(memcell.user_id_list) == 3
                 assert memcell.group_id == "complete_meeting"
-                print(f"\n✅ Verification passed: This is a complete meeting conversation MemCell")
+                print(
+                    f"\n✅ Verification passed: This is a complete meeting conversation MemCell"
+                )
 
             else:
-                print("⚠️ MemCell is None, conversation judgment logic may need adjustment")
+                print(
+                    "⚠️ MemCell is None, conversation judgment logic may need adjustment"
+                )
 
             print(f"\n📊 Boundary detection status analysis:")
             print(f"   - should_wait: {status_result.should_wait}")
             if status_result.should_wait:
-                print("   - Meaning: Need to wait for more messages (conversation may not be complete)")
+                print(
+                    "   - Meaning: Need to wait for more messages (conversation may not be complete)"
+                )
             else:
-                print("   - Meaning: Conversation is complete, can be processed (as expected)")
+                print(
+                    "   - Meaning: Conversation is complete, can be processed (as expected)"
+                )
 
             if memcell and not status_result.should_wait:
                 print(f"\n🎉 Success: Complete conversation boundary detected!")
             elif not memcell and not status_result.should_wait:
-                print(f"\n🤔 Partial success: Conversation judged complete but no MemCell generated")
+                print(
+                    f"\n🤔 Partial success: Conversation judged complete but no MemCell generated"
+                )
             else:
-                print(f"\n📝 Needs optimization: Conversation judgment logic may need adjustment")
+                print(
+                    f"\n📝 Needs optimization: Conversation judgment logic may need adjustment"
+                )
 
     def create_complete_meeting_conversation(
         self,
     ) -> tuple[List[RawData], List[RawData]]:
         """Create a complete meeting conversation, from start to clear end"""
-        base_time = datetime.now() - timedelta(hours=2)  # Start 2 hours ago
+        base_time = get_now_with_timezone() - timedelta(hours=2)  # Start 2 hours ago
 
         # Phase 1: Meeting start and agenda introduction (historical messages)
         meeting_start = [
@@ -548,7 +567,11 @@ class TestConvMemCellExtractor:
                 "offset": 52,
             },
             {"speaker_name": "Alice", "content": "Any other questions?", "offset": 53},
-            {"speaker_name": "Bob", "content": "I have no other questions.", "offset": 54},
+            {
+                "speaker_name": "Bob",
+                "content": "I have no other questions.",
+                "offset": 54,
+            },
             {"speaker_name": "Charlie", "content": "Neither do I.", "offset": 55},
             {
                 "speaker_name": "Alice",

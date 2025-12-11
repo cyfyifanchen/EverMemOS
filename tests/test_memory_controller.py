@@ -32,11 +32,8 @@ import json
 import uuid
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
-
 import requests
-
-# Use Shanghai timezone
-SHANGHAI_TZ = ZoneInfo("Asia/Shanghai")
+from common_utils.datetime_utils import get_now_with_timezone
 
 
 class MemoryControllerTester:
@@ -324,7 +321,7 @@ class MemoryControllerTester:
 
         # Prepare a simple conversation to simulate user and assistant interaction
         # Sending multiple messages can trigger boundary detection and extract memories
-        base_time = datetime.now(SHANGHAI_TZ)
+        base_time = get_now_with_timezone()
 
         # Build conversation sequence, triggering boundary detection through:
         # 1. First scenario: Discussion about coffee preferences (4 messages)
@@ -793,7 +790,7 @@ class MemoryControllerTester:
         """Test 7: GET /api/v1/memories/search - Hybrid search (pass parameters via body)"""
         self.print_section("Test 7: GET /api/v1/memories/search - Hybrid Search")
 
-        now = datetime.now(SHANGHAI_TZ)
+        now = get_now_with_timezone()
         data = {
             "user_id": self.user_id,
             "query": "coffee preference",
@@ -846,7 +843,7 @@ class MemoryControllerTester:
             "Test 8: POST /api/v1/memories/conversation-meta - Save Conversation Metadata"
         )
 
-        now = datetime.now(SHANGHAI_TZ)
+        now = get_now_with_timezone(ZoneInfo("Asia/Shanghai"))
         data = {
             "version": "1.0",
             "scene": "assistant",

@@ -141,7 +141,12 @@ async def test_search_and_filter():
             {
                 "event_id": f"search_test_002_{int(base_time.timestamp())}",
                 "episode": "Learned a new technology framework",
-                "search_content": ["technology", "framework", "learning", "programming"],
+                "search_content": [
+                    "technology",
+                    "framework",
+                    "learning",
+                    "programming",
+                ],
                 "title": "Technical Learning",
                 "group_id": None,  # No group
                 "event_type": "Learning",
@@ -213,7 +218,9 @@ async def test_search_and_filter():
         assert (
             len(results) >= 2
         ), f"At least 2 records containing 'technology' or 'project' should be found, actually found {len(results)}"
-        logger.info("✅ Multi-word search test succeeded, found %d results", len(results))
+        logger.info(
+            "✅ Multi-word search test succeeded, found %d results", len(results)
+        )
 
         # Test 2: Filter by user ID
         logger.info("Test 2: Filter by user ID")
@@ -223,7 +230,9 @@ async def test_search_and_filter():
         assert (
             len(user_results) >= 5
         ), f"At least 5 user records should be found, actually found {len(user_results)}"
-        logger.info("✅ User ID filter test succeeded, found %d results", len(user_results))
+        logger.info(
+            "✅ User ID filter test succeeded, found %d results", len(user_results)
+        )
 
         # Test 3: Filter by group ID
         logger.info("Test 3: Filter by group ID")
@@ -233,7 +242,9 @@ async def test_search_and_filter():
         assert (
             len(group_results) >= 3
         ), f"At least 3 group records should be found, actually found {len(group_results)}"
-        logger.info("✅ Group ID filter test succeeded, found %d results", len(group_results))
+        logger.info(
+            "✅ Group ID filter test succeeded, found %d results", len(group_results)
+        )
 
         # Test 4: Filter by event type
         logger.info("Test 4: Filter by event type")
@@ -243,7 +254,9 @@ async def test_search_and_filter():
         assert (
             len(type_results) >= 1
         ), f"At least 1 Conversation type record should be found, actually found {len(type_results)}"
-        logger.info("✅ Event type filter test succeeded, found %d results", len(type_results))
+        logger.info(
+            "✅ Event type filter test succeeded, found %d results", len(type_results)
+        )
 
         # Test 5: Filter by keywords
         logger.info("Test 5: Filter by keywords")
@@ -253,7 +266,9 @@ async def test_search_and_filter():
         assert (
             len(keyword_results) >= 2
         ), f"At least 2 records containing 'technology' keyword should be found, actually found {len(keyword_results)}"
-        logger.info("✅ Keyword filter test succeeded, found %d results", len(keyword_results))
+        logger.info(
+            "✅ Keyword filter test succeeded, found %d results", len(keyword_results)
+        )
 
         # Test 6: Filter by time range
         logger.info("Test 6: Filter by time range")
@@ -267,7 +282,9 @@ async def test_search_and_filter():
         assert (
             len(time_results) >= 2
         ), f"At least 2 records within time range should be found, actually found {len(time_results)}"
-        logger.info("✅ Time range filter test succeeded, found %d results", len(time_results))
+        logger.info(
+            "✅ Time range filter test succeeded, found %d results", len(time_results)
+        )
 
         # Test 7: Combined query
         logger.info("Test 7: Combined query")
@@ -279,7 +296,9 @@ async def test_search_and_filter():
             size=10,
             explain=True,
         )
-        logger.info("✅ Combined query test succeeded, found %d results", len(combo_results))
+        logger.info(
+            "✅ Combined query test succeeded, found %d results", len(combo_results)
+        )
 
         # Test 8: Use dedicated query method
         logger.info("Test 8: Use dedicated query method")
@@ -292,7 +311,10 @@ async def test_search_and_filter():
         assert (
             len(timerange_results) >= 5
         ), f"At least 5 records within time range should be found, actually found {len(timerange_results)}"
-        logger.info("✅ Dedicated query method test succeeded, found %d results", len(timerange_results))
+        logger.info(
+            "✅ Dedicated query method test succeeded, found %d results",
+            len(timerange_results),
+        )
 
     except Exception as e:
         logger.error("❌ Search and filtering function test failed: %s", e)
@@ -367,7 +389,10 @@ async def test_delete_operations():
         assert (
             deleted_count >= 2
         ), f"At least 2 records with group_id should be deleted, actually deleted {deleted_count}"
-        logger.info("✅ Delete by group_id filter test succeeded, deleted %d records", deleted_count)
+        logger.info(
+            "✅ Delete by group_id filter test succeeded, deleted %d records",
+            deleted_count,
+        )
 
         # Test 3: Delete by time range
         logger.info("Test 3: Delete by time range")
@@ -378,7 +403,9 @@ async def test_delete_operations():
         deleted_count = await repo.delete_by_filters(
             user_id=test_user_id, date_range=date_range, refresh=True
         )
-        logger.info("✅ Delete by time range test succeeded, deleted %d records", deleted_count)
+        logger.info(
+            "✅ Delete by time range test succeeded, deleted %d records", deleted_count
+        )
 
         # Test 4: Verify parameter validation
         logger.info("Test 4: Verify parameter validation")
@@ -417,8 +444,8 @@ async def test_timezone_handling():
 
     try:
         # Create times in different timezones
-        utc_time = datetime.now(ZoneInfo("UTC"))
-        tokyo_time = datetime.now(ZoneInfo("Asia/Tokyo"))
+        utc_time = get_now_with_timezone(ZoneInfo("UTC"))
+        tokyo_time = get_now_with_timezone(ZoneInfo("Asia/Tokyo"))
         shanghai_time = get_now_with_timezone()  # Default Shanghai timezone
 
         logger.info("Original UTC time: %s", to_iso_format(utc_time))
@@ -453,10 +480,15 @@ async def test_timezone_handling():
         assert retrieved_doc is not None
 
         logger.info("Retrieved times from database:")
-        logger.info("timestamp (original UTC): %s", to_iso_format(retrieved_doc.timestamp))
-        logger.info("created_at (original Tokyo): %s", to_iso_format(retrieved_doc.created_at))
         logger.info(
-            "updated_at (original Shanghai): %s", to_iso_format(retrieved_doc.updated_at)
+            "timestamp (original UTC): %s", to_iso_format(retrieved_doc.timestamp)
+        )
+        logger.info(
+            "created_at (original Tokyo): %s", to_iso_format(retrieved_doc.created_at)
+        )
+        logger.info(
+            "updated_at (original Shanghai): %s",
+            to_iso_format(retrieved_doc.updated_at),
         )
 
         # Verify time conversion correctness (should be equal when converted to same timezone)
@@ -482,12 +514,18 @@ async def test_timezone_handling():
 
         # If still not found, try without time range, only user_id query
         if len(time_results) == 0:
-            logger.warning("Time range query found no records, trying pure user_id query")
+            logger.warning(
+                "Time range query found no records, trying pure user_id query"
+            )
             fallback_results = await repo.multi_search(
                 query=[], user_id=test_user_id, size=10
             )
-            logger.info("Pure user_id query results: found %d records", len(fallback_results))
-            assert len(fallback_results) >= 1, "At least one record should be found by user_id"
+            logger.info(
+                "Pure user_id query results: found %d records", len(fallback_results)
+            )
+            assert (
+                len(fallback_results) >= 1
+            ), "At least one record should be found by user_id"
             logger.info("✅ Basic timezone handling validation succeeded")
         else:
             assert len(time_results) >= 1, "Records within time range should be found"
@@ -518,20 +556,26 @@ async def test_edge_cases():
         # Test 1: Empty search terms
         logger.info("Test 1: Empty search terms")
         empty_results = await repo.multi_search(query=[], user_id=test_user_id, size=10)
-        logger.info("✅ Empty search terms test succeeded, found %d results", len(empty_results))
+        logger.info(
+            "✅ Empty search terms test succeeded, found %d results", len(empty_results)
+        )
 
         # Test 2: Non-existent user
         logger.info("Test 2: Non-existent user")
         nonexistent_results = await repo.multi_search(
             query=["test"], user_id="nonexistent_user_999999", size=10, explain=True
         )
-        assert len(nonexistent_results) == 0, "Non-existent user should return empty results"
+        assert (
+            len(nonexistent_results) == 0
+        ), "Non-existent user should return empty results"
         logger.info("✅ Non-existent user test succeeded")
 
         # Test 3: Delete non-existent event_id
         logger.info("Test 3: Delete non-existent event_id")
         delete_result = await repo.delete_by_event_id("nonexistent_event_999999")
-        assert delete_result is False, "Deleting non-existent document should return False"
+        assert (
+            delete_result is False
+        ), "Deleting non-existent document should return False"
         logger.info("✅ Delete non-existent document test succeeded")
 
         # Test 4: Use invalid time range
@@ -630,7 +674,9 @@ async def test_multi_search():
             query=["DSL", "search"], user_id=test_user_id, size=10, explain=True
         )
         assert len(results) == 1, "DSL multi-word search should return results"
-        logger.info("✅ DSL multi-word search test passed: found %d results", len(results))
+        logger.info(
+            "✅ DSL multi-word search test passed: found %d results", len(results)
+        )
 
         # Test 2: DSL filter query (no search terms)
         logger.info("Testing DSL filter query...")
@@ -657,7 +703,9 @@ async def test_multi_search():
         logger.info("✅ BM25 filter query test passed: found %d results", len(results))
 
         # Test 6: Compare result consistency between BM25 method and original method
-        logger.info("Testing result consistency between BM25 method and original method...")
+        logger.info(
+            "Testing result consistency between BM25 method and original method..."
+        )
         bm25_results = await repo.multi_search(
             query=["preference", "test"], user_id=test_user_id, size=10
         )

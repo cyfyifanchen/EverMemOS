@@ -47,7 +47,6 @@ import subprocess
 from fnmatch import fnmatch
 from pathlib import Path
 from typing import Optional
-from datetime import datetime
 from dataclasses import dataclass
 from enum import Enum
 
@@ -150,6 +149,10 @@ HOOK_SKIP_COMMIT_MSG_KEYWORDS = [
     "[skip-i18n]",
     "[no-i18n-check]",
 ]
+
+# Inline comment to skip i18n check for a specific line
+# Usage: code_with_chinese()  #skip-i18n-check
+HOOK_SKIP_LINE_COMMENT = "#skip-i18n-check"
 
 # CJK Unicode ranges (Chinese, Japanese, Korean)
 CJK_PATTERN = re.compile(
@@ -314,7 +317,6 @@ def print_header(title: str):
     """Print a section header."""
     print("=" * 70)
     print(title)
-    print(f"Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 70)
     print()
 
@@ -324,7 +326,6 @@ def print_summary_header():
     print()
     print("=" * 70)
     print("Summary")
-    print(f"Finished at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 70)
 
 
@@ -1286,14 +1287,31 @@ def _hook_contains_cjk(text: str) -> bool:
     return bool(CJK_PATTERN.search(text))
 
 
+def _hook_line_has_skip_comment(line: str) -> bool:
+    """Check if a line has the skip-i18n-check inline comment.
+
+    The comment can appear anywhere in the line (typically at the end).
+    Whitespace around the comment marker is ignored.
+    """
+    # Normalize the line for checking (remove spaces around #)
+    # Match patterns like: #skip-i18n-check, # skip-i18n-check, #  skip-i18n-check
+    normalized = line.lower().replace(" ", "")
+    return "#skip-i18n-check" in normalized
+
+
 def _hook_find_cjk_lines(content: str) -> list[tuple[int, str]]:
     """Find all lines containing CJK characters.
+
+    Lines with #skip-i18n-check comment are skipped.
 
     Returns:
         List of tuples: (line_number, line_content)
     """
     cjk_lines = []
     for line_num, line in enumerate(content.split("\n"), 1):
+        # Skip lines with inline skip comment
+        if _hook_line_has_skip_comment(line):
+            continue
         if _hook_contains_cjk(line):
             display_line = line.strip()[:100]
             if len(line.strip()) > 100:
@@ -1399,7 +1417,8 @@ def _hook_print_error_report(
             rel_path = _hook_get_relative_path(file_path)
             print(f"\n  {rel_path} ({len(cjk_lines)} lines)", file=sys.stderr)
             for line_num, content in cjk_lines[:5]:
-                print(f"    Line {line_num}: {content}", file=sys.stderr)
+                # Use file:line format for clickable terminal links
+                print(f"    {rel_path}:{line_num}: {content}", file=sys.stderr)
             if len(cjk_lines) > 5:
                 print(f"    ... and {len(cjk_lines) - 5} more lines", file=sys.stderr)
 
@@ -1427,6 +1446,11 @@ def _hook_print_error_report(
     print("\n" + "-" * 70, file=sys.stderr)
     print("TO SKIP THIS CHECK (use sparingly):", file=sys.stderr)
     print("-" * 70, file=sys.stderr)
+    print(
+        "  • Add inline comment to skip specific line: #skip-i18n-check",
+        file=sys.stderr,
+    )
+    print('    Example: if "中文" in text:  #skip-i18n-check', file=sys.stderr)
     print(f"  • Set environment variable: {HOOK_SKIP_ENV_VAR}=1", file=sys.stderr)
     print("  • Add to commit message: [skip-i18n] or #skip-i18n-check", file=sys.stderr)
     print(

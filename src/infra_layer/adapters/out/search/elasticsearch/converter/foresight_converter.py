@@ -8,6 +8,7 @@ Supports both individual and group foresights.
 from typing import List
 import jieba
 
+from common_utils.datetime_utils import get_now_with_timezone
 from core.oxm.es.base_converter import BaseEsConverter
 from core.observation.logger import get_logger
 from core.nlp.stopwords_utils import filter_stopwords
@@ -57,7 +58,7 @@ class ForesightConverter(BaseEsConverter[ForesightDoc]):
                     timestamp = source_doc.start_time
 
             if not timestamp:
-                timestamp = source_doc.created_at or datetime.now()
+                timestamp = source_doc.created_at or get_now_with_timezone()
 
             # Create ES document instance
             # Pass id via meta parameter to ensure idempotency (MongoDB _id -> ES _id)

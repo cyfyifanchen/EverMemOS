@@ -13,6 +13,7 @@ Test contents include:
 import asyncio
 from datetime import datetime
 
+from common_utils.datetime_utils import get_now_with_timezone
 from core.di import get_bean_by_type
 from infra_layer.adapters.out.persistence.repository.group_profile_raw_repository import (
     GroupProfileRawRepository,
@@ -28,7 +29,7 @@ async def test_basic_crud_operations():
 
     repo = get_bean_by_type(GroupProfileRawRepository)
     group_id = "test_group_001"
-    current_timestamp = int(datetime.now().timestamp() * 1000)
+    current_timestamp = int(get_now_with_timezone().timestamp() * 1000)
 
     try:
         # First clean up any existing test data
@@ -50,7 +51,9 @@ async def test_basic_crud_operations():
         assert result.version == "v1"
         assert result.is_latest == True
         assert result.timestamp == current_timestamp
-        logger.info("✅ Successfully tested creating new record (version=v1, is_latest=True)")
+        logger.info(
+            "✅ Successfully tested creating new record (version=v1, is_latest=True)"
+        )
 
         # Test querying by group_id (should return the latest version)
         queried = await repo.get_by_group_id(group_id)
@@ -61,14 +64,19 @@ async def test_basic_crud_operations():
         logger.info("✅ Successfully tested querying by group_id")
 
         # Test updating record (without changing version)
-        update_data = {"group_name": "Advanced Technical Discussion Group", "summary": "Updated group description"}
+        update_data = {
+            "group_name": "Advanced Technical Discussion Group",
+            "summary": "Updated group description",
+        }
 
         updated = await repo.update_by_group_id(group_id, update_data)
         assert updated is not None
         assert updated.group_name == "Advanced Technical Discussion Group"
         assert updated.summary == "Updated group description"
         assert updated.version == "v1"  # Version unchanged
-        assert updated.subject == "Technical Exchange and Learning"  # Unupdated fields should retain original values
+        assert (
+            updated.subject == "Technical Exchange and Learning"
+        )  # Unupdated fields should retain original values
         logger.info("✅ Successfully tested updating record (version unchanged)")
 
         # Test deleting a specific version
@@ -94,7 +102,7 @@ async def test_version_management():
 
     repo = get_bean_by_type(GroupProfileRawRepository)
     group_id = "test_group_version_002"
-    current_timestamp = int(datetime.now().timestamp() * 1000)
+    current_timestamp = int(get_now_with_timezone().timestamp() * 1000)
 
     try:
         # First clean up any existing test data
@@ -102,7 +110,11 @@ async def test_version_management():
         logger.info("✅ Cleaned up existing test data")
 
         # Create first version
-        v1_data = {"version": "202501", "group_name": "Tech Group v1", "subject": "Initial version"}
+        v1_data = {
+            "version": "202501",
+            "group_name": "Tech Group v1",
+            "subject": "Initial version",
+        }
 
         v1_result = await repo.upsert_by_group_id(group_id, v1_data, current_timestamp)
         assert v1_result is not None
@@ -111,7 +123,11 @@ async def test_version_management():
         logger.info("✅ Created version 202501 successfully, is_latest=True")
 
         # Create second version
-        v2_data = {"version": "202502", "group_name": "Tech Group v2", "subject": "Second version"}
+        v2_data = {
+            "version": "202502",
+            "group_name": "Tech Group v2",
+            "subject": "Second version",
+        }
 
         v2_result = await repo.upsert_by_group_id(group_id, v2_data, current_timestamp)
         assert v2_result is not None
@@ -120,7 +136,11 @@ async def test_version_management():
         logger.info("✅ Created version 202502 successfully, is_latest=True")
 
         # Create third version
-        v3_data = {"version": "202503", "group_name": "Tech Group v3", "subject": "Third version"}
+        v3_data = {
+            "version": "202503",
+            "group_name": "Tech Group v3",
+            "subject": "Third version",
+        }
 
         v3_result = await repo.upsert_by_group_id(group_id, v3_data, current_timestamp)
         assert v3_result is not None
@@ -141,15 +161,21 @@ async def test_version_management():
         )
         assert v2_by_range is not None
         assert v2_by_range.version == "202502"
-        logger.info("✅ Version range query [202502, 202502] succeeded, returned version=202502")
+        logger.info(
+            "✅ Version range query [202502, 202502] succeeded, returned version=202502"
+        )
 
         # Test multi-version range query (returns latest version within range)
         v_multi_range = await repo.get_by_group_id(
             group_id, version_range=("202501", "202502")
         )
         assert v_multi_range is not None
-        assert v_multi_range.version == "202502"  # Returns the latest version within the range
-        logger.info("✅ Version range query [202501, 202502] succeeded, returned latest version 202502")
+        assert (
+            v_multi_range.version == "202502"
+        )  # Returns the latest version within the range
+        logger.info(
+            "✅ Version range query [202501, 202502] succeeded, returned latest version 202502"
+        )
 
         # Test updating a specific version
         update_v2 = {"subject": "Updated second version"}
@@ -190,7 +216,7 @@ async def test_ensure_latest():
 
     repo = get_bean_by_type(GroupProfileRawRepository)
     group_id = "test_group_ensure_003"
-    current_timestamp = int(datetime.now().timestamp() * 1000)
+    current_timestamp = int(get_now_with_timezone().timestamp() * 1000)
 
     try:
         # First clean up any existing test data
@@ -219,7 +245,9 @@ async def test_ensure_latest():
         assert latest is not None
         assert latest.version == "202504"
         assert latest.is_latest == True
-        logger.info("✅ Verified latest version is correct: version=202504, is_latest=True")
+        logger.info(
+            "✅ Verified latest version is correct: version=202504, is_latest=True"
+        )
 
         # Verify is_latest is False for old versions
         for old_version in ["202501", "202502", "202503"]:
@@ -253,7 +281,7 @@ async def test_batch_query_with_only_latest():
 
     repo = get_bean_by_type(GroupProfileRawRepository)
     base_group_id = "test_batch_group"
-    current_timestamp = int(datetime.now().timestamp() * 1000)
+    current_timestamp = int(get_now_with_timezone().timestamp() * 1000)
 
     try:
         # Create multiple groups, each with multiple versions
@@ -284,12 +312,16 @@ async def test_batch_query_with_only_latest():
             assert result.version == "202503"
             assert result.is_latest == True
 
-        logger.info("✅ Batch query with only_latest=True succeeded, returned 3 latest versions")
+        logger.info(
+            "✅ Batch query with only_latest=True succeeded, returned 3 latest versions"
+        )
 
         # Test only_latest=False (return all versions)
         all_results = await repo.find_by_group_ids(group_ids, only_latest=False)
         assert len(all_results) == 9  # 3 groups * 3 versions
-        logger.info("✅ Batch query with only_latest=False succeeded, returned 9 versions")
+        logger.info(
+            "✅ Batch query with only_latest=False succeeded, returned 9 versions"
+        )
 
         # Clean up test data
         for gid in group_ids:
@@ -309,14 +341,17 @@ async def test_create_without_version_should_fail():
 
     repo = get_bean_by_type(GroupProfileRawRepository)
     group_id = "test_no_version_004"
-    current_timestamp = int(datetime.now().timestamp() * 1000)
+    current_timestamp = int(get_now_with_timezone().timestamp() * 1000)
 
     try:
         # First clean up
         await repo.delete_by_group_id(group_id)
 
         # Try to create a record without version
-        data_without_version = {"group_name": "No Version Group", "subject": "This should fail"}
+        data_without_version = {
+            "group_name": "No Version Group",
+            "subject": "This should fail",
+        }
 
         try:
             await repo.upsert_by_group_id(

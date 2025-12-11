@@ -8,6 +8,7 @@ import logging
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
+from common_utils.datetime_utils import get_now_with_timezone
 from core.longjob.interfaces import LongJobInterface, LongJobStatus
 from core.di import service, get_beans_by_type
 import os
@@ -69,7 +70,7 @@ class LongJobManager:
             'total_jobs_started': 0,
             'total_jobs_stopped': 0,
             'total_jobs_failed': 0,
-            'manager_start_time': datetime.now(),
+            'manager_start_time': get_now_with_timezone(),
         }
 
         self.logger.info(
@@ -608,7 +609,7 @@ class LongJobManager:
                 'running_jobs': len(self.get_running_jobs()),
                 'is_shutdown': self._is_shutdown,
                 'uptime': (
-                    datetime.now() - stats['manager_start_time']
+                    get_now_with_timezone() - stats['manager_start_time']
                 ).total_seconds(),
             }
         )

@@ -214,7 +214,12 @@ async def test_vector_search():
             {
                 "event_id": f"search_test_002_{int(base_time.timestamp())}",
                 "episode": "Learned a new technical framework",
-                "search_content": ["technology", "framework", "learning", "programming"],
+                "search_content": [
+                    "technology",
+                    "framework",
+                    "learning",
+                    "programming",
+                ],
                 "vector": generate_random_vector(),  # Random vector
                 "title": "Technical Learning",
                 "group_id": "",
@@ -268,8 +273,13 @@ async def test_vector_search():
         results = await repo.vector_search(
             query_vector=base_vector, user_id=test_user_id, limit=10
         )
-        assert len(results) >= 2, f"Should find at least 2 similar records, actually found {len(results)}"
-        logger.info("✅ Vector similarity search test successful, found %d results", len(results))
+        assert (
+            len(results) >= 2
+        ), f"Should find at least 2 similar records, actually found {len(results)}"
+        logger.info(
+            "✅ Vector similarity search test successful, found %d results",
+            len(results),
+        )
 
         # Test 2: Vector search with user ID filter
         logger.info("Test 2: Vector search with user ID filter")
@@ -279,7 +289,9 @@ async def test_vector_search():
         assert (
             len(user_results) >= 2
         ), f"Should find at least 2 user records, actually found {len(user_results)}"
-        logger.info("✅ User ID filter test successful, found %d results", len(user_results))
+        logger.info(
+            "✅ User ID filter test successful, found %d results", len(user_results)
+        )
 
         # Test 3: Vector search with group ID filter
         logger.info("Test 3: Vector search with group ID filter")
@@ -292,7 +304,9 @@ async def test_vector_search():
         assert (
             len(group_results) >= 1
         ), f"Should find at least 1 group record, actually found {len(group_results)}"
-        logger.info("✅ Group ID filter test successful, found %d results", len(group_results))
+        logger.info(
+            "✅ Group ID filter test successful, found %d results", len(group_results)
+        )
 
         # Test 4: Vector search with event type filter
         logger.info("Test 4: Vector search with event type filter")
@@ -305,7 +319,9 @@ async def test_vector_search():
         assert (
             len(type_results) >= 1
         ), f"Should find at least 1 Conversation type record, actually found {len(type_results)}"
-        logger.info("✅ Event type filter test successful, found %d results", len(type_results))
+        logger.info(
+            "✅ Event type filter test successful, found %d results", len(type_results)
+        )
 
         # Test 5: Vector search with time range filter
         logger.info("Test 5: Vector search with time range filter")
@@ -319,7 +335,9 @@ async def test_vector_search():
         assert (
             len(time_results) >= 1
         ), f"Should find at least 1 record within time range, actually found {len(time_results)}"
-        logger.info("✅ Time range filter test successful, found %d results", len(time_results))
+        logger.info(
+            "✅ Time range filter test successful, found %d results", len(time_results)
+        )
 
     except Exception as e:
         logger.error("❌ Vector search and filtering function test failed: %s", e)
@@ -392,7 +410,10 @@ async def test_delete_operations():
         assert (
             deleted_count >= 2
         ), f"Should delete at least 2 records with group_id, actually deleted {deleted_count}"
-        logger.info("✅ Delete by group_id filter test successful, deleted %d records", deleted_count)
+        logger.info(
+            "✅ Delete by group_id filter test successful, deleted %d records",
+            deleted_count,
+        )
 
         # Test 3: Delete by time range
         logger.info("Test 3: Delete by time range")
@@ -401,7 +422,9 @@ async def test_delete_operations():
             start_time=base_time - timedelta(days=2),
             end_time=base_time,
         )
-        logger.info("✅ Delete by time range test successful, deleted %d records", deleted_count)
+        logger.info(
+            "✅ Delete by time range test successful, deleted %d records", deleted_count
+        )
 
         # Test 4: Verify parameter checking
         logger.info("Test 4: Verify parameter checking")
@@ -440,8 +463,8 @@ async def test_timezone_handling():
 
     try:
         # Create times in different timezones
-        utc_time = datetime.now(ZoneInfo("UTC"))
-        tokyo_time = datetime.now(ZoneInfo("Asia/Tokyo"))
+        utc_time = get_now_with_timezone(ZoneInfo("UTC"))
+        tokyo_time = get_now_with_timezone(ZoneInfo("Asia/Tokyo"))
         shanghai_time = get_now_with_timezone()  # Default Shanghai timezone
 
         logger.info("Original UTC time: %s", to_iso_format(utc_time))
@@ -475,7 +498,9 @@ async def test_timezone_handling():
 
         # Parse timestamp
         retrieved_timestamp = datetime.fromtimestamp(retrieved_doc["timestamp"])
-        logger.info("Retrieved timestamp from database: %s", to_iso_format(retrieved_timestamp))
+        logger.info(
+            "Retrieved timestamp from database: %s", to_iso_format(retrieved_timestamp)
+        )
 
         # Verify time conversion correctness (should be equal after converting to same timezone)
         assert compare_datetime(
@@ -525,18 +550,22 @@ async def test_edge_cases():
             user_id="nonexistent_user_999999",
             limit=10,
         )
-        assert len(nonexistent_results) == 0, "Non-existent user should return empty results"
+        assert (
+            len(nonexistent_results) == 0
+        ), "Non-existent user should return empty results"
         logger.info("✅ Non-existent user test successful")
 
         # Test 2: Delete non-existent event_id
         logger.info("Test 2: Delete non-existent event_id")
         delete_result = await repo.delete_by_event_id("nonexistent_event_999999")
-        assert delete_result is True, "Deleting non-existent document somehow returns True"
+        assert (
+            delete_result is True
+        ), "Deleting non-existent document somehow returns True"
         logger.info("✅ Delete non-existent document test successful")
 
         # Test 3: Use invalid time range
         logger.info("Test 3: Use invalid time range")
-        future_time = datetime.now(ZoneInfo("UTC")) + timedelta(days=365)
+        future_time = get_now_with_timezone(ZoneInfo("UTC")) + timedelta(days=365)
         future_results = await repo.vector_search(
             query_vector=generate_random_vector(),
             user_id=test_user_id,
@@ -611,13 +640,13 @@ async def test_performance():
 
         for i in range(0, num_docs, batch_size):
             batch = test_data[i : i + batch_size]
-            start_time = datetime.now()
+            start_time = get_now_with_timezone()
 
             for doc in batch:
                 entity = build_episodic_memory_entity(**doc)
                 await repo.collection.insert([entity])
 
-            end_time = datetime.now()
+            end_time = get_now_with_timezone()
             insert_time = (end_time - start_time).total_seconds()
             insert_times.append(insert_time)
 
@@ -654,9 +683,9 @@ async def test_performance():
 
         # Test 2: Flush performance
         logger.info("Test 2: Flush performance...")
-        start_time = datetime.now()
+        start_time = get_now_with_timezone()
         await repo.flush()
-        flush_time = (datetime.now() - start_time).total_seconds()
+        flush_time = (get_now_with_timezone() - start_time).total_seconds()
         logger.info("Flush time: %.3f seconds", flush_time)
 
         # Wait for data loading
@@ -673,11 +702,11 @@ async def test_performance():
             noise = np.random.normal(0, 0.1, len(base_vector))
             query_vector = [x + n for x, n in zip(base_vector, noise)]
 
-            start_time = datetime.now()
+            start_time = get_now_with_timezone()
             results = await repo.vector_search(
                 query_vector=query_vector, user_id=test_user_id, limit=10
             )
-            search_time = (datetime.now() - start_time).total_seconds()
+            search_time = (get_now_with_timezone() - start_time).total_seconds()
             search_times.append(search_time)
 
             logger.info(
@@ -707,7 +736,9 @@ async def test_performance():
             await repo.flush()
             logger.info("✅ Cleaned up %d performance test data", cleanup_count)
         except Exception as cleanup_error:
-            logger.error("Error during cleanup of performance test data: %s", cleanup_error)
+            logger.error(
+                "Error during cleanup of performance test data: %s", cleanup_error
+            )
 
     logger.info("✅ Performance test completed")
 

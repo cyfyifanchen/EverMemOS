@@ -237,8 +237,8 @@ class RedisLengthCacheManager:
             await cache.append("api_calls", {"method": "GET", "path": "/api/users"}, timestamp=1640995200000)
 
             # Append data using datetime object
-            from datetime import datetime
-            await cache.append("events", "user_action", timestamp=datetime.now())
+            from common_utils.datetime_utils import get_now_with_timezone
+            await cache.append("events", "user_action", timestamp=get_now_with_timezone())
         """
         try:
             client = await self.redis_provider.get_client()

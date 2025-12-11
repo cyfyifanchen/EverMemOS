@@ -13,7 +13,7 @@ Usage:
 import asyncio
 import os
 import sys
-from datetime import datetime
+from common_utils.datetime_utils import get_now_with_timezone
 from pymongo import AsyncMongoClient
 from pymilvus import connections, Collection, utility
 from elasticsearch import AsyncElasticsearch
@@ -374,7 +374,7 @@ async def main():
     print(f"{Colors.BOLD}{Colors.HEADER}Database Data Viewer Tool{Colors.END}")
     print(f"{Colors.BOLD}{Colors.HEADER}{'='*80}{Colors.END}")
     print(
-        f"\n{Colors.CYAN}Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}{Colors.END}"
+        f"\n{Colors.CYAN}Time: {get_now_with_timezone().strftime('%Y-%m-%d %H:%M:%S')}{Colors.END}"
     )
 
     # If no database specified, view all

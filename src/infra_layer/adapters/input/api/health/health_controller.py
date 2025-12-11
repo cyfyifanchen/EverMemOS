@@ -4,7 +4,7 @@ Health check controller
 Provides system health status check interface
 """
 
-from datetime import datetime
+from common_utils.datetime_utils import get_now_with_timezone
 from typing import Dict, Any
 from core.interface.controller.base_controller import BaseController, get
 from core.observation.logger import get_logger
@@ -46,7 +46,7 @@ class HealthController(BaseController):
             # Return simple health status
             return {
                 "status": "healthy",
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": get_now_with_timezone().isoformat(),
                 "message": "System running normally",
             }
         except Exception as e:
@@ -58,7 +58,7 @@ class HealthController(BaseController):
                 status_code=500,
                 detail={
                     "status": "unhealthy",
-                    "timestamp": datetime.now().isoformat(),
+                    "timestamp": get_now_with_timezone().isoformat(),
                     "message": f"System check exception: {str(e)}",
                 },
             )

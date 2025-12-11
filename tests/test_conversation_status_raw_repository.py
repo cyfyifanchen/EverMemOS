@@ -126,7 +126,9 @@ async def test_statistics():
 
         # Test total record count
         total = await repo.count_all()
-        assert total >= 3, "Total record count should be at least 3, actually is %d" % total
+        assert total >= 3, (
+            "Total record count should be at least 3, actually is %d" % total
+        )
         logger.info("✅ Test total record count succeeded")
 
         # Clean up test data
@@ -150,11 +152,11 @@ async def test_timezone_handling():
 
     try:
         # Create UTC time
-        utc_time = datetime.now(ZoneInfo("UTC"))
+        utc_time = get_now_with_timezone(ZoneInfo("UTC"))
         # Create Tokyo time
-        tokyo_time = datetime.now(ZoneInfo("Asia/Tokyo"))
+        tokyo_time = get_now_with_timezone(ZoneInfo("Asia/Tokyo"))
 
-        shanghai_time = datetime.now()
+        shanghai_time = get_now_with_timezone(ZoneInfo("Asia/Shanghai"))
 
         # Create record using times from different time zones
         update_data = {
@@ -180,7 +182,8 @@ async def test_timezone_handling():
         # Output retrieved time information
         logger.info("Times retrieved from database:")
         logger.info(
-            "old_msg_start_time (original UTC): %s", to_iso_format(queried.old_msg_start_time)
+            "old_msg_start_time (original UTC): %s",
+            to_iso_format(queried.old_msg_start_time),
         )
         logger.info(
             "new_msg_start_time (original Tokyo): %s",

@@ -15,6 +15,7 @@ Test coverage:
 import asyncio
 import time
 from datetime import datetime, timedelta
+from common_utils.datetime_utils import get_now_with_timezone
 from core.di.utils import get_bean
 from core.observation.logger import get_logger
 
@@ -86,7 +87,9 @@ async def test_basic_operations():
 
     # 3. Verify queue size
     size = await cache.get_queue_size(test_key)
-    assert size == len(test_data), f"Queue size mismatch: expected {len(test_data)}, actual {size}"
+    assert size == len(
+        test_data
+    ), f"Queue size mismatch: expected {len(test_data)}, actual {size}"
     logger.info("Queue size verification passed: %d", size)
 
     # 4. Use get by timestamp range (replaces get_recent)
@@ -146,7 +149,9 @@ async def test_timestamp_range_query():
         data = {"index": i, "content": f"windows_data_{i}", "created_at": timestamp}
         test_data.append({"data": data, "timestamp": timestamp})
 
-        success = await cache.append(test_key, data)  # Let system assign timestamp automatically
+        success = await cache.append(
+            test_key, data
+        )  # Let system assign timestamp automatically
         assert success, f"Failed to add data {i+1}"
 
         # Slight delay to ensure timestamp differences
@@ -156,7 +161,9 @@ async def test_timestamp_range_query():
 
     # 3. Test getting all data (no time range limit)
     all_data = await cache.get_by_timestamp_range(test_key)
-    assert len(all_data) == 8, f"Failed to get all data, expected 8, actual {len(all_data)}"
+    assert (
+        len(all_data) == 8
+    ), f"Failed to get all data, expected 8, actual {len(all_data)}"
     logger.info("Successfully retrieved all data: %d items", len(all_data))
 
     # 4. Test filtering by start time
@@ -188,17 +195,21 @@ async def test_timestamp_range_query():
 
     # 7. Test limiting number of results
     limited_data = await cache.get_by_timestamp_range(test_key, limit=3)
-    assert len(limited_data) == 3, f"Limiting failed, expected 3, actual {len(limited_data)}"
+    assert (
+        len(limited_data) == 3
+    ), f"Limiting failed, expected 3, actual {len(limited_data)}"
     logger.info("Limit count test passed")
 
     # 8. Test using datetime objects as timestamps
-    dt_start = datetime.now() - timedelta(minutes=10)
-    dt_end = datetime.now()
+    dt_start = get_now_with_timezone() - timedelta(minutes=10)
+    dt_end = get_now_with_timezone()
     dt_data = await cache.get_by_timestamp_range(
         test_key, start_timestamp=dt_start, end_timestamp=dt_end
     )
     assert len(dt_data) >= 0, "Filtering with datetime objects failed"
-    logger.info("Datetime object filtering test passed, retrieved %d items", len(dt_data))
+    logger.info(
+        "Datetime object filtering test passed, retrieved %d items", len(dt_data)
+    )
 
     # 9. Verify data format
     if len(all_data) > 0:
@@ -276,7 +287,9 @@ async def test_json_pickle_mixed_data():
     # 4. Verify total data count
     total_count = len(all_test_data)
     size = await cache.get_queue_size(test_key)
-    assert size == total_count, f"Data count mismatch: expected {total_count}, actual {size}"
+    assert (
+        size == total_count
+    ), f"Data count mismatch: expected {total_count}, actual {size}"
     logger.info(
         "Data addition completed, total: %d items (JSON: %d, Pickle: %d)",
         total_count,
@@ -313,7 +326,8 @@ async def test_json_pickle_mixed_data():
                 retrieved_data["windows_bytes"], bytes
             ), "Bytes data type error"
             logger.debug(
-                "Successfully verified dictionary with complex data: %s", retrieved_data.get("type", "unknown")
+                "Successfully verified dictionary with complex data: %s",
+                retrieved_data.get("type", "unknown"),
             )
 
         # Check Pickle data
@@ -322,10 +336,14 @@ async def test_json_pickle_mixed_data():
             # Verify Pickle object functionality
             doubled = retrieved_data.get_doubled_value()
             expected = retrieved_data.value * retrieved_data.multiplier
-            assert doubled == expected, f"Pickle object function error: {doubled} != {expected}"
+            assert (
+                doubled == expected
+            ), f"Pickle object function error: {doubled} != {expected}"
 
             # Verify complex data
-            assert "set_data" in retrieved_data.complex_data, "Pickle object missing set data"
+            assert (
+                "set_data" in retrieved_data.complex_data
+            ), "Pickle object missing set data"
             assert (
                 "bytes_data" in retrieved_data.complex_data
             ), "Pickle object missing bytes data"
@@ -351,7 +369,9 @@ async def test_json_pickle_mixed_data():
 
             if found or isinstance(retrieved_data, (str, int, float, bool)):
                 json_count += 1
-                logger.debug("Successfully verified JSON data: %s", str(retrieved_data)[:50])
+                logger.debug(
+                    "Successfully verified JSON data: %s", str(retrieved_data)[:50]
+                )
 
         else:
             logger.warning(
@@ -374,7 +394,9 @@ async def test_json_pickle_mixed_data():
     ), f"Pickle data count mismatch: expected {len(pickle_data)}, actual {pickle_count}"
 
     logger.info(
-        "Data type verification completed: JSON data %d items, Pickle data %d items", json_count, pickle_count
+        "Data type verification completed: JSON data %d items, Pickle data %d items",
+        json_count,
+        pickle_count,
     )
 
     # 8. Test timestamp range query support for mixed data
@@ -383,7 +405,9 @@ async def test_json_pickle_mixed_data():
     recent_data = await cache.get_by_timestamp_range(
         test_key, start_timestamp=five_minutes_ago
     )
-    assert len(recent_data) == total_count, "Timestamp range query support for mixed data failed"
+    assert (
+        len(recent_data) == total_count
+    ), "Timestamp range query support for mixed data failed"
 
     # Get first half of data
     if len(all_data) > 2:
@@ -538,7 +562,9 @@ async def test_stress_operations():
 
     # 3. Verify data count
     size = await cache.get_queue_size(test_key)
-    assert size == batch_size, f"Data count mismatch: expected {batch_size}, actual {size}"
+    assert (
+        size == batch_size
+    ), f"Data count mismatch: expected {batch_size}, actual {size}"
 
     # 4. Test performance of getting large amount of data
     start_time = time.time()
@@ -546,7 +572,9 @@ async def test_stress_operations():
     elapsed = time.time() - start_time
 
     assert len(recent_data) == batch_size, "Retrieved data count mismatch"
-    logger.info("Retrieved %d items, elapsed time: %.2f seconds", len(recent_data), elapsed)
+    logger.info(
+        "Retrieved %d items, elapsed time: %.2f seconds", len(recent_data), elapsed
+    )
 
     # 5. Clean up test data
     success = await cache.clear_queue(test_key)
@@ -645,7 +673,9 @@ async def test_compatibility_layer():
 
     # Test limit count
     limited_data = await default_manager.get_by_timestamp_range(test_key, limit=2)
-    assert len(limited_data) == 2, "Backward compatibility layer limit count function failed"
+    assert (
+        len(limited_data) == 2
+    ), "Backward compatibility layer limit count function failed"
 
     logger.info("Backward compatibility layer new method test passed")
 

@@ -8,7 +8,7 @@ Created: 2025-09-11T23:37:54.703305
 
 import asyncio
 import logging
-from typing import Optional
+from common_utils.datetime_utils import get_now_with_timezone
 
 from pymongo.errors import OperationFailure
 
@@ -74,10 +74,10 @@ async def enable_timestamp_sharding(session=None):
 
         # 4. Create pre-split chunks (optional, improves initial performance)
         try:
-            from datetime import datetime, timedelta
+            from datetime import timedelta
 
             # Create pre-split points for the next 12 months
-            base_date = datetime.now().replace(
+            base_date = get_now_with_timezone().replace(
                 day=1, hour=0, minute=0, second=0, microsecond=0
             )
             split_points = []

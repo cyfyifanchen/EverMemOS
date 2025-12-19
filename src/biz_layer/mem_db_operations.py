@@ -58,7 +58,7 @@ from common_utils.datetime_utils import (
 )
 from core.observation.logger import get_logger
 from core.events import ApplicationEventPublisher
-from infra_layer.adapters.out.event.memcell_created import MemCellCreatedEvent
+from infra_layer.adapters.out.event.memcell_created_event import MemCellCreatedEvent
 from infra_layer.adapters.out.persistence.document.memory.foresight_record import (
     ForesightRecord,
 )

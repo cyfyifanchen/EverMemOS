@@ -20,8 +20,9 @@ import time
 from pathlib import Path
 from typing import Dict, Any, Optional
 
-ALLOWED_SCENES: tuple[str, str, str] = ("assistant", "companion", "group_chat")
-# todo xinzegao originally was group_chat
+from memory_layer.profile_manager.config import ScenarioType
+
+ALLOWED_SCENES = tuple(e.value for e in ScenarioType)
 
 from infra_layer.adapters.input.api.mapper.group_chat_converter import (
     validate_group_chat_format_input,
@@ -342,7 +343,7 @@ Input file format:
         type=str,
         choices=ALLOWED_SCENES,
         required=True,
-        help='Memory extraction scene (required, supports assistant/companion/group_chat)',
+        help='Memory extraction scene (required, supports assistant/group_chat)',
     )
     parser.add_argument(
         '--validate-only',

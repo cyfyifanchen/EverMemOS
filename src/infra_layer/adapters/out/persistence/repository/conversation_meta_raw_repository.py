@@ -13,13 +13,12 @@ from core.di.decorators import repository
 from infra_layer.adapters.out.persistence.document.memory.conversation_meta import (
     ConversationMeta,
 )
+from memory_layer.profile_manager.config import ScenarioType
 
 logger = logging.getLogger(__name__)
 
-# Allowed scene enum values
-# - assistant/companion: 1:1 assistant-like conversations
-# - group_chat: multi-participant/work-group conversations
-ALLOWED_SCENES = ["assistant", "companion", "group_chat"]
+# Allowed scene enum values (derived from ScenarioType)
+ALLOWED_SCENES = [e.value for e in ScenarioType]
 
 
 @repository("conversation_meta_raw_repository", primary=True)

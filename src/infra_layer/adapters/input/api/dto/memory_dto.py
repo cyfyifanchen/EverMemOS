@@ -231,7 +231,7 @@ class ConversationMetaCreateRequest(BaseModel):
         ...,
         description="""Scene identifier, enum values from ScenarioType:
 - group_chat: work/group chat scenario, suitable for group conversations such as multi-person collaboration and project discussions
-- assistant: companion/assistant scenario, suitable for one-on-one AI assistant conversations""",
+- assistant: assistant scenario, suitable for one-on-one AI assistant conversations""",
         examples=["group_chat"],
     )
     scene_desc: Dict[str, Any] = Field(

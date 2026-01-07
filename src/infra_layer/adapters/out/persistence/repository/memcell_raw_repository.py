@@ -173,14 +173,17 @@ class MemCellRawRepository(BaseRepository[MemCell]):
             raise e
 
     async def delete_by_event_id(
-        self, event_id: str, deleted_by: Optional[str] = None, session: Optional[AsyncClientSession] = None
+        self,
+        event_id: str,
+        deleted_by: Optional[str] = None,
+        session: Optional[AsyncClientSession] = None,
     ) -> bool:
         """
-        软删除 MemCell by event_id
+        Soft delete MemCell by event_id
 
         Args:
             event_id: Event ID
-            deleted_by: 删除操作者（可选）
+            deleted_by: Deleter (optional)
             session: Optional MongoDB session, for transaction support
 
         Returns:
@@ -203,9 +206,9 @@ class MemCellRawRepository(BaseRepository[MemCell]):
         self, event_id: str, session: Optional[AsyncClientSession] = None
     ) -> bool:
         """
-        硬删除（物理删除）MemCell by event_id
-        
-        ⚠️ 警告：此操作不可恢复！请谨慎使用。
+        Hard delete (physical deletion) MemCell by event_id
+
+        ⚠️ Warning: This operation is irreversible! Use with caution.
 
         Args:
             event_id: Event ID
@@ -519,14 +522,17 @@ class MemCellRawRepository(BaseRepository[MemCell]):
     # ==================== Batch Operations ====================
 
     async def delete_by_user_id(
-        self, user_id: str, deleted_by: Optional[str] = None, session: Optional[AsyncClientSession] = None
+        self,
+        user_id: str,
+        deleted_by: Optional[str] = None,
+        session: Optional[AsyncClientSession] = None,
     ) -> int:
         """
-        软删除用户的所有 MemCell
+        Soft delete all MemCell of a user
 
         Args:
             user_id: User ID
-            deleted_by: 删除操作者（可选）
+            deleted_by: Deleter (optional)
             session: Optional MongoDB session, for transaction support
 
         Returns:
@@ -534,9 +540,7 @@ class MemCellRawRepository(BaseRepository[MemCell]):
         """
         try:
             result = await self.model.delete_many(
-                {"user_id": user_id},
-                deleted_by=deleted_by,
-                session=session
+                {"user_id": user_id}, deleted_by=deleted_by, session=session
             )
             count = result.modified_count if result else 0
             logger.info(
@@ -553,9 +557,9 @@ class MemCellRawRepository(BaseRepository[MemCell]):
         self, user_id: str, session: Optional[AsyncClientSession] = None
     ) -> int:
         """
-        硬删除（物理删除）用户的所有 MemCell
-        
-        ⚠️ 警告：此操作不可恢复！请谨慎使用。
+        Hard delete (physical deletion) all MemCell of a user
+
+        ⚠️ Warning: This operation is irreversible! Use with caution.
 
         Args:
             user_id: User ID
@@ -566,8 +570,7 @@ class MemCellRawRepository(BaseRepository[MemCell]):
         """
         try:
             result = await self.model.hard_delete_many(
-                {"user_id": user_id},
-                session=session
+                {"user_id": user_id}, session=session
             )
             count = result.deleted_count if result else 0
             logger.info(
@@ -589,29 +592,25 @@ class MemCellRawRepository(BaseRepository[MemCell]):
         session: Optional[AsyncClientSession] = None,
     ) -> int:
         """
-        软删除时间范围内的 MemCell
+        Soft delete MemCell within time range
 
         Args:
             start_time: Start time
             end_time: End time
             user_id: Optional user ID filter
-            deleted_by: 删除操作者（可选）
+            deleted_by: Deleter (optional)
             session: Optional MongoDB session, for transaction support
 
         Returns:
             Number of soft deleted records
         """
         try:
-            filter_dict = {
-                "timestamp": {"$gte": start_time, "$lt": end_time}
-            }
+            filter_dict = {"timestamp": {"$gte": start_time, "$lt": end_time}}
             if user_id:
                 filter_dict["user_id"] = user_id
 
             result = await self.model.delete_many(
-                filter_dict,
-                deleted_by=deleted_by,
-                session=session
+                filter_dict, deleted_by=deleted_by, session=session
             )
             count = result.modified_count if result else 0
             logger.info(
@@ -634,9 +633,9 @@ class MemCellRawRepository(BaseRepository[MemCell]):
         session: Optional[AsyncClientSession] = None,
     ) -> int:
         """
-        硬删除（物理删除）时间范围内的 MemCell
-        
-        ⚠️ 警告：此操作不可恢复！请谨慎使用。
+        Hard delete (physical deletion) MemCell within time range
+
+        ⚠️ Warning: This operation is irreversible! Use with caution.
 
         Args:
             start_time: Start time
@@ -648,16 +647,11 @@ class MemCellRawRepository(BaseRepository[MemCell]):
             Number of hard deleted records
         """
         try:
-            filter_dict = {
-                "timestamp": {"$gte": start_time, "$lt": end_time}
-            }
+            filter_dict = {"timestamp": {"$gte": start_time, "$lt": end_time}}
             if user_id:
                 filter_dict["user_id"] = user_id
 
-            result = await self.model.hard_delete_many(
-                filter_dict,
-                session=session
-            )
+            result = await self.model.hard_delete_many(filter_dict, session=session)
             count = result.deleted_count if result else 0
             logger.info(
                 "✅ Successfully hard deleted MemCell within time range: %s - %s, user: %s, deleted %d records",
@@ -674,11 +668,10 @@ class MemCellRawRepository(BaseRepository[MemCell]):
     # ==================== Soft Delete Recovery Methods ====================
 
     async def restore_by_event_id(
-        self, event_id: str, 
-        session: Optional[AsyncClientSession] = None,
+        self, event_id: str, session: Optional[AsyncClientSession] = None
     ) -> bool:
         """
-        恢复已软删除的 MemCell by event_id
+        Restore soft-deleted MemCell by event_id
 
         Args:
             event_id: Event ID
@@ -687,7 +680,9 @@ class MemCellRawRepository(BaseRepository[MemCell]):
             Returns True if restoration succeeds, otherwise False
         """
         try:
-            memcell = await self.model.hard_find_one({"_id": ObjectId(event_id)}, session=session)
+            memcell = await self.model.hard_find_one(
+                {"_id": ObjectId(event_id)}, session=session
+            )
             if memcell:
                 await memcell.restore()
                 logger.debug(
@@ -703,7 +698,7 @@ class MemCellRawRepository(BaseRepository[MemCell]):
         self, user_id: str, session: Optional[AsyncClientSession] = None
     ) -> int:
         """
-        恢复用户的所有已软删除的 MemCell
+        Restore all soft-deleted MemCell of a user
 
         Args:
             user_id: User ID
@@ -714,8 +709,7 @@ class MemCellRawRepository(BaseRepository[MemCell]):
         """
         try:
             result = await self.model.restore_many(
-                {"user_id": user_id},
-                session=session
+                {"user_id": user_id}, session=session
             )
             count = result.modified_count if result else 0
             logger.info(
@@ -736,7 +730,7 @@ class MemCellRawRepository(BaseRepository[MemCell]):
         session: Optional[AsyncClientSession] = None,
     ) -> int:
         """
-        恢复时间范围内的已软删除的 MemCell
+        Restore soft-deleted MemCell within time range
 
         Args:
             start_time: Start time
@@ -750,15 +744,12 @@ class MemCellRawRepository(BaseRepository[MemCell]):
         try:
             filter_dict = {
                 "timestamp": {"$gte": start_time, "$lt": end_time},
-                "deleted_at": {"$ne": None}  # 只恢复已删除的
+                "deleted_at": {"$ne": None},  # Only restore deleted records
             }
             if user_id:
                 filter_dict["user_id"] = user_id
 
-            result = await self.model.restore_many(
-                filter_dict,
-                session=session
-            )
+            result = await self.model.restore_many(filter_dict, session=session)
             count = result.modified_count if result else 0
             logger.info(
                 "✅ Successfully restored MemCell within time range: %s - %s, user: %s, restored %d records",
@@ -859,6 +850,7 @@ class MemCellRawRepository(BaseRepository[MemCell]):
         except Exception as e:
             logger.error("❌ Failed to retrieve latest user MemCell: %s", e)
             return []
+
 
 # Export
 __all__ = ["MemCellRawRepository"]

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-MemoryRequestLog <-> RawData 转换器
+MemoryRequestLog <-> RawData Converter
 
-负责 MemoryRequestLog 和 RawData 之间的相互转换。
+Handles bidirectional conversion between MemoryRequestLog and RawData.
 """
 
 import json
@@ -25,31 +25,31 @@ logger = get_logger(__name__)
 
 class MemoryRequestLogMapper:
     """
-    MemoryRequestLog <-> RawData 转换器
+    MemoryRequestLog <-> RawData Converter
 
-    提供 MemoryRequestLog 和 RawData 之间的双向转换功能。
+    Provides bidirectional conversion between MemoryRequestLog and RawData.
     """
 
     @staticmethod
     def to_raw_data(log: MemoryRequestLog) -> Optional[RawData]:
         """
-        将 MemoryRequestLog 转换为 RawData
+        Convert MemoryRequestLog to RawData
 
-        转换策略（按优先级）：
-        1. 优先从 raw_input_str 解析简单消息格式
-        2. 其次使用 raw_input 字典解析简单消息格式
-        3. 最后从独立字段构建 RawData
+        Conversion strategy (by priority):
+        1. First, parse simple message format from raw_input_str
+        2. Then, parse simple message format from raw_input dictionary
+        3. Finally, build from individual fields
 
         Args:
-            log: MemoryRequestLog 对象
+            log: MemoryRequestLog object
 
         Returns:
-            RawData 对象或 None（转换失败时）
+            RawData object or None (if conversion fails)
         """
         if log is None:
             return None
 
-        # 策略 1: 优先从 raw_input_str 解析简单消息格式
+        # Strategy 1: First, parse simple message format from raw_input_str
         if log.raw_input_str:
             try:
                 data = json.loads(log.raw_input_str)
@@ -59,9 +59,11 @@ class MemoryRequestLogMapper:
                 if raw_data:
                     return raw_data
             except (json.JSONDecodeError, ValueError, TypeError) as e:
-                logger.debug("从 raw_input_str 解析失败，尝试其他方式: %s", e)
+                logger.debug(
+                    "Failed to parse from raw_input_str, trying other methods: %s", e
+                )
 
-        # 策略 2: 使用 raw_input 字典解析简单消息格式
+        # Strategy 2: Use raw_input dictionary to parse simple message format
         if log.raw_input:
             raw_data = MemoryRequestLogMapper._convert_simple_message_to_raw_data(
                 log.raw_input, log.request_id
@@ -69,7 +71,7 @@ class MemoryRequestLogMapper:
             if raw_data:
                 return raw_data
 
-        # 策略 3: 从独立字段构建
+        # Strategy 3: Build from individual fields
         return MemoryRequestLogMapper._build_from_fields(log)
 
     @staticmethod
@@ -77,16 +79,16 @@ class MemoryRequestLogMapper:
         message_data: Dict[str, Any], request_id: Optional[str] = None
     ) -> Optional[RawData]:
         """
-        将简单消息格式转换为 RawData
+        Convert simple message format to RawData
 
-        简单消息格式: {"message_id": "...", "sender": "...", "content": "...", ...}
+        Simple message format: {"message_id": "...", "sender": "...", "content": "...", ...}
 
         Args:
-            message_data: 简单消息数据字典
-            request_id: 请求 ID（可选，用于 metadata）
+            message_data: Dictionary containing simple message data
+            request_id: Request ID (optional, used in metadata)
 
         Returns:
-            RawData 对象或 None
+            RawData object or None
         """
         if not isinstance(message_data, dict):
             return None
@@ -99,7 +101,7 @@ class MemoryRequestLogMapper:
         if not message_id or not sender:
             return None
 
-        # 解析时间戳
+        # Parse timestamp
         timestamp = None
         if create_time_str:
             try:
@@ -109,13 +111,13 @@ class MemoryRequestLogMapper:
                     timestamp = create_time_str
             except (ValueError, TypeError) as e:
                 logger.warning(
-                    "解析 create_time 失败: %s, error: %s", create_time_str, e
+                    "Failed to parse create_time: %s, error: %s", create_time_str, e
                 )
 
-        # 标准化 refer_list
+        # Normalize refer_list
         refer_list = normalize_refer_list(message_data.get("refer_list", []))
 
-        # 构建 extra_metadata
+        # Build extra_metadata
         extra_metadata = {"request_id": request_id} if request_id else None
 
         return build_raw_data_from_simple_message(
@@ -133,21 +135,21 @@ class MemoryRequestLogMapper:
     @staticmethod
     def _build_from_fields(log: MemoryRequestLog) -> RawData:
         """
-        从 MemoryRequestLog 的独立字段构建 RawData
+        Build RawData from individual fields of MemoryRequestLog
 
-        使用统一的 build_raw_data_from_simple_message 函数确保字段一致性。
+        Use the unified build_raw_data_from_simple_message function to ensure field consistency.
 
         Args:
-            log: MemoryRequestLog 对象
+            log: MemoryRequestLog object
 
         Returns:
-            RawData 对象
+            RawData object
         """
-        # 处理时间戳
+        # Handle timestamp
         timestamp = None
         if log.message_create_time:
             try:
-                # 如果是字符串，解析为 datetime
+                # If it's a string, parse it into datetime
                 if isinstance(log.message_create_time, str):
                     timestamp = from_iso_format(
                         log.message_create_time, ZoneInfo("UTC")
@@ -156,13 +158,13 @@ class MemoryRequestLogMapper:
                     timestamp = log.message_create_time
             except (ValueError, TypeError) as e:
                 logger.warning(
-                    "解析 message_create_time 失败: %s, error: %s",
+                    "Failed to parse message_create_time: %s, error: %s",
                     log.message_create_time,
                     e,
                 )
                 timestamp = None
 
-        # 使用统一的构建函数
+        # Use unified build function
         return build_raw_data_from_simple_message(
             message_id=log.message_id or str(log.id),
             sender=log.sender or "",
@@ -178,13 +180,13 @@ class MemoryRequestLogMapper:
     @staticmethod
     def to_raw_data_list(logs: List[MemoryRequestLog]) -> List[RawData]:
         """
-        批量将 MemoryRequestLog 列表转换为 RawData 列表
+        Batch convert a list of MemoryRequestLog objects to a list of RawData objects
 
         Args:
-            logs: MemoryRequestLog 对象列表
+            logs: List of MemoryRequestLog objects
 
         Returns:
-            RawData 对象列表（跳过转换失败的记录）
+            List of RawData objects (skip records that fail conversion)
         """
         raw_data_list: List[RawData] = []
 
@@ -195,7 +197,7 @@ class MemoryRequestLogMapper:
                     raw_data_list.append(raw_data)
             except (ValueError, TypeError) as e:
                 logger.error(
-                    "❌ 转换 MemoryRequestLog 到 RawData 失败: log_id=%s, error=%s",
+                    "❌ Failed to convert MemoryRequestLog to RawData: log_id=%s, error=%s",
                     log.id,
                     e,
                 )

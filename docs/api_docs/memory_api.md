@@ -24,6 +24,8 @@
 - [Conversation Metadata Management](#conversation-metadata-management)
   - [POST `/api/v1/memories/conversation-meta` - Save Conversation Metadata](#post-apiv1memoriesconversation-meta)
   - [PATCH `/api/v1/memories/conversation-meta` - Partial Update Conversation Metadata](#patch-apiv1memoriesconversation-meta)
+- [Memory Deletion Interface](#memory-deletion-interface)
+  - [DELETE `/api/v1/memories` - Delete Memories (Soft Delete)](#delete-apiv1memories)
 - [Related Documentation](#related-documentation)
 
 ---
@@ -896,6 +898,179 @@ async def patch_conversation_meta():
 
 asyncio.run(patch_conversation_meta())
 ```
+
+---
+
+## Memory Deletion Interface
+
+### DELETE `/api/v1/memories`
+
+Soft delete MemCell records based on combined filter criteria.
+
+#### Features
+
+- Soft delete records matching combined filter conditions
+- If multiple conditions are provided, ALL must be satisfied (AND logic)
+- Use MAGIC_ALL (`"__all__"`) to skip a specific filter
+- At least one valid filter must be specified (not all MAGIC_ALL)
+
+#### Request Format
+
+**Content-Type**: `application/json`
+
+**Request Body**:
+
+```json
+{
+  "event_id": "evt_001",
+  "user_id": "user_123",
+  "group_id": "group_456"
+}
+```
+
+**Field Descriptions**:
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| event_id | string | No | "__all__" | Filter by event ID |
+| user_id | string | No | "__all__" | Filter by user ID |
+| group_id | string | No | "__all__" | Filter by group ID |
+
+**Filter Criteria**:
+- All filter conditions are combined with AND logic
+- Use `"__all__"` to skip a specific filter
+- At least one non-`"__all__"` filter must be provided
+
+**Filter Examples**:
+- `event_id` only: Delete specific memory by event
+- `user_id` only: Delete all memories of a user
+- `user_id` + `group_id`: Delete user's memories in a specific group
+- `event_id` + `user_id` + `group_id`: Delete if all conditions match
+
+#### Response Format
+
+**Success Response (200 OK)**
+
+```json
+{
+  "status": "ok",
+  "message": "Successfully deleted 10 memories",
+  "result": {
+    "filters": ["user_id", "group_id"],
+    "count": 10
+  }
+}
+```
+
+**Field Descriptions**:
+- `filters`: List of filter conditions actually used
+- `count`: Number of memories deleted
+
+**Error Response (400 Bad Request)**
+
+```json
+{
+  "status": "failed",
+  "code": "INVALID_PARAMETER",
+  "message": "At least one of event_id, user_id, or group_id must be provided (not MAGIC_ALL)",
+  "timestamp": "2025-01-15T10:30:00+00:00",
+  "path": "/api/v1/memories"
+}
+```
+
+**Error Response (404 Not Found)**
+
+```json
+{
+  "status": "failed",
+  "code": "RESOURCE_NOT_FOUND",
+  "message": "No memories found matching the criteria or already deleted",
+  "timestamp": "2025-01-15T10:30:00+00:00",
+  "path": "/api/v1/memories"
+}
+```
+
+**Error Response (500 Internal Server Error)**
+
+```json
+{
+  "status": "failed",
+  "code": "SYSTEM_ERROR",
+  "message": "Failed to delete memories, please try again later",
+  "timestamp": "2025-01-15T10:30:00+00:00",
+  "path": "/api/v1/memories"
+}
+```
+
+#### Soft Delete Notes
+
+- Records are marked as deleted, not physically removed
+- Deleted records can be restored if needed
+- Deleted records won't appear in regular queries
+
+#### Usage Examples
+
+**Using curl - Delete by event_id**:
+
+```bash
+curl -X DELETE http://localhost:1995/api/v1/memories \
+  -H "Content-Type: application/json" \
+  -d '{
+    "event_id": "evt_001"
+  }'
+```
+
+**Using curl - Delete all memories of a user**:
+
+```bash
+curl -X DELETE http://localhost:1995/api/v1/memories \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "user_123"
+  }'
+```
+
+**Using curl - Delete by user_id and group_id combined**:
+
+```bash
+curl -X DELETE http://localhost:1995/api/v1/memories \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "user_123",
+    "group_id": "group_456"
+  }'
+```
+
+**Using Python**:
+
+```python
+import httpx
+import asyncio
+
+async def delete_memories():
+    # Delete all memories of a specific user in a specific group
+    delete_data = {
+        "user_id": "user_123",
+        "group_id": "group_456"
+    }
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.delete(
+            "http://localhost:1995/api/v1/memories",
+            json=delete_data
+        )
+        result = response.json()
+        print(f"Deleted {result['result']['count']} memories")
+
+asyncio.run(delete_memories())
+```
+
+#### Use Cases
+
+- **User Data Deletion Request**: Respond to user requests for personal data deletion
+- **Group Chat Cleanup**: Clean up historical memories in a specific group
+- **Privacy Compliance**: Meet requirements of privacy regulations like GDPR
+- **Conversation History Management**: Manage and clean up expired conversation memories
 
 ---
 

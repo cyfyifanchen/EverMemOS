@@ -74,12 +74,12 @@ class MemCell(DocumentBaseWithSoftDelete, AuditBase):
     MemCell document model
 
     Storage model for scene segmentation results, supporting flexible extension and high-performance queries.
-    
-    支持软删除功能：
-    - 使用 delete() 方法进行软删除
-    - 使用 find_one()、find_many() 自动过滤已删除记录
-    - 使用 hard_find_one()、hard_find_many() 查询包括已删除的记录
-    - 使用 hard_delete() 进行物理删除
+
+    Supports soft delete functionality:
+    - Use delete() method for soft deletion
+    - Use find_one(), find_many() to automatically filter out deleted records
+    - Use hard_find_one(), hard_find_many() to query including deleted records
+    - Use hard_delete() for physical deletion
     """
 
     # Core fields (required)
@@ -170,22 +170,30 @@ class MemCell(DocumentBaseWithSoftDelete, AuditBase):
 
         # Index definitions
         indexes = [
-            # 1. Soft delete support - 软删除状态索引
+            # 1. Soft delete support - soft delete status index
             IndexModel(
                 [("deleted_at", ASCENDING)],
                 name="idx_deleted_at",
-                sparse=True  # 只索引已删除的文档
+                sparse=True,  # Only index documents that are deleted
             ),
             # 2. Composite index for user queries - core query pattern
-            # 包含 deleted_at 以优化软删除过滤
+            # Includes deleted_at to optimize soft delete filtering
             IndexModel(
-                [("user_id", ASCENDING), ("deleted_at", ASCENDING), ("timestamp", DESCENDING)],
+                [
+                    ("user_id", ASCENDING),
+                    ("deleted_at", ASCENDING),
+                    ("timestamp", DESCENDING),
+                ],
                 name="idx_user_deleted_timestamp",
             ),
             # 3. Composite index for group queries - optimized for group chat scenarios
-            # 包含 deleted_at 以优化软删除过滤
+            # Includes deleted_at to optimize soft delete filtering
             IndexModel(
-                [("group_id", ASCENDING), ("deleted_at", ASCENDING), ("timestamp", DESCENDING)],
+                [
+                    ("group_id", ASCENDING),
+                    ("deleted_at", ASCENDING),
+                    ("timestamp", DESCENDING),
+                ],
                 name="idx_group_deleted_timestamp",
             ),
             # 4. Index for time range queries (shard key, automatically created by MongoDB)

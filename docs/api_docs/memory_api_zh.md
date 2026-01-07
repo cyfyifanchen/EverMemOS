@@ -24,6 +24,8 @@
 - [对话元数据管理](#对话元数据管理)
   - [POST `/api/v1/memories/conversation-meta` - 保存对话元数据](#post-apiv1memoriesconversation-meta)
   - [PATCH `/api/v1/memories/conversation-meta` - 局部更新对话元数据](#patch-apiv1memoriesconversation-meta)
+- [记忆删除接口](#记忆删除接口)
+  - [DELETE `/api/v1/memories` - 删除记忆（软删除）](#delete-apiv1memories)
 - [相关文档](#相关文档)
 
 ---
@@ -896,6 +898,179 @@ async def patch_conversation_meta():
 
 asyncio.run(patch_conversation_meta())
 ```
+
+---
+
+## 记忆删除接口
+
+### DELETE `/api/v1/memories`
+
+基于组合过滤条件软删除 MemCell 记录。
+
+#### 功能说明
+
+- 软删除匹配组合过滤条件的记录
+- 如果提供多个条件，则所有条件必须同时满足（AND 逻辑）
+- 使用 MAGIC_ALL (`"__all__"`) 跳过特定过滤条件
+- 至少需要指定一个有效过滤条件（不能全部都是 MAGIC_ALL）
+
+#### 请求格式
+
+**Content-Type**: `application/json`
+
+**请求体**：
+
+```json
+{
+  "event_id": "evt_001",
+  "user_id": "user_123",
+  "group_id": "group_456"
+}
+```
+
+**字段说明**：
+
+| 字段 | 类型 | 必需 | 默认值 | 说明 |
+|-----|------|------|--------|------|
+| event_id | string | 否 | "__all__" | 按事件ID过滤 |
+| user_id | string | 否 | "__all__" | 按用户ID过滤 |
+| group_id | string | 否 | "__all__" | 按群组ID过滤 |
+
+**过滤条件说明**：
+- 所有过滤条件使用 AND 逻辑组合
+- 使用 `"__all__"` 表示跳过该过滤条件
+- 至少需要提供一个非 `"__all__"` 的过滤条件
+
+**过滤示例**：
+- 仅 `event_id`：删除特定事件的记忆
+- 仅 `user_id`：删除该用户的所有记忆
+- `user_id` + `group_id`：删除该用户在特定群组的记忆
+- `event_id` + `user_id` + `group_id`：删除同时满足所有条件的记忆
+
+#### 响应格式
+
+**成功响应 (200 OK)**
+
+```json
+{
+  "status": "ok",
+  "message": "Successfully deleted 10 memories",
+  "result": {
+    "filters": ["user_id", "group_id"],
+    "count": 10
+  }
+}
+```
+
+**字段说明**：
+- `filters`: 实际使用的过滤条件列表
+- `count`: 删除的记忆数量
+
+**错误响应 (400 Bad Request)**
+
+```json
+{
+  "status": "failed",
+  "code": "INVALID_PARAMETER",
+  "message": "At least one of event_id, user_id, or group_id must be provided (not MAGIC_ALL)",
+  "timestamp": "2025-01-15T10:30:00+00:00",
+  "path": "/api/v1/memories"
+}
+```
+
+**错误响应 (404 Not Found)**
+
+```json
+{
+  "status": "failed",
+  "code": "RESOURCE_NOT_FOUND",
+  "message": "No memories found matching the criteria or already deleted",
+  "timestamp": "2025-01-15T10:30:00+00:00",
+  "path": "/api/v1/memories"
+}
+```
+
+**错误响应 (500 Internal Server Error)**
+
+```json
+{
+  "status": "failed",
+  "code": "SYSTEM_ERROR",
+  "message": "Failed to delete memories, please try again later",
+  "timestamp": "2025-01-15T10:30:00+00:00",
+  "path": "/api/v1/memories"
+}
+```
+
+#### 软删除说明
+
+- 记录被标记为已删除，而非物理删除
+- 如有需要，已删除的记录可以恢复
+- 已删除的记录不会出现在常规查询中
+
+#### 使用示例
+
+**使用 curl - 按 event_id 删除**：
+
+```bash
+curl -X DELETE http://localhost:1995/api/v1/memories \
+  -H "Content-Type: application/json" \
+  -d '{
+    "event_id": "evt_001"
+  }'
+```
+
+**使用 curl - 按 user_id 删除该用户所有记忆**：
+
+```bash
+curl -X DELETE http://localhost:1995/api/v1/memories \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "user_123"
+  }'
+```
+
+**使用 curl - 按 user_id 和 group_id 组合删除**：
+
+```bash
+curl -X DELETE http://localhost:1995/api/v1/memories \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "user_123",
+    "group_id": "group_456"
+  }'
+```
+
+**使用 Python**：
+
+```python
+import httpx
+import asyncio
+
+async def delete_memories():
+    # 删除特定用户在特定群组的所有记忆
+    delete_data = {
+        "user_id": "user_123",
+        "group_id": "group_456"
+    }
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.delete(
+            "http://localhost:1995/api/v1/memories",
+            json=delete_data
+        )
+        result = response.json()
+        print(f"删除了 {result['result']['count']} 条记忆")
+
+asyncio.run(delete_memories())
+```
+
+#### 使用场景
+
+- **用户请求数据删除**：响应用户删除个人数据的请求
+- **群聊清理**：清理特定群组的历史记忆
+- **隐私合规**：满足 GDPR 等隐私法规要求
+- **对话历史管理**：管理和清理过期的对话记忆
 
 ---
 

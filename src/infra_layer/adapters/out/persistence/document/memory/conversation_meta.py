@@ -144,6 +144,14 @@ class ConversationMeta(DocumentBase, AuditBase):
                 [("group_id", ASCENDING), ("scene", ASCENDING)],
                 name="idx_group_id_scene",
             ),
+            IndexModel(
+                [("conversation_created_at", ASCENDING)],
+                name="idx_conversation_created_at",
+            ),
+            # Creation time index
+            IndexModel([("created_at", DESCENDING)], name="idx_created_at"),
+            # Update time index
+            IndexModel([("updated_at", DESCENDING)], name="idx_updated_at"),
         ]
         validate_on_save = True
         use_state_management = True

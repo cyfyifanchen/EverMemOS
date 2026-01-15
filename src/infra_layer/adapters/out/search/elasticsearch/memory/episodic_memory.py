@@ -117,6 +117,8 @@ class EpisodicMemoryDoc(TenantAwareAliasDoc("episodic-memory", number_of_shards=
     linked_entities = e_field.Keyword(multi=True)  # List of linked entity IDs
 
     subject = e_field.Text()  # Event title
+
+    # todo: will abandon this field
     memcell_event_id_list = e_field.Keyword(multi=True)  # List of memory cell event IDs
 
     # Parent info

@@ -134,5 +134,6 @@ class EpisodicMemoryCollection(TenantAwareMilvusCollectionWithSuffix):
         ),
         IndexConfig(field_name="group_id", index_type="AUTOINDEX"),
         IndexConfig(field_name="event_type", index_type="AUTOINDEX"),
+        IndexConfig(field_name="parent_id", index_type="AUTOINDEX"),
         IndexConfig(field_name="timestamp", index_type="AUTOINDEX"),
     ]

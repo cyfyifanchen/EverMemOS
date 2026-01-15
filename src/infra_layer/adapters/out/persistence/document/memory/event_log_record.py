@@ -95,12 +95,7 @@ class EventLogRecord(DocumentBase, AuditBase):
             IndexModel([("group_id", ASCENDING)], name="idx_group_id", sparse=True),
             IndexModel([("timestamp", DESCENDING)], name="idx_timestamp"),
             # Parent memory index
-            IndexModel([("parent_id", ASCENDING)], name="idx_parent"),
-            # Composite index of user ID and parent ID
-            IndexModel(
-                [("user_id", ASCENDING), ("parent_id", ASCENDING)],
-                name="idx_user_parent_id",
-            ),
+            IndexModel([("parent_id", ASCENDING)], name="idx_parent_id"),
             # Composite index of user ID and timestamp
             IndexModel(
                 [("user_id", ASCENDING), ("timestamp", DESCENDING)],

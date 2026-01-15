@@ -10,7 +10,6 @@ from typing import Optional
 
 from core.di import service
 from core.di.utils import get_bean_by_type
-from core.constants.exceptions import ValidationException
 from infra_layer.adapters.out.persistence.repository.conversation_meta_raw_repository import (
     ConversationMetaRawRepository,
 )
@@ -132,37 +131,33 @@ class ConversationMetaService:
                     full_name=detail.full_name, role=detail.role, extra=detail.extra
                 )
 
-        try:
-            saved_meta = await repo.upsert_by_group_id(
-                group_id=request.group_id,
-                conversation_data={
-                    "version": request.version,
-                    "scene": request.scene,
-                    "scene_desc": request.scene_desc,
-                    "name": request.name,
-                    "description": request.description,
-                    "conversation_created_at": request.created_at,
-                    "default_timezone": request.default_timezone,
-                    "user_details": user_details_model,
-                    "tags": request.tags or [],
-                },
-            )
+        saved_meta = await repo.upsert_by_group_id(
+            group_id=request.group_id,
+            conversation_data={
+                "version": request.version,
+                "scene": request.scene,
+                "scene_desc": request.scene_desc,
+                "name": request.name,
+                "description": request.description,
+                "conversation_created_at": request.created_at,
+                "default_timezone": request.default_timezone,
+                "user_details": user_details_model,
+                "tags": request.tags or [],
+            },
+        )
 
-            if not saved_meta:
-                logger.error(
-                    "Failed to save conversation metadata: group_id=%s", request.group_id
-                )
-                return None
-
-            logger.info(
-                "Saved conversation metadata: group_id=%s, is_default=%s",
-                saved_meta.group_id,
-                saved_meta.group_id is None,
+        if not saved_meta:
+            logger.error(
+                "Failed to save conversation metadata: group_id=%s", request.group_id
             )
-            return self._to_response(saved_meta)
-        except ValidationException:
-            # Re-raise ValidationException to propagate detailed error info to controller
-            raise
+            return None
+
+        logger.info(
+            "Saved conversation metadata: group_id=%s, is_default=%s",
+            saved_meta.group_id,
+            saved_meta.group_id is None,
+        )
+        return self._to_response(saved_meta)
 
     async def patch(
         self, request: ConversationMetaPatchRequest
@@ -225,19 +220,15 @@ class ConversationMetaService:
             return self._to_response(existing_meta), []
 
         # Perform update
-        try:
-            updated_meta = await repo.update_by_group_id(
-                group_id=request.group_id, update_data=filtered_data
-            )
+        updated_meta = await repo.update_by_group_id(
+            group_id=request.group_id, update_data=filtered_data
+        )
 
-            if not updated_meta:
-                logger.error(
-                    "Failed to update conversation metadata: group_id=%s", request.group_id
-                )
-                return None, []
-        except ValidationException:
-            # Re-raise ValidationException to propagate detailed error info to controller
-            raise
+        if not updated_meta:
+            logger.error(
+                "Failed to update conversation metadata: group_id=%s", request.group_id
+            )
+            return None, []
 
         logger.info(
             "Updated conversation metadata: group_id=%s, updated_fields=%s",

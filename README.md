@@ -11,11 +11,14 @@
 <p><strong>Let every interaction be driven by understanding</strong> · Enterprise-Grade Intelligent Memory System</p>
 
 <p>
+  <a href="https://arxiv.org/abs/2601.02163">
+    <img alt="arXiv" src="https://img.shields.io/badge/arXiv-2601.02163-b31b1b?style=flat-square&logo=arxiv&logoColor=white" />
+  </a>
   <img alt="Python" src="https://img.shields.io/badge/Python-3.10+-0084FF?style=flat-square&logo=python&logoColor=white" />
   <img alt="License" src="https://img.shields.io/badge/License-Apache%202.0-00B894?style=flat-square&logo=apache&logoColor=white" />
   <img alt="Docker" src="https://img.shields.io/badge/Docker-Supported-4A90E2?style=flat-square&logo=docker&logoColor=white" />
   <a href="https://github.com/EverMind-AI/EverMemOS/releases">
-    <img alt="Release" src="https://img.shields.io/badge/release-v1.1.0-4A90E2?style=flat-square" />
+    <img alt="Release" src="https://img.shields.io/badge/release-v1.2.0-4A90E2?style=flat-square" />
   </a>
   <a href="https://github.com/EverMind-AI/EverMemOS/stargazers">
     <img alt="Stars" src="https://img.shields.io/github/stars/EverMind-AI/EverMemOS?style=flat-square" />
@@ -35,7 +38,7 @@
 
 > 💬 **More than memory — it's foresight.**
 
-**EverMemOS** enables AI to not only remember what happened, but understand the meaning behind memories and use them to guide decisions. Achieving **92.3% reasoning accuracy** on the LoCoMo benchmark, EverMemOS provides long-term memory capabilities for conversational AI agents through structured extraction, intelligent retrieval, and progressive profile building.
+**EverMemOS** enables AI to not only remember what happened, but understand the meaning behind memories and use them to guide decisions. Achieving **93% reasoning accuracy** on the LoCoMo benchmark, EverMemOS provides long-term memory capabilities for conversational AI agents through structured extraction, intelligent retrieval, and progressive profile building.
 
 <p align="center">
   <img src="figs/overview.png" alt="EverMemOS Architecture Overview" width="800"/>
@@ -43,19 +46,25 @@
 
 **How it works:** EverMemOS extracts structured memories from conversations (Encoding), organizes them into episodes and profiles (Consolidation), and intelligently retrieves relevant context when needed (Retrieval).
 
-📚 [Vision & Overview](docs/OVERVIEW.md) • 🏗️ [Architecture](docs/ARCHITECTURE.md) • 📖 [Full Documentation](docs/)
+📄 [Paper](https://arxiv.org/abs/2601.02163) • 📚 [Vision & Overview](docs/OVERVIEW.md) • 🏗️ [Architecture](docs/ARCHITECTURE.md) • 📖 [Full Documentation](docs/)
 
-**Latest**: v1.1.0 with vLLM Support + Evaluation Resources ([Changelog](docs/CHANGELOG.md))
+**Latest**: v1.2.0 with API enhancements + DB efficiency improvements ([Changelog](docs/CHANGELOG.md))
 
 ---
 
 ## Why EverMemOS?
 
-- 🎯 **92.3% Accuracy** - Best-in-class performance on LoCoMo benchmark
+- 🎯 **93% Accuracy** - Best-in-class performance on LoCoMo benchmark
 - 🚀 **Production Ready** - Enterprise-grade with Milvus vector DB, Elasticsearch, MongoDB, and Redis
 - 🔧 **Easy Integration** - Simple REST API, works with any LLM
 - 📊 **Multi-Modal Memory** - Episodes, facts, preferences, relations
 - 🔍 **Smart Retrieval** - BM25, embeddings, or agentic search
+
+<p align="center">
+  <img src="figs/benchmark.png" alt="EverMemOS Benchmark Results" width="800"/>
+  <br>
+  <em>EverMemOS outperforms existing memory systems across all major benchmarks</em>
+</p>
 
 ---
 
@@ -150,31 +159,13 @@ for memory_group in result.get("memories", []):
 
 ## Evaluation & Benchmarking
 
-EverMemOS achieves **92.3% overall accuracy** on the LoCoMo benchmark, outperforming comparable memory systems.
+EverMemOS achieves **93% overall accuracy** on the LoCoMo benchmark, outperforming comparable memory systems.
 
 ### Benchmark Results
 
-**LoCoMo Benchmark:**
-
-| System | Single Hop | Multi Hop | Temporal | Open Domain | Overall |
-|--------|------------|-----------|----------|-------------|---------|
-| **EverMemOS** | **96.08%** | **91.13%** | **89.72%** | 70.83% | **92.32%** |
-| Zep | 90.84% | 81.91% | 77.26% | 75.00% | 85.22% |
-| MemOS | 85.37% | 79.43% | 75.08% | 64.58% | 80.76% |
-| MemU | 74.91% | 72.34% | 43.61% | 54.17% | 66.67% |
-| Mem0 | 68.97% | 61.70% | 58.26% | 50.00% | 64.20% |
-
-**LongMemEval Benchmark:**
-
-| Category | Accuracy |
-|----------|----------|
-| Single-session-user | 100.00% |
-| Single-session-preference | 96.67% |
-| Knowledge-update | 87.18% |
-| Single-session-assistant | 78.57% |
-| Multi-session | 78.45% |
-| Temporal-reasoning | 71.18% |
-| **Overall** | **82.00%** |
+<p align="center">
+  <img src="figs/benchmark_2.png" alt="EverMemOS Benchmark Results" width="800"/>
+</p>
 
 ### Supported Benchmarks
 

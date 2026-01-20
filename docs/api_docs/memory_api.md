@@ -263,6 +263,11 @@ curl -X GET "http://localhost:8001/api/v1/memories/search" \
       "user_id": "user_123",
       "memory_type": "retrieve"
     },
+    "metadata": {
+      "source": "episodic_memory_es_repository",
+      "user_id": "user_123",
+      "memory_type": "retrieve"
+    },
     "pending_messages": []
   }
 }
@@ -275,8 +280,11 @@ curl -X GET "http://localhost:8001/api/v1/memories/search" \
 | `memories` | List of memory groups, organized by memory type |
 | `scores` | Relevance scores for each memory |
 | `importance_scores` | Group importance scores for sorting |
+| `original_data` | Original data associated with memories |
 | `total_count` | Total number of memories found |
 | `has_more` | Whether more results are available |
+| `query_metadata` | Metadata about the query execution |
+| `metadata` | Additional response metadata |
 | `pending_messages` | Messages waiting for memory extraction |
 
 ---
@@ -406,6 +414,8 @@ Partially update conversation metadata.
   "result": {
     "id": "...",
     "group_id": "group_123",
+    "scene": "group_chat",
+    "name": "Updated Team Name",
     "updated_fields": ["name", "tags"],
     "updated_at": "2025-01-15T12:00:00Z"
   }

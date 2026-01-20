@@ -6,6 +6,20 @@ All notable changes to EverMemOS will be documented in this file.
 
 ---
 
+## [1.2.0] - 2025-01-20
+
+### Changed
+- 🔌 **API Enhancement**: Added `role` field to `POST /memories` endpoint to identify message source (`user` or `assistant`)
+- 🔧 **Conversation Metadata**: `group_id` is now optional in conversation-meta endpoints, allowing default configuration without specifying a group
+
+### Improved
+- 🚀 **Database Efficiency**: Major performance improvements to database operations
+
+### Breaking Changes
+- ⚠️ **Data Migration Required**: Database schema changes may cause incompatibility with data created in previous versions. Please backup your data before upgrading.
+
+---
+
 ## [1.1.0] - 2025-11-27
 
 **🎉 🎉 🎉 EverMemOS v1.1.0 Released!**

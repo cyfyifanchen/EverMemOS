@@ -79,6 +79,11 @@ On the **LoCoMo** benchmark, EverMemOS achieved **92.3%** reasoning accuracy (LL
 
 <br>
 
+![divider][divider-light]
+![divider][divider-dark]
+
+![image](https://github.com/user-attachments/assets/0c512570-945a-483a-9f47-8e067bd34484)
+
 ## Features
 
 <br>
@@ -91,8 +96,8 @@ On the **LoCoMo** benchmark, EverMemOS achieved **92.3%** reasoning accuracy (LL
 
 <br>
 
-![image](https://github.com/user-attachments/assets/2a2a4f15-9185-47b3-9182-9c28145e18a4)
-![image](https://github.com/user-attachments/assets/a392bc68-403f-48c4-97e3-fd01dc108080)
+![divider][divider-light]
+![divider][divider-dark]
 
 <!-- <p align="center">
   <img src="figs/overview.png" alt="EverMemOS Architecture Overview" />
@@ -339,6 +344,10 @@ This project is licensed under the [Apache License 2.0][license].
 [contributing]: #contributing
 [license-section]: #license
 [demo-section]: #run-the-demo
+
+<!-- Dividers -->
+[divider-light]:https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd
+[divider-dark]:https://github.com/user-attachments/assets/d57fad08-4f49-4a1c-bdfc-f659a5d86150
 
 <!-- Header Badges -->
 [release-badge]: https://img.shields.io/github/v/release/EverMind-AI/EverMemOS?color=369eff&labelColor=gray&logo=github&style=flat-square

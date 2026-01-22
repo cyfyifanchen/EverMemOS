@@ -13,6 +13,8 @@ EverMemOS is an open-source, enterprise-grade intelligent memory system.
 [![MongoDB][mongodb-badge]][mongodb]
 [![Elasticsearch][elasticsearch-badge]][elasticsearch]
 [![Milvus][milvus-badge]][milvus]
+[![Ask DeepWiki][deepwiki-badge]][deepwiki]
+[![ReadmeX][readmex-badge]][readmex]
 [![License][license-badge]][license]
 
 <p><strong>Share EverMemOS Repository</strong></p>
@@ -187,7 +189,7 @@ The demo stores sample conversations, waits for indexing, and searches for relev
 ![divider][divider-light]
 ![divider][divider-dark]
 
-**Full Demo Experience**
+### Full Demo Experience
 
 ① Extract memories from sample data
 ```bash
@@ -240,7 +242,7 @@ Recalls relevant memories through multi-round reasoning and intelligent fusion.
 
 ## API Usage
 
-### Store a Memory
+#### Store a Memory
 
 ```bash
 curl -X POST http://localhost:8001/api/v1/memories \
@@ -259,7 +261,7 @@ curl -X POST http://localhost:8001/api/v1/memories \
 ![divider][divider-light]
 ![divider][divider-dark]
 
-### Search Memories
+#### Search Memories
 
 ```bash
 curl -X GET http://localhost:8001/api/v1/memories/search \
@@ -287,20 +289,31 @@ See the [API Documentation][api-docs] for complete reference.
 
 Run benchmarks to test EverMemOS performance:
 
-### Quick smoke test
+#### Quick smoke test
 ```bash
 uv run python -m evaluation.cli --dataset locomo --system evermemos --smoke
 ```
 
-### Full evaluation
+![divider][divider-light]
+![divider][divider-dark]
+
+
+#### Full evaluation
 ```bash
 uv run python -m evaluation.cli --dataset locomo --system evermemos
 ```
 
-### View results
+![divider][divider-light]
+![divider][divider-dark]
+
+
+#### View results
 ```bash
 cat evaluation/results/locomo-evermemos/report.txt
 ```
+
+![divider][divider-light]
+![divider][divider-dark]
 
 Supported datasets: `locomo`, `longmemeval`, `personamem`
 
@@ -352,19 +365,18 @@ EverMemOS is available on these AI-powered Q&A platforms. They can help you find
 
 ## Contributing
 
-We love open-source energy! Whether you’re squashing bugs, shipping features, sharpening docs, or just tossing in wild ideas, every PR moves EverMemOS forward. Browse [Issues](https://github.com/EverMind-AI/EverMemOS/issues) and [Projects](https://github.com/EverMind-AI/EverMemOS/projects) to find your perfect entry point—then show us what you’ve got. Let’s build the future of memory together.
+We love open-source energy! Whether you’re squashing bugs, shipping features, sharpening docs, or just tossing in wild ideas, every PR moves EverMemOS forward. Browse [Issues](https://github.com/EverMind-AI/EverMemOS/issues) to find your perfect entry point—then show us what you’ve got. Let’s build the future of memory together.
 
 <br>
 
 > [!TIP]
 >
-> **Welcome all kinds of contributions** 🙏
+> **Welcome all kinds of contributions** 🎉
 >
 > Join us in building EverMemOS better! Every contribution makes a difference, from code to documentation. Share your projects on social media to inspire others!
 >
 > Connect with one of the EverMemOS maintainers [@elliotchen200][elliotchen200-x] on 𝕏 or [@cyfyifanchen][cyfyifanchen-github] on GitHub for project updates, discussions, and collaboration opportunities.
 
-<br>
 
 ![divider][divider-light]
 ![divider][divider-dark]
@@ -373,11 +385,14 @@ We love open-source energy! Whether you’re squashing bugs, shipping features, 
 
 [![EverMemOS][contributors-image]][contributors]
 
+![divider][divider-light]
+![divider][divider-dark]
+
+
 ### Contribution Guidelines
 
 Read our [Contribution Guidelines](CONTRIBUTING.md) for code standards and Git workflow.
 
-<br>
 
 ![divider][divider-light]
 ![divider][divider-dark]
@@ -438,15 +453,17 @@ Read our [Contribution Guidelines](CONTRIBUTING.md) for code standards and Git w
 [lang-zh-badge]: https://img.shields.io/badge/简体中文-lightgrey?style=flat-square
 
 <!-- Community Badges -->
-[discord-badge]: https://img.shields.io/badge/Discord-EverMemOS-5865F2?style=flat-square&logo=discord&logoColor=white
-[hugging-face-badge]: https://img.shields.io/badge/Hugging%20Face-EverMindAI-F5C842?style=flat-square&logo=huggingface&logoColor=white
-[x-badge]: https://img.shields.io/badge/X-EverMemOS-000000?style=flat-square&logo=x&logoColor=white
-[linkedin-badge]: https://img.shields.io/badge/LinkedIn-EverMemOS-0A66C2?style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyBmaWxsPSIjZmZmIiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU%2BTGlua2VkSW48L3RpdGxlPjxwYXRoIGQ9Ik0yMC40NDcgMjAuNDUyaC0zLjU1NHYtNS41NjljMC0xLjMyOC0uMDI3LTMuMDM3LTEuODUyLTMuMDM3LTEuODUzIDAtMi4xMzYgMS40NDUtMi4xMzYgMi45Mzl2NS42NjdIOS4zNTFWOWgzLjQxNHYxLjU2MWguMDQ2Yy40NzctLjkgMS42MzctMS44NSAzLjM3LTEuODUgMy42MDEgMCA0LjI2NyAyLjM3IDQuMjY3IDUuNDU1djYuMjg2ek01LjMzNyA3LjQzM2MtMS4xNDQgMC0yLjA2My0uOTI2LTIuMDYzLTIuMDY1IDAtMS4xMzguOTItMi4wNjMgMi4wNjMtMi4wNjMgMS4xNCAwIDIuMDY0LjkyNSAyLjA2NCAyLjA2MyAwIDEuMTM5LS45MjUgMi4wNjUtMi4wNjQgMi4wNjV6bTEuNzgyIDEzLjAxOUgzLjU1NVY5aDMuNTY0djExLjQ1MnpNMjIuMjI1IDBIMS43NzFDLjc5MiAwIDAgLjc3NCAwIDEuNzI5djIwLjU0MkMwIDIzLjIyNy43OTIgMjQgMS43NzEgMjRoMjAuNDUxQzIzLjIgMjQgMjQgMjMuMjI3IDI0IDIyLjI3MVYxLjcyOUMyNCAuNzc0IDIzLjIgMCAyMi4yMjIgMGguMDAzeiIvPjwvc3ZnPg%3D%3D
-[reddit-badge]: https://img.shields.io/badge/Reddit-EverMemOS-FF4500?style=flat-square&logo=reddit&logoColor=white
+[discord-badge]: https://img.shields.io/badge/EverMemOS-Community-5865F2?style=for-the-badge&logo=discord&logoColor=white
+[hugging-face-badge]: https://img.shields.io/badge/EverMemOS-Community-F5C842?style=for-the-badge&logo=huggingface&logoColor=white
+[x-badge]: https://img.shields.io/badge/EverMemOS-Community-000000?style=for-the-badge&logo=x&logoColor=white
+[linkedin-badge]: https://img.shields.io/badge/EverMemOS-Community-0A66C2?style=for-the-badge&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyBmaWxsPSIjZmZmIiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU%2BTGlua2VkSW48L3RpdGxlPjxwYXRoIGQ9Ik0yMC40NDcgMjAuNDUyaC0zLjU1NHYtNS41NjljMC0xLjMyOC0uMDI3LTMuMDM3LTEuODUyLTMuMDM3LTEuODUzIDAtMi4xMzYgMS40NDUtMi4xMzYgMi45Mzl2NS42NjdIOS4zNTFWOWgzLjQxNHYxLjU2MWguMDQ2Yy40NzctLjkgMS42MzctMS44NSAzLjM3LTEuODUgMy42MDEgMCA0LjI2NyAyLjM3IDQuMjY3IDUuNDU1djYuMjg2ek01LjMzNyA3LjQzM2MtMS4xNDQgMC0yLjA2My0uOTI2LTIuMDYzLTIuMDY1IDAtMS4xMzguOTItMi4wNjMgMi4wNjMtMi4wNjMgMS4xNCAwIDIuMDY0LjkyNSAyLjA2NCAyLjA2MyAwIDEuMTM5LS45MjUgMi4wNjUtMi4wNjQgMi4wNjV6bTEuNzgyIDEzLjAxOUgzLjU1NVY5aDMuNTY0djExLjQ1MnpNMjIuMjI1IDBIMS43NzFDLjc5MiAwIDAgLjc3NCAwIDEuNzI5djIwLjU0MkMwIDIzLjIyNy43OTIgMjQgMS43NzEgMjRoMjAuNDUxQzIzLjIgMjQgMjQgMjMuMjI3IDI0IDIyLjI3MVYxLjcyOUMyNCAuNzc0IDIzLjIgMCAyMi4yMjIgMGguMDAzeiIvPjwvc3ZnPg%3D%3D
+[reddit-badge]: https://img.shields.io/badge/EverMemOS-Community-FF4500?style=for-the-badge&logo=reddit&logoColor=white
 
 <!-- Q&A Badges -->
-[deepwiki-badge]: https://img.shields.io/badge/-Ask%20DeepWiki-F5C842?style=flat-square
-[readmex-badge]: https://img.shields.io/badge/-ReadmeX-F5C842?style=flat-square
+[deepwiki-badge]: https://deepwiki.com/badge.svg
+[deepwiki]: https://deepwiki.com/EverMind-AI/EverMemOS
+[readmex-badge]: https://raw.githubusercontent.com/CodePhiliaX/resource-trusteeship/main/readmex.svg
+[readmex]: https://readmex.com/evermind-ai/everMemOs
 
 <!-- Misc Badges -->
 [back-to-top]: https://img.shields.io/badge/-Back_to_top-gray?style=flat-square

@@ -16,17 +16,17 @@ EverMemOS is an open-source, enterprise-grade intelligent memory system. Our mis
 [![Python][python-badge]][python]
 [![Docker][docker-badge]][docker]
 [![FastAPI][fastapi-badge]][fastapi]
+
 [![MongoDB][mongodb-badge]][mongodb]
 [![Elasticsearch][elasticsearch-badge]][elasticsearch]
 [![Milvus][milvus-badge]][milvus]
 [![License][license-badge]][license]
 
-<p><strong>Share EverMemOS Repository</strong></p>
-
 [![][share-x-shield]][share-x-link]
 [![][share-linkedin-shield]][share-linkedin-link]
 [![][share-reddit-shield]][share-reddit-link]
 [![][share-telegram-shield]][share-telegram-link]
+
 [![][share-whatsapp-shield]][share-whatsapp-link]
 [![][share-mastodon-shield]][share-mastodon-link]
 [![][share-weibo-shield]][share-mastodon-link]

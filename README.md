@@ -403,22 +403,22 @@ This project is licensed under the [Apache License 2.0][license].
 [divider-dark]: https://github.com/user-attachments/assets/d57fad08-4f49-4a1c-bdfc-f659a5d86150#gh-dark-mode-only
 
 <!-- Header Badges -->
-[arxiv-badge]: https://img.shields.io/badge/arXiv-EverMemOS_Paper-F5C842?labelColor=555&style=flat-square&logo=arxiv&logoColor=white
+[arxiv-badge]: https://img.shields.io/badge/arXiv-EverMemOS_Paper-F5C842?labelColor=gray&style=flat-square&logo=arxiv&logoColor=white
 [arxiv-link]: https://arxiv.org/abs/2601.02163
 [release-badge]: https://img.shields.io/github/v/release/EverMind-AI/EverMemOS?color=369eff&labelColor=gray&logo=github&style=flat-square
 [release-date-badge]: https://img.shields.io/github/release-date/EverMind-AI/EverMemOS?labelColor=gray&style=flat-square
 [commits-badge]: https://img.shields.io/github/commit-activity/m/EverMind-AI/EverMemOS?labelColor=gray&color=pink&style=flat-square
 [issues-closed-badge]: https://img.shields.io/github/issues-search?query=repo%3AEverMind-AI%2FEverMemOS%20is%3Aclosed&label=issues%20closed&labelColor=gray&color=green&style=flat-square
 [contributors-badge]: https://img.shields.io/github/contributors/EverMind-AI/EverMemOS?color=c4f042&labelColor=gray&style=flat-square
-[license-badge]: https://img.shields.io/badge/License-Apache%202.0-blue?labelColor=gray&style=flat-square
+[license-badge]: https://img.shields.io/badge/License-Apache%202.0-blue?labelColor=gray&labelColor=F5C842&style=flat-square
 
 <!-- Tech Stack Badges -->
-[python-badge]: https://img.shields.io/badge/Python-3.10+-0084FF?style=flat-square&logo=python&logoColor=white
-[docker-badge]: https://img.shields.io/badge/Docker-Supported-4A90E2?style=flat-square&logo=docker&logoColor=white
-[fastapi-badge]: https://img.shields.io/badge/FastAPI-Latest-26A69A?style=flat-square&logo=fastapi&logoColor=white
-[mongodb-badge]: https://img.shields.io/badge/MongoDB-7.0+-00C853?style=flat-square&logo=mongodb&logoColor=white
-[elasticsearch-badge]: https://img.shields.io/badge/Elasticsearch-8.x-0084FF?style=flat-square&logo=elasticsearch&logoColor=white
-[milvus-badge]: https://img.shields.io/badge/Milvus-2.4+-00A3E0?style=flat-square
+[python-badge]: https://img.shields.io/badge/Python-3.10+-blue?labelColor=gray&style=flat-square&logo=python&logoColor=white&labelColor=F5C842
+[docker-badge]: https://img.shields.io/badge/Docker-Supported-4A90E2?labelColor=gray&style=flat-square&logo=docker&logoColor=white&labelColor=F5C842
+[fastapi-badge]: https://img.shields.io/badge/FastAPI-Latest-26A69A?labelColor=gray&style=flat-square&logo=fastapi&logoColor=white&labelColor=F5C842
+[mongodb-badge]: https://img.shields.io/badge/MongoDB-7.0+-00C853?labelColor=gray&style=flat-square&logo=mongodb&logoColor=white&labelColor=F5C842
+[elasticsearch-badge]: https://img.shields.io/badge/Elasticsearch-8.x-0084FF?labelColor=gray&style=flat-square&logo=elasticsearch&logoColor=white&labelColor=F5C842
+[milvus-badge]: https://img.shields.io/badge/Milvus-2.4+-00A3E0?labelColor=gray&style=flat-square&labelColor=F5C842
 
 <!-- Language Badges -->
 [lang-en-badge]: https://img.shields.io/badge/English-lightgrey?style=flat-square
@@ -475,18 +475,18 @@ This project is licensed under the [Apache License 2.0][license].
 [evaluation-guide]: evaluation/README.md
 [contributing-doc]: CONTRIBUTING.md
 
-<!-- Share Badges (using warm cream #faf9f5 from EverMemOS theme) -->
+<!-- Share Badges (dark gray #555) -->
 [share-linkedin-link]: https://linkedin.com/feed/?shareActive=true&text=Check%20this%20GitHub%20repository%20out%20%F0%9F%A4%AF%20EverMemOS%20-%20An%20open-source%20intelligent%20memory%20system%20for%20conversational%20AI.%20Let%20every%20interaction%20be%20driven%20by%20understanding.%20https%3A%2F%2Fgithub.com%2FEverMind-AI%2FEverMemOS%20%23AI%20%23Memory%20%23LLM
-[share-linkedin-shield]: https://img.shields.io/badge/-Share%20on%20Linkedin-faf9f5?labelColor=faf9f5&style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyBmaWxsPSIjNTU1IiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU%2BTGlua2VkSW48L3RpdGxlPjxwYXRoIGQ9Ik0yMC40NDcgMjAuNDUyaC0zLjU1NHYtNS41NjljMC0xLjMyOC0uMDI3LTMuMDM3LTEuODUyLTMuMDM3LTEuODUzIDAtMi4xMzYgMS40NDUtMi4xMzYgMi45Mzl2NS42NjdIOS4zNTFWOWgzLjQxNHYxLjU2MWguMDQ2Yy40NzctLjkgMS42MzctMS44NSAzLjM3LTEuODUgMy42MDEgMCA0LjI2NyAyLjM3IDQuMjY3IDUuNDU1djYuMjg2ek01LjMzNyA3LjQzM2MtMS4xNDQgMC0yLjA2My0uOTI2LTIuMDYzLTIuMDY1IDAtMS4xMzguOTItMi4wNjMgMi4wNjMtMi4wNjMgMS4xNCAwIDIuMDY0LjkyNSAyLjA2NCAyLjA2MyAwIDEuMTM5LS45MjUgMi4wNjUtMi4wNjQgMi4wNjV6bTEuNzgyIDEzLjAxOUgzLjU1NVY5aDMuNTY0djExLjQ1MnpNMjIuMjI1IDBIMS43NzFDLjc5MiAwIDAgLjc3NCAwIDEuNzI5djIwLjU0MkMwIDIzLjIyNy43OTIgMjQgMS43NzEgMjRoMjAuNDUxQzIzLjIgMjQgMjQgMjMuMjI3IDI0IDIyLjI3MVYxLjcyOUMyNCAuNzc0IDIzLjIgMCAyMi4yMjIgMGguMDAzeiIvPjwvc3ZnPg%3D%3D
+[share-linkedin-shield]: https://img.shields.io/badge/-Share%20on%20Linkedin-555?labelColor=555&style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyBmaWxsPSIjZmZmIiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU%2BTGlua2VkSW48L3RpdGxlPjxwYXRoIGQ9Ik0yMC40NDcgMjAuNDUyaC0zLjU1NHYtNS41NjljMC0xLjMyOC0uMDI3LTMuMDM3LTEuODUyLTMuMDM3LTEuODUzIDAtMi4xMzYgMS40NDUtMi4xMzYgMi45Mzl2NS42NjdIOS4zNTFWOWgzLjQxNHYxLjU2MWguMDQ2Yy40NzctLjkgMS42MzctMS44NSAzLjM3LTEuODUgMy42MDEgMCA0LjI2NyAyLjM3IDQuMjY3IDUuNDU1djYuMjg2ek01LjMzNyA3LjQzM2MtMS4xNDQgMC0yLjA2My0uOTI2LTIuMDYzLTIuMDY1IDAtMS4xMzguOTItMi4wNjMgMi4wNjMtMi4wNjMgMS4xNCAwIDIuMDY0LjkyNSAyLjA2NCAyLjA2MyAwIDEuMTM5LS45MjUgMi4wNjUtMi4wNjQgMi4wNjV6bTEuNzgyIDEzLjAxOUgzLjU1NVY5aDMuNTY0djExLjQ1MnpNMjIuMjI1IDBIMS43NzFDLjc5MiAwIDAgLjc3NCAwIDEuNzI5djIwLjU0MkMwIDIzLjIyNy43OTIgMjQgMS43NzEgMjRoMjAuNDUxQzIzLjIgMjQgMjQgMjMuMjI3IDI0IDIyLjI3MVYxLjcyOUMyNCAuNzc0IDIzLjIgMCAyMi4yMjIgMGguMDAzeiIvPjwvc3ZnPg%3D%3D
 [share-mastodon-link]: https://mastodon.social/share?text=Check%20this%20GitHub%20repository%20out%20%F0%9F%A4%AF%20EverMemOS%20-%20An%20open-source%20intelligent%20memory%20system%20for%20conversational%20AI.%20Let%20every%20interaction%20be%20driven%20by%20understanding.%20https://github.com/EverMind-AI/EverMemOS%20%23AI%20%23Memory%20%23LLM
-[share-mastodon-shield]: https://img.shields.io/badge/-Share%20on%20Mastodon-faf9f5?labelColor=faf9f5&logo=mastodon&logoColor=555&style=flat-square
+[share-mastodon-shield]: https://img.shields.io/badge/-Share%20on%20Mastodon-555?labelColor=555&logo=mastodon&logoColor=white&style=flat-square
 [share-reddit-link]: https://www.reddit.com/submit?title=Check%20this%20GitHub%20repository%20out%20%F0%9F%A4%AF%20EverMemOS%20-%20An%20open-source%20intelligent%20memory%20system%20for%20conversational%20AI.%20Let%20every%20interaction%20be%20driven%20by%20understanding.%20%23AI%20%23Memory%20%23LLM&url=https%3A%2F%2Fgithub.com%2FEverMind-AI%2FEverMemOS
-[share-reddit-shield]: https://img.shields.io/badge/-Share%20on%20Reddit-faf9f5?labelColor=faf9f5&logo=reddit&logoColor=555&style=flat-square
+[share-reddit-shield]: https://img.shields.io/badge/-Share%20on%20Reddit-555?labelColor=555&logo=reddit&logoColor=white&style=flat-square
 [share-telegram-link]: https://t.me/share/url?text=Check%20this%20GitHub%20repository%20out%20%F0%9F%A4%AF%20EverMemOS%20-%20An%20open-source%20intelligent%20memory%20system%20for%20conversational%20AI.%20Let%20every%20interaction%20be%20driven%20by%20understanding.%20%23AI%20%23Memory%20%23LLM&url=https%3A%2F%2Fgithub.com%2FEverMind-AI%2FEverMemOS
-[share-telegram-shield]: https://img.shields.io/badge/-Share%20on%20Telegram-faf9f5?labelColor=faf9f5&logo=telegram&logoColor=555&style=flat-square
+[share-telegram-shield]: https://img.shields.io/badge/-Share%20on%20Telegram-555?labelColor=555&logo=telegram&logoColor=white&style=flat-square
 [share-weibo-link]: http://service.weibo.com/share/share.php?sharesource=weibo&title=Check%20this%20GitHub%20repository%20out%20%F0%9F%A4%AF%20EverMemOS%20-%20An%20open-source%20intelligent%20memory%20system%20for%20conversational%20AI.%20Let%20every%20interaction%20be%20driven%20by%20understanding.%20%23AI%20%23Memory%20%23LLM&url=https%3A%2F%2Fgithub.com%2FEverMind-AI%2FEverMemOS
-[share-weibo-shield]: https://img.shields.io/badge/-Share%20on%20Weibo-faf9f5?labelColor=faf9f5&logo=sinaweibo&logoColor=555&style=flat-square
+[share-weibo-shield]: https://img.shields.io/badge/-Share%20on%20Weibo-555?labelColor=555&logo=sinaweibo&logoColor=white&style=flat-square
 [share-whatsapp-link]: https://api.whatsapp.com/send?text=Check%20this%20GitHub%20repository%20out%20%F0%9F%A4%AF%20EverMemOS%20-%20An%20open-source%20intelligent%20memory%20system%20for%20conversational%20AI.%20Let%20every%20interaction%20be%20driven%20by%20understanding.%20https%3A%2F%2Fgithub.com%2FEverMind-AI%2FEverMemOS%20%23AI%20%23Memory%20%23LLM
-[share-whatsapp-shield]: https://img.shields.io/badge/-Share%20on%20Whatsapp-faf9f5?labelColor=faf9f5&logo=whatsapp&logoColor=555&style=flat-square
+[share-whatsapp-shield]: https://img.shields.io/badge/-Share%20on%20Whatsapp-555?labelColor=555&logo=whatsapp&logoColor=white&style=flat-square
 [share-x-link]: https://x.com/intent/tweet?hashtags=AI%2CMemory%2CLLM&text=Check%20this%20GitHub%20repository%20out%20%F0%9F%A4%AF%20EverMemOS%20-%20An%20open-source%20intelligent%20memory%20system%20for%20conversational%20AI.%20Let%20every%20interaction%20be%20driven%20by%20understanding.&url=https%3A%2F%2Fgithub.com%2FEverMind-AI%2FEverMemOS
-[share-x-shield]: https://img.shields.io/badge/-Share%20on%20X-faf9f5?labelColor=faf9f5&logo=x&logoColor=555&style=flat-square
+[share-x-shield]: https://img.shields.io/badge/-Share%20on%20X-555?labelColor=555&logo=x&logoColor=white&style=flat-square

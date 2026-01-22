@@ -29,15 +29,24 @@ EverMemOS is an open-source, enterprise-grade intelligent memory system. Our mis
 [![][share-telegram-shield]][share-telegram-link]
 [![][share-whatsapp-shield]][share-whatsapp-link]
 [![][share-mastodon-shield]][share-mastodon-link]
+[![][share-weibo-shield]][share-mastodon-link]
 
-[![README in English][lang-en-badge]][lang-en-readme]
-[![简体中文][lang-zh-badge]][lang-zh-readme]
 
 [Documentation][documentation] •
 [API Reference][api-docs] •
 [Demo][demo-section]
 
+[![README in English][lang-en-badge]][lang-en-readme]
+[![简体中文][lang-zh-badge]][lang-zh-readme]
+
 </div>
+
+<!-- dividers -->
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/d57fad08-4f49-4a1c-bdfc-f659a5d86150">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd">
+  <img alt="divider" src="https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd">
+</picture>
 
 <br>
 
@@ -65,26 +74,67 @@ EverMemOS is an open-source, enterprise-grade intelligent memory system. Our mis
 
 ## Welcome to EverMemOS
 
-EverMemOS is an open-source intelligent memory system for conversational AI. It extracts, structures, and retrieves information from conversations — enabling AI agents to maintain context, recall past interactions, and build user profiles over time.
-
-On the **LoCoMo** benchmark, EverMemOS achieved **92.3%** reasoning accuracy (LLM-Judge evaluation).
-
-<br>
+Welcome to EverMemOS! Join our community to help improve the project and collaborate with talented developers worldwide.
 
 | Community | Purpose |
 | --------- | ------- |
-| [![GitHub Issues][issues-badge]][issues] | Report bugs and request features |
-| [![GitHub Discussions][discussions-badge]][discussions] | Ask questions and share ideas |
-| [![Email][email-badge]][email] | Contact the team |
+| [![Discord][discord-badge]][discord] | Join our Discord community |
+| [![X][x-badge]][x] | Follow updates on X |
+| [![LinkedIn][linkedin-badge]][linkedin] | Connect with us on LinkedIn |
+| [![Reddit][reddit-badge]][reddit] | Join the Reddit community |
 
 <br>
 
-![divider][divider-light]
-![divider][divider-dark]
+> \[!IMPORTANT]
+>
+> 🌟 **Star us and stay tuned with us** 🌟
 
-![image](https://github.com/user-attachments/assets/0c512570-945a-483a-9f47-8e067bd34484)
+![star us gif](https://github.com/user-attachments/assets/0c512570-945a-483a-9f47-8e067bd34484)
 
-## Features
+<!-- dividers -->
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/d57fad08-4f49-4a1c-bdfc-f659a5d86150">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd">
+  <img alt="divider" src="https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd">
+</picture>
+
+<br>
+
+## How EverMemOS works
+
+EverMemOS enables AI to not only remember what happened, but understand the meaning behind memories and use them to guide decisions. Achieving 93% reasoning accuracy on the LoCoMo benchmark, EverMemOS provides long-term memory capabilities for conversational AI agents through structured extraction, intelligent retrieval, and progressive profile building.
+
+![image](https://github.com/user-attachments/assets/2a2a4f15-9185-47b3-9182-9c28145e18a4)
+
+<!-- dividers -->
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/d57fad08-4f49-4a1c-bdfc-f659a5d86150">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd">
+  <img alt="divider" src="https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd">
+</picture>
+
+<br>
+
+## Why EveryMemOS
+
+🎯 93% Accuracy - Best-in-class performance on LoCoMo benchmark
+🚀 Production Ready - Enterprise-grade with Milvus vector DB, Elasticsearch, MongoDB, and Redis
+🔧 Easy Integration - Simple REST API, works with any LLM
+📊 Multi-Modal Memory - Episodes, facts, preferences, relations
+🔍 Smart Retrieval - BM25, embeddings, or agentic search
+
+![image](https://github.com/user-attachments/assets/9583e4de-8f3b-4681-ab5f-10ee82327da8)
+
+<!-- dividers -->
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/d57fad08-4f49-4a1c-bdfc-f659a5d86150">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd">
+  <img alt="divider" src="https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd">
+</picture>
+
+<br>
+
+<!-- ## Features
 
 <br>
 
@@ -94,10 +144,13 @@ On the **LoCoMo** benchmark, EverMemOS achieved **92.3%** reasoning accuracy (LL
 | **Evidence-Based Perception** | Proactively captures deep connections between memories and tasks — responses are grounded in real context |
 | **Living Profiles** | Real-time user profile updates that evolve with each conversation — AI learns who you are, not just what you said |
 
-<br>
+<br> -->
 
-![divider][divider-light]
-![divider][divider-dark]
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/d57fad08-4f49-4a1c-bdfc-f659a5d86150">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd">
+  <img alt="divider" src="https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd">
+</picture>
 
 <!-- <p align="center">
   <img src="figs/overview.png" alt="EverMemOS Architecture Overview" />
@@ -370,9 +423,10 @@ This project is licensed under the [Apache License 2.0][license].
 [lang-zh-badge]: https://img.shields.io/badge/简体中文-lightgrey?style=flat-square
 
 <!-- Community Badges -->
-[issues-badge]: https://img.shields.io/badge/GitHub-Issues-blue?style=flat-square&logo=github
-[discussions-badge]: https://img.shields.io/badge/GitHub-Discussions-blue?style=flat-square&logo=github
-[email-badge]: https://img.shields.io/badge/Email-Contact_Us-blue?style=flat-square&logo=gmail
+[discord-badge]: https://img.shields.io/badge/Discord-EverMemOS-5865F2?style=flat-square&logo=discord&logoColor=white
+[x-badge]: https://img.shields.io/badge/X-EverMemOS-000000?style=flat-square&logo=x&logoColor=white
+[linkedin-badge]: https://img.shields.io/badge/LinkedIn-EverMemOS-0A66C2?style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyBmaWxsPSIjZmZmIiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU%2BTGlua2VkSW48L3RpdGxlPjxwYXRoIGQ9Ik0yMC40NDcgMjAuNDUyaC0zLjU1NHYtNS41NjljMC0xLjMyOC0uMDI3LTMuMDM3LTEuODUyLTMuMDM3LTEuODUzIDAtMi4xMzYgMS40NDUtMi4xMzYgMi45Mzl2NS42NjdIOS4zNTFWOWgzLjQxNHYxLjU2MWguMDQ2Yy40NzctLjkgMS42MzctMS44NSAzLjM3LTEuODUgMy42MDEgMCA0LjI2NyAyLjM3IDQuMjY3IDUuNDU1djYuMjg2ek01LjMzNyA3LjQzM2MtMS4xNDQgMC0yLjA2My0uOTI2LTIuMDYzLTIuMDY1IDAtMS4xMzguOTItMi4wNjMgMi4wNjMtMi4wNjMgMS4xNCAwIDIuMDY0LjkyNSAyLjA2NCAyLjA2MyAwIDEuMTM5LS45MjUgMi4wNjUtMi4wNjQgMi4wNjV6bTEuNzgyIDEzLjAxOUgzLjU1NVY5aDMuNTY0djExLjQ1MnpNMjIuMjI1IDBIMS43NzFDLjc5MiAwIDAgLjc3NCAwIDEuNzI5djIwLjU0MkMwIDIzLjIyNy43OTIgMjQgMS43NzEgMjRoMjAuNDUxQzIzLjIgMjQgMjQgMjMuMjI3IDI0IDIyLjI3MVYxLjcyOUMyNCAuNzc0IDIzLjIgMCAyMi4yMjIgMGguMDAzeiIvPjwvc3ZnPg%3D%3D
+[reddit-badge]: https://img.shields.io/badge/Reddit-EverMemOS-FF4500?style=flat-square&logo=reddit&logoColor=white
 
 <!-- Misc Badges -->
 [back-to-top]: https://img.shields.io/badge/-Back_to_top-gray?style=flat-square
@@ -397,9 +451,10 @@ This project is licensed under the [Apache License 2.0][license].
 [lang-zh-readme]: README_zh.md
 
 <!-- Community Links -->
-[issues]: https://github.com/EverMind-AI/EverMemOS/issues
-[discussions]: https://github.com/EverMind-AI/EverMemOS/discussions
-[email]: mailto:evermind@shanda.com
+[discord]: https://discord.gg/gYep5nQRZJ
+[x]: https://x.com/EverMindAI
+[linkedin]: https://www.linkedin.com/company/evermind-ai/
+[reddit]: https://www.reddit.com/r/EverMindAI/
 
 <!-- External Links -->
 [uv]: https://github.com/astral-sh/uv
@@ -420,16 +475,16 @@ This project is licensed under the [Apache License 2.0][license].
 
 <!-- Share Badges (using warm cream #faf9f5 from EverMemOS theme) -->
 [share-linkedin-link]: https://linkedin.com/feed/?shareActive=true&text=Check%20this%20GitHub%20repository%20out%20%F0%9F%A4%AF%20EverMemOS%20-%20An%20open-source%20intelligent%20memory%20system%20for%20conversational%20AI.%20Let%20every%20interaction%20be%20driven%20by%20understanding.%20https%3A%2F%2Fgithub.com%2FEverMind-AI%2FEverMemOS%20%23AI%20%23Memory%20%23LLM
-[share-linkedin-shield]: https://img.shields.io/badge/-share%20on%20linkedin-faf9f5?labelColor=faf9f5&color=555&style=flat-square&logo=linkedin&logoColor=555
+[share-linkedin-shield]: https://img.shields.io/badge/-Share%20on%20Linkedin-faf9f5?labelColor=faf9f5&style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyBmaWxsPSIjNTU1IiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU%2BTGlua2VkSW48L3RpdGxlPjxwYXRoIGQ9Ik0yMC40NDcgMjAuNDUyaC0zLjU1NHYtNS41NjljMC0xLjMyOC0uMDI3LTMuMDM3LTEuODUyLTMuMDM3LTEuODUzIDAtMi4xMzYgMS40NDUtMi4xMzYgMi45Mzl2NS42NjdIOS4zNTFWOWgzLjQxNHYxLjU2MWguMDQ2Yy40NzctLjkgMS42MzctMS44NSAzLjM3LTEuODUgMy42MDEgMCA0LjI2NyAyLjM3IDQuMjY3IDUuNDU1djYuMjg2ek01LjMzNyA3LjQzM2MtMS4xNDQgMC0yLjA2My0uOTI2LTIuMDYzLTIuMDY1IDAtMS4xMzguOTItMi4wNjMgMi4wNjMtMi4wNjMgMS4xNCAwIDIuMDY0LjkyNSAyLjA2NCAyLjA2MyAwIDEuMTM5LS45MjUgMi4wNjUtMi4wNjQgMi4wNjV6bTEuNzgyIDEzLjAxOUgzLjU1NVY5aDMuNTY0djExLjQ1MnpNMjIuMjI1IDBIMS43NzFDLjc5MiAwIDAgLjc3NCAwIDEuNzI5djIwLjU0MkMwIDIzLjIyNy43OTIgMjQgMS43NzEgMjRoMjAuNDUxQzIzLjIgMjQgMjQgMjMuMjI3IDI0IDIyLjI3MVYxLjcyOUMyNCAuNzc0IDIzLjIgMCAyMi4yMjIgMGguMDAzeiIvPjwvc3ZnPg%3D%3D
 [share-mastodon-link]: https://mastodon.social/share?text=Check%20this%20GitHub%20repository%20out%20%F0%9F%A4%AF%20EverMemOS%20-%20An%20open-source%20intelligent%20memory%20system%20for%20conversational%20AI.%20Let%20every%20interaction%20be%20driven%20by%20understanding.%20https://github.com/EverMind-AI/EverMemOS%20%23AI%20%23Memory%20%23LLM
-[share-mastodon-shield]: https://img.shields.io/badge/-share%20on%20mastodon-faf9f5?labelColor=faf9f5&logo=mastodon&logoColor=555&style=flat-square
+[share-mastodon-shield]: https://img.shields.io/badge/-Share%20on%20Mastodon-faf9f5?labelColor=faf9f5&logo=mastodon&logoColor=555&style=flat-square
 [share-reddit-link]: https://www.reddit.com/submit?title=Check%20this%20GitHub%20repository%20out%20%F0%9F%A4%AF%20EverMemOS%20-%20An%20open-source%20intelligent%20memory%20system%20for%20conversational%20AI.%20Let%20every%20interaction%20be%20driven%20by%20understanding.%20%23AI%20%23Memory%20%23LLM&url=https%3A%2F%2Fgithub.com%2FEverMind-AI%2FEverMemOS
-[share-reddit-shield]: https://img.shields.io/badge/-share%20on%20reddit-faf9f5?labelColor=faf9f5&logo=reddit&logoColor=555&style=flat-square
+[share-reddit-shield]: https://img.shields.io/badge/-Share%20on%20Reddit-faf9f5?labelColor=faf9f5&logo=reddit&logoColor=555&style=flat-square
 [share-telegram-link]: https://t.me/share/url?text=Check%20this%20GitHub%20repository%20out%20%F0%9F%A4%AF%20EverMemOS%20-%20An%20open-source%20intelligent%20memory%20system%20for%20conversational%20AI.%20Let%20every%20interaction%20be%20driven%20by%20understanding.%20%23AI%20%23Memory%20%23LLM&url=https%3A%2F%2Fgithub.com%2FEverMind-AI%2FEverMemOS
-[share-telegram-shield]: https://img.shields.io/badge/-share%20on%20telegram-faf9f5?labelColor=faf9f5&logo=telegram&logoColor=555&style=flat-square
+[share-telegram-shield]: https://img.shields.io/badge/-Share%20on%20Telegram-faf9f5?labelColor=faf9f5&logo=telegram&logoColor=555&style=flat-square
 [share-weibo-link]: http://service.weibo.com/share/share.php?sharesource=weibo&title=Check%20this%20GitHub%20repository%20out%20%F0%9F%A4%AF%20EverMemOS%20-%20An%20open-source%20intelligent%20memory%20system%20for%20conversational%20AI.%20Let%20every%20interaction%20be%20driven%20by%20understanding.%20%23AI%20%23Memory%20%23LLM&url=https%3A%2F%2Fgithub.com%2FEverMind-AI%2FEverMemOS
-[share-weibo-shield]: https://img.shields.io/badge/-share%20on%20weibo-faf9f5?labelColor=faf9f5&logo=sinaweibo&logoColor=555&style=flat-square
+[share-weibo-shield]: https://img.shields.io/badge/-Share%20on%20Weibo-faf9f5?labelColor=faf9f5&logo=sinaweibo&logoColor=555&style=flat-square
 [share-whatsapp-link]: https://api.whatsapp.com/send?text=Check%20this%20GitHub%20repository%20out%20%F0%9F%A4%AF%20EverMemOS%20-%20An%20open-source%20intelligent%20memory%20system%20for%20conversational%20AI.%20Let%20every%20interaction%20be%20driven%20by%20understanding.%20https%3A%2F%2Fgithub.com%2FEverMind-AI%2FEverMemOS%20%23AI%20%23Memory%20%23LLM
-[share-whatsapp-shield]: https://img.shields.io/badge/-share%20on%20whatsapp-faf9f5?labelColor=faf9f5&logo=whatsapp&logoColor=555&style=flat-square
+[share-whatsapp-shield]: https://img.shields.io/badge/-Share%20on%20Whatsapp-faf9f5?labelColor=faf9f5&logo=whatsapp&logoColor=555&style=flat-square
 [share-x-link]: https://x.com/intent/tweet?hashtags=AI%2CMemory%2CLLM&text=Check%20this%20GitHub%20repository%20out%20%F0%9F%A4%AF%20EverMemOS%20-%20An%20open-source%20intelligent%20memory%20system%20for%20conversational%20AI.%20Let%20every%20interaction%20be%20driven%20by%20understanding.&url=https%3A%2F%2Fgithub.com%2FEverMind-AI%2FEverMemOS
-[share-x-shield]: https://img.shields.io/badge/-share%20on%20x-faf9f5?labelColor=faf9f5&logo=x&logoColor=555&style=flat-square
+[share-x-shield]: https://img.shields.io/badge/-Share%20on%20X-faf9f5?labelColor=faf9f5&logo=x&logoColor=555&style=flat-square

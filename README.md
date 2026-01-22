@@ -70,6 +70,7 @@ Welcome to EverMemOS! Join our community to help improve the project and collabo
 | Community | Purpose |
 | :-------- | :------ |
 | [![Discord][discord-badge]][discord] | Join our Discord community |
+| [![Hugging Face Space][hugging-face-badge]][hugging-face] | Join our Hugging Face community to explore our spaces and models |
 | [![X][x-badge]][x] | Follow updates on X |
 | [![LinkedIn][linkedin-badge]][linkedin] | Connect with us on LinkedIn |
 | [![Reddit][reddit-badge]][reddit] | Join the Reddit community |
@@ -237,14 +238,6 @@ Recalls relevant memories through multi-round reasoning and intelligent fusion.
 | **Lightweight Mode** | Pure BM25 for latency-sensitive scenarios |
 | **Agentic Recall** | Multi-round query generation for complex intents | -->
 
-<br>
-
-<div align="right">
-
-[![][back-to-top]][readme-top]
-
-</div>
-
 ## API Usage
 
 ### Store a Memory
@@ -333,13 +326,31 @@ See the [Evaluation Guide][evaluation-guide] for details.
 | [Demo Guide][demo-guide] | Interactive examples |
 | [Evaluation Guide][evaluation-guide] | Benchmark testing |
 
+<br>
+
 <div align="right">
 
 [![][back-to-top]][readme-top]
 
 </div>
 
-### Contributing
+## Questions
+
+EverMemOS is available on these AI-powered Q&A platforms. They can help you find answers quickly and accurately in multiple languages, covering everything from basic setup to advanced implementation details.
+
+| Service | Link |
+| ------- | ---- |
+| DeepWiki | [![Ask DeepWiki][deepwiki-badge]][deepwiki] |
+| ReadmeX | [![ReadmeX][readmex-badge]][readmex] |
+
+<br>
+<div align="right">
+
+[![][back-to-top]][readme-top]
+
+</div>
+
+## Contributing
 
 We love open-source energy! Whether you’re squashing bugs, shipping features, sharpening docs, or just tossing in wild ideas, every PR moves EverMemOS forward. Browse [Issues](https://github.com/EverMind-AI/EverMemOS/issues) and [Projects](https://github.com/EverMind-AI/EverMemOS/projects) to find your perfect entry point—then show us what you’ve got. Let’s build the future of memory together.
 
@@ -360,27 +371,29 @@ We love open-source energy! Whether you’re squashing bugs, shipping features, 
 
 ### Code Contributors
 
-[![TEN][contributors-image]][contributors]
+[![EverMemOS][contributors-image]][contributors]
 
 ### Contribution Guidelines
 
-Contributions are welcome! Please read the [contribution guidelines][contribution-guidelines-doc] first.
+Read our [Contribution Guidelines](CONTRIBUTING.md) for code standards and Git workflow.
 
 <br>
 
 ![divider][divider-light]
 ![divider][divider-dark]
 
-### License
+### License & Citation & Acknowledgments
 
-This project is licensed under the [Apache License 2.0][license].
+[Apache 2.0](LICENSE) • [Citation](docs/CITATION.md) • [Acknowledgments](docs/ACKNOWLEDGMENTS.md)
 
-<!-- <br>
+<br>
 
-## Acknowledgments
+<div align="right">
 
-- [Memos][memos] — Inspiration for memory system design
-- [Nemori][nemori] — Self-organizing long-term memory concepts -->
+[![][back-to-top]][readme-top]
+
+</div>
+
 
 <!-- Navigation -->
 [readme-top]: #readme-top
@@ -426,9 +439,14 @@ This project is licensed under the [Apache License 2.0][license].
 
 <!-- Community Badges -->
 [discord-badge]: https://img.shields.io/badge/Discord-EverMemOS-5865F2?style=flat-square&logo=discord&logoColor=white
+[hugging-face-badge]: https://img.shields.io/badge/Hugging%20Face-EverMindAI-F5C842?style=flat-square&logo=huggingface&logoColor=white
 [x-badge]: https://img.shields.io/badge/X-EverMemOS-000000?style=flat-square&logo=x&logoColor=white
 [linkedin-badge]: https://img.shields.io/badge/LinkedIn-EverMemOS-0A66C2?style=flat-square&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyBmaWxsPSIjZmZmIiByb2xlPSJpbWciIHZpZXdCb3g9IjAgMCAyNCAyNCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU%2BTGlua2VkSW48L3RpdGxlPjxwYXRoIGQ9Ik0yMC40NDcgMjAuNDUyaC0zLjU1NHYtNS41NjljMC0xLjMyOC0uMDI3LTMuMDM3LTEuODUyLTMuMDM3LTEuODUzIDAtMi4xMzYgMS40NDUtMi4xMzYgMi45Mzl2NS42NjdIOS4zNTFWOWgzLjQxNHYxLjU2MWguMDQ2Yy40NzctLjkgMS42MzctMS44NSAzLjM3LTEuODUgMy42MDEgMCA0LjI2NyAyLjM3IDQuMjY3IDUuNDU1djYuMjg2ek01LjMzNyA3LjQzM2MtMS4xNDQgMC0yLjA2My0uOTI2LTIuMDYzLTIuMDY1IDAtMS4xMzguOTItMi4wNjMgMi4wNjMtMi4wNjMgMS4xNCAwIDIuMDY0LjkyNSAyLjA2NCAyLjA2MyAwIDEuMTM5LS45MjUgMi4wNjUtMi4wNjQgMi4wNjV6bTEuNzgyIDEzLjAxOUgzLjU1NVY5aDMuNTY0djExLjQ1MnpNMjIuMjI1IDBIMS43NzFDLjc5MiAwIDAgLjc3NCAwIDEuNzI5djIwLjU0MkMwIDIzLjIyNy43OTIgMjQgMS43NzEgMjRoMjAuNDUxQzIzLjIgMjQgMjQgMjMuMjI3IDI0IDIyLjI3MVYxLjcyOUMyNCAuNzc0IDIzLjIgMCAyMi4yMjIgMGguMDAzeiIvPjwvc3ZnPg%3D%3D
 [reddit-badge]: https://img.shields.io/badge/Reddit-EverMemOS-FF4500?style=flat-square&logo=reddit&logoColor=white
+
+<!-- Q&A Badges -->
+[deepwiki-badge]: https://img.shields.io/badge/-Ask%20DeepWiki-F5C842?style=flat-square
+[readmex-badge]: https://img.shields.io/badge/-ReadmeX-F5C842?style=flat-square
 
 <!-- Misc Badges -->
 [back-to-top]: https://img.shields.io/badge/-Back_to_top-gray?style=flat-square
@@ -454,9 +472,14 @@ This project is licensed under the [Apache License 2.0][license].
 
 <!-- Community Links -->
 [discord]: https://discord.gg/gYep5nQRZJ
+[hugging-face]: https://huggingface.co/EverMind-AI
 [x]: https://x.com/EverMindAI
 [linkedin]: https://www.linkedin.com/company/evermind-ai/
 [reddit]: https://www.reddit.com/r/EverMindAI/
+
+<!-- Q&A Links -->
+[deepwiki]: https://deepwiki.com/EverMind-AI/EverMemOS
+[readmex]: https://readmex.com/EverMind-AI/EverMemOS
 
 <!-- External Links -->
 [uv]: https://github.com/astral-sh/uv

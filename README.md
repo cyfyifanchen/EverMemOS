@@ -22,6 +22,8 @@ EverMemOS is an open-source, enterprise-grade intelligent memory system. Our mis
 [![Milvus][milvus-badge]][milvus]
 [![License][license-badge]][license]
 
+<p><strong>Share EverMemOS Repository</strong></p>
+
 [![][share-x-shield]][share-x-link]
 [![][share-linkedin-shield]][share-linkedin-link]
 [![][share-reddit-shield]][share-reddit-link]
@@ -83,30 +85,14 @@ Welcome to EverMemOS! Join our community to help improve the project and collabo
 | [![LinkedIn][linkedin-badge]][linkedin] | Connect with us on LinkedIn |
 | [![Reddit][reddit-badge]][reddit] | Join the Reddit community |
 
-<br>
 
-> \[!IMPORTANT]
->
-> 🌟 **Star us and stay tuned with us** 🌟
+### 🌟 Star us and stay tuned with us 
 
 ![star us gif](https://github.com/user-attachments/assets/0c512570-945a-483a-9f47-8e067bd34484)
 
 <!-- dividers -->
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/d57fad08-4f49-4a1c-bdfc-f659a5d86150">
-  <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd">
-  <img alt="divider" src="https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd">
-</picture>
-
 <br>
 
-## How EverMemOS works
-
-EverMemOS enables AI to not only remember what happened, but understand the meaning behind memories and use them to guide decisions. Achieving 93% reasoning accuracy on the LoCoMo benchmark, EverMemOS provides long-term memory capabilities for conversational AI agents through structured extraction, intelligent retrieval, and progressive profile building.
-
-![image](https://github.com/user-attachments/assets/2a2a4f15-9185-47b3-9182-9c28145e18a4)
-
-<!-- dividers -->
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/d57fad08-4f49-4a1c-bdfc-f659a5d86150">
   <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd">
@@ -117,44 +103,22 @@ EverMemOS enables AI to not only remember what happened, but understand the mean
 
 ## Why EveryMemOS
 
-🎯 93% Accuracy - Best-in-class performance on LoCoMo benchmark
-🚀 Production Ready - Enterprise-grade with Milvus vector DB, Elasticsearch, MongoDB, and Redis
-🔧 Easy Integration - Simple REST API, works with any LLM
-📊 Multi-Modal Memory - Episodes, facts, preferences, relations
-🔍 Smart Retrieval - BM25, embeddings, or agentic search
+### How EverMemOS Works
+![image](https://github.com/user-attachments/assets/2a2a4f15-9185-47b3-9182-9c28145e18a4)
+
+EverMemOS enables AI to not only remember what happened, but understand the meaning behind memories and use them to guide decisions. Achieving 93% reasoning accuracy on the LoCoMo benchmark, EverMemOS provides long-term memory capabilities for conversational AI agents through structured extraction, intelligent retrieval, and progressive profile building.
+
+### Benchmark
 
 ![image](https://github.com/user-attachments/assets/9583e4de-8f3b-4681-ab5f-10ee82327da8)
 
-<!-- dividers -->
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/d57fad08-4f49-4a1c-bdfc-f659a5d86150">
-  <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd">
-  <img alt="divider" src="https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd">
-</picture>
+* 🎯 93% Accuracy - Best-in-class performance on LoCoMo benchmark
+* 🚀 Production Ready - Enterprise-grade with Milvus vector DB, Elasticsearch, MongoDB, and Redis
+* 🔧 Easy Integration - Simple REST API, works with any LLM
+* 📊 Multi-Modal Memory - Episodes, facts, preferences, relations
+* 🔍 Smart Retrieval - BM25, embeddings, or agentic search
 
 <br>
-
-<!-- ## Features
-
-<br>
-
-| Feature | Description |
-| ------- | ----------- |
-| **Coherent Narrative** | Automatically links conversation fragments into thematic context — AI understands the whole story, not just isolated sentences |
-| **Evidence-Based Perception** | Proactively captures deep connections between memories and tasks — responses are grounded in real context |
-| **Living Profiles** | Real-time user profile updates that evolve with each conversation — AI learns who you are, not just what you said |
-
-<br> -->
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/d57fad08-4f49-4a1c-bdfc-f659a5d86150">
-  <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd">
-  <img alt="divider" src="https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd">
-</picture>
-
-<!-- <p align="center">
-  <img src="figs/overview.png" alt="EverMemOS Architecture Overview" />
-</p> -->
 
 <div align="right">
 

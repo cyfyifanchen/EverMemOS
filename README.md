@@ -6,7 +6,7 @@ EverMemOS is an open-source, enterprise-grade intelligent memory system.
 
 <br>
 
-[![arXiv](https://img.shields.io/badge/arXiv-EverMemOS_Paper-F5C842?labelColor=555&style=flat-square&logo=arxiv&logoColor=white)](https://arxiv.org/abs/2601.02163)
+[![][arxiv-badge]][arxiv-link]
 [![Python][python-badge]][python]
 [![Docker][docker-badge]][docker]
 [![FastAPI][fastapi-badge]][fastapi]
@@ -35,12 +35,9 @@ EverMemOS is an open-source, enterprise-grade intelligent memory system.
 
 </div>
 
-<!-- dividers -->
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/d57fad08-4f49-4a1c-bdfc-f659a5d86150">
-  <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd">
-  <img alt="divider" src="https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd">
-</picture>
+
+![divider][divider-light]
+![divider][divider-dark]
 
 <br>
 
@@ -91,6 +88,10 @@ Welcome to EverMemOS! Join our community to help improve the project and collabo
 
 EverMemOS enables AI to not only remember what happened, but understand the meaning behind memories and use them to guide decisions. Achieving 93% reasoning accuracy on the LoCoMo benchmark, EverMemOS provides long-term memory capabilities for conversational AI agents through structured extraction, intelligent retrieval, and progressive profile building.
 
+![divider][divider-light]
+![divider][divider-dark]
+
+
 ### EverMemOS benchmark
 
 ![image](https://github.com/user-attachments/assets/9583e4de-8f3b-4681-ab5f-10ee82327da8)
@@ -120,7 +121,9 @@ EverMemOS enables AI to not only remember what happened, but understand the mean
 | **Hardware** | CPU ≥ 2 cores, RAM ≥ 4 GB |
 | **API Keys** | LLM API key, [DeepInfra][deepinfra] API key (for embedding/rerank) |
 
-<br>
+![divider][divider-light]
+![divider][divider-dark]
+
 
 ### Installation
 
@@ -163,33 +166,41 @@ curl http://localhost:8001/health
 # Expected response: {"status": "healthy", ...}
 ```
 
-<br>
+![divider][divider-light]
+![divider][divider-dark]
 
 ### Run the Demo
 
+① Terminal 1: Start the API server
 ```bash
-# Terminal 1: Start the API server
 uv run python src/run.py --port 8001
+```
 
-# Terminal 2: Run the simple demo
+② Terminal 2: Run the simple demo
+```bash
 uv run python src/bootstrap.py demo/simple_demo.py
 ```
 
 The demo stores sample conversations, waits for indexing, and searches for relevant memories — showing the complete workflow in action.
 
-<br>
+![divider][divider-light]
+![divider][divider-dark]
 
-**Full Demo Experience:**
+**Full Demo Experience**
 
+① Extract memories from sample data
 ```bash
-# Extract memories from sample data
 uv run python src/bootstrap.py demo/extract_memory.py
+```
 
-# Start interactive chat with memory
+② Start interactive chat with memory
+```
 uv run python src/bootstrap.py demo/chat_with_memory.py
 ```
 
 See the [Demo Guide][demo-guide] for detailed instructions.
+
+<br>
 
 <div align="right">
 
@@ -197,7 +208,7 @@ See the [Demo Guide][demo-guide] for detailed instructions.
 
 </div>
 
-## How It Works
+<!-- ## How It Works
 
 EverMemOS operates along two tracks: **memory construction** and **memory perception**.
 
@@ -224,7 +235,9 @@ Recalls relevant memories through multi-round reasoning and intelligent fusion.
 | **Hybrid Retrieval** | Parallel semantic + keyword search with RRF fusion |
 | **Intelligent Reranking** | Deep relevance scoring to prioritize critical information |
 | **Lightweight Mode** | Pure BM25 for latency-sensitive scenarios |
-| **Agentic Recall** | Multi-round query generation for complex intents |
+| **Agentic Recall** | Multi-round query generation for complex intents | -->
+
+<br>
 
 <div align="right">
 
@@ -250,7 +263,8 @@ curl -X POST http://localhost:8001/api/v1/memories \
   }'
 ```
 
-<br>
+![divider][divider-light]
+![divider][divider-dark]
 
 ### Search Memories
 
@@ -268,6 +282,8 @@ curl -X GET http://localhost:8001/api/v1/memories/search \
 
 See the [API Documentation][api-docs] for complete reference.
 
+<br>
+
 <div align="right">
 
 [![][back-to-top]][readme-top]
@@ -278,20 +294,26 @@ See the [API Documentation][api-docs] for complete reference.
 
 Run benchmarks to test EverMemOS performance:
 
+### Quick smoke test
 ```bash
-# Quick smoke test
 uv run python -m evaluation.cli --dataset locomo --system evermemos --smoke
+```
 
-# Full evaluation
+### Full evaluation
+```bash
 uv run python -m evaluation.cli --dataset locomo --system evermemos
+```
 
-# View results
+### View results
+```bash
 cat evaluation/results/locomo-evermemos/report.txt
 ```
 
 Supported datasets: `locomo`, `longmemeval`, `personamem`
 
 See the [Evaluation Guide][evaluation-guide] for details.
+
+<br>
 
 <div align="right">
 
@@ -317,38 +339,49 @@ See the [Evaluation Guide][evaluation-guide] for details.
 
 </div>
 
-## Contributing
+### Contributing
 
-Contributions are welcome! Please read the [Contributing Guide][contributing-doc] first.
+We love open-source energy! Whether you’re squashing bugs, shipping features, sharpening docs, or just tossing in wild ideas, every PR moves EverMemOS forward. Browse [Issues](https://github.com/EverMind-AI/EverMemOS/issues) and [Projects](https://github.com/EverMind-AI/EverMemOS/projects) to find your perfect entry point—then show us what you’ve got. Let’s build the future of memory together.
 
-### Contributors
+<br>
 
-Thanks to all the developers who have contributed to this project!
+> [!TIP]
+>
+> **Welcome all kinds of contributions** 🙏
+>
+> Join us in building EverMemOS better! Every contribution makes a difference, from code to documentation. Share your projects on social media to inspire others!
+>
+> Connect with one of the EverMemOS maintainers [@elliotchen200][elliotchen200-x] on 𝕏 or [@cyfyifanchen][cyfyifanchen-github] on GitHub for project updates, discussions, and collaboration opportunities.
 
-<a href="https://github.com/EverMind-AI/EverMemOS/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=EverMind-AI/EverMemOS" />
-</a>
+<br>
 
-<div align="right">
+![divider][divider-light]
+![divider][divider-dark]
 
-[![][back-to-top]][readme-top]
+### Code Contributors
 
-</div>
+[![TEN][contributors-image]][contributors]
 
-## License
+### Contribution Guidelines
+
+Contributions are welcome! Please read the [contribution guidelines][contribution-guidelines-doc] first.
+
+<br>
+
+![divider][divider-light]
+![divider][divider-dark]
+
+### License
 
 This project is licensed under the [Apache License 2.0][license].
 
-<br>
+<!-- <br>
 
 ## Acknowledgments
 
 - [Memos][memos] — Inspiration for memory system design
-- [Nemori][nemori] — Self-organizing long-term memory concepts
+- [Nemori][nemori] — Self-organizing long-term memory concepts -->
 
-<br>
-
----
 <!-- Navigation -->
 [readme-top]: #readme-top
 [welcome]: #welcome-to-evermemos
@@ -366,10 +399,12 @@ This project is licensed under the [Apache License 2.0][license].
 [demo-section]: #run-the-demo
 
 <!-- Dividers -->
-[divider-light]:https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd
-[divider-dark]:https://github.com/user-attachments/assets/d57fad08-4f49-4a1c-bdfc-f659a5d86150
+[divider-light]: https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd#gh-light-mode-only
+[divider-dark]: https://github.com/user-attachments/assets/d57fad08-4f49-4a1c-bdfc-f659a5d86150#gh-dark-mode-only
 
 <!-- Header Badges -->
+[arxiv-badge]: https://img.shields.io/badge/arXiv-EverMemOS_Paper-F5C842?labelColor=555&style=flat-square&logo=arxiv&logoColor=white
+[arxiv-link]: https://arxiv.org/abs/2601.02163
 [release-badge]: https://img.shields.io/github/v/release/EverMind-AI/EverMemOS?color=369eff&labelColor=gray&logo=github&style=flat-square
 [release-date-badge]: https://img.shields.io/github/release-date/EverMind-AI/EverMemOS?labelColor=gray&style=flat-square
 [commits-badge]: https://img.shields.io/github/commit-activity/m/EverMind-AI/EverMemOS?labelColor=gray&color=pink&style=flat-square

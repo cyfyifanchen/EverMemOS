@@ -1,14 +1,8 @@
 <div align="center" id="readme-top">
 
-<h2>
-  EverMemOS
-  <a href="https://everm.ai/" target="_blank">
-    <img src="https://github.com/user-attachments/assets/01bb906c-30a6-4cd3-911f-2df29b4333f0" alt="EverMemOS" height="100" />
-  </a>
-  <br>
-</h2>
+# EverMemOS
 
-EverMemOS is an open-source, enterprise-grade intelligent memory system. Our mission is to build AI memory that never forgets, making every conversation built on previous understanding.
+EverMemOS is an open-source, enterprise-grade intelligent memory system. 
 
 <br>
 
@@ -16,7 +10,6 @@ EverMemOS is an open-source, enterprise-grade intelligent memory system. Our mis
 [![Python][python-badge]][python]
 [![Docker][docker-badge]][docker]
 [![FastAPI][fastapi-badge]][fastapi]
-
 [![MongoDB][mongodb-badge]][mongodb]
 [![Elasticsearch][elasticsearch-badge]][elasticsearch]
 [![Milvus][milvus-badge]][milvus]
@@ -28,7 +21,6 @@ EverMemOS is an open-source, enterprise-grade intelligent memory system. Our mis
 [![][share-linkedin-shield]][share-linkedin-link]
 [![][share-reddit-shield]][share-reddit-link]
 [![][share-telegram-shield]][share-telegram-link]
-
 [![][share-whatsapp-shield]][share-whatsapp-link]
 [![][share-mastodon-shield]][share-mastodon-link]
 [![][share-weibo-shield]][share-mastodon-link]
@@ -79,7 +71,7 @@ EverMemOS is an open-source, enterprise-grade intelligent memory system. Our mis
 Welcome to EverMemOS! Join our community to help improve the project and collaborate with talented developers worldwide.
 
 | Community | Purpose |
-| --------- | ------- |
+| :-------- | :------ |
 | [![Discord][discord-badge]][discord] | Join our Discord community |
 | [![X][x-badge]][x] | Follow updates on X |
 | [![LinkedIn][linkedin-badge]][linkedin] | Connect with us on LinkedIn |
@@ -94,12 +86,12 @@ Welcome to EverMemOS! Join our community to help improve the project and collabo
 
 ## Why EveryMemOS
 
-### How EverMemOS Works
+### How EverMemOS works
 ![image](https://github.com/user-attachments/assets/2a2a4f15-9185-47b3-9182-9c28145e18a4)
 
 EverMemOS enables AI to not only remember what happened, but understand the meaning behind memories and use them to guide decisions. Achieving 93% reasoning accuracy on the LoCoMo benchmark, EverMemOS provides long-term memory capabilities for conversational AI agents through structured extraction, intelligent retrieval, and progressive profile building.
 
-### Benchmark
+### EverMemOS benchmark
 
 ![image](https://github.com/user-attachments/assets/9583e4de-8f3b-4681-ab5f-10ee82327da8)
 
@@ -132,23 +124,43 @@ EverMemOS enables AI to not only remember what happened, but understand the mean
 
 ### Installation
 
+① Clone the repository and cd into the project
 ```bash
-# 1. Clone the repository
 git clone https://github.com/EverMind-AI/EverMemOS.git
+
 cd EverMemOS
+```
 
-# 2. Start dependency services (MongoDB, Elasticsearch, Milvus, Redis)
+② Start dependency services (MongoDB, Elasticsearch, Milvus and Redis)
+```bash
 docker-compose up -d
+```
 
-# 3. Install uv if needed
+③ Install uv and use uv to install dependencies
+```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# 4. Install project dependencies
 uv sync
+```
 
-# 5. Configure environment
+④ Configure API Keys
+```bash
 cp env.template .env
-# Edit .env with your API keys (LLM_API_KEY, VECTORIZE_API_KEY)
+
+# Edit .env and set:
+#   - LLM_API_KEY (for memory extraction)
+#   - VECTORIZE_API_KEY (for embedding/rerank)
+```
+
+⑤ Start server
+```bash
+uv run python src/run.py --port 8001
+```
+
+⑥ Verify installation
+```bash
+curl http://localhost:8001/health
+# Expected response: {"status": "healthy", ...}
 ```
 
 <br>

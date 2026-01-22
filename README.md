@@ -1,11 +1,11 @@
 <div align="center" id="readme-top">
 
 <h2>
+  EverMemOS
   <a href="https://everm.ai/" target="_blank">
-    <!-- <img src="figs/logo.png" alt="EverMemOS" height="100" /> -->
+    <img src="https://github.com/user-attachments/assets/01bb906c-30a6-4cd3-911f-2df29b4333f0" alt="EverMemOS" height="100" />
   </a>
   <br>
-  EverMemOS
 </h2>
 
 EverMemOS is an open-source, enterprise-grade intelligent memory system. Our mission is to build AI memory that never forgets, making every conversation built on previous understanding.
@@ -89,15 +89,6 @@ Welcome to EverMemOS! Join our community to help improve the project and collabo
 ### 🌟 Star us and stay tuned with us 
 
 ![star us gif](https://github.com/user-attachments/assets/0c512570-945a-483a-9f47-8e067bd34484)
-
-<!-- dividers -->
-<br>
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/d57fad08-4f49-4a1c-bdfc-f659a5d86150">
-  <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd">
-  <img alt="divider" src="https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd">
-</picture>
 
 <br>
 

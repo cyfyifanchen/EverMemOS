@@ -30,7 +30,7 @@
 
 ---
 
-[🚀 Quick Start](#quick-start) • [📖 Documentation](docs/) • [🎯 Demos](docs/usage/DEMOS.md) • [🤝 Contributing](#contributing) • [💬 Discord](https://discord.gg/pfwwskxp)
+[🚀 Quick Start](#quick-start) • [🛠️ Starter Kit](docs/STARTER_KIT.md) • [📖 Documentation](docs/) • [🎯 Demos](docs/usage/DEMOS.md) • [🤝 Contributing](#contributing) • [💬 Discord](https://discord.gg/pfwwskxp)
 
 ---
 
@@ -65,6 +65,21 @@
   <br>
   <em>EverMemOS outperforms existing memory systems across all major benchmarks</em>
 </p>
+
+---
+
+## Hackathon
+
+Join our AI Memory Hackathon! Build innovative applications, plugins, or infrastructure improvements powered by EverMemOS.
+
+**Tracks:**
+- **Agent + Memory** - Build intelligent agents with long-term, evolving memories
+- **Platform Plugins** - Integrate EverMemOS with VSCode, Chrome, Slack, Notion, LangChain, and more
+- **OS Infrastructure** - Optimize core functionality and performance
+
+👉 **[Get Started with the Hackathon Starter Kit](docs/STARTER_KIT.md)** 👈
+
+Join our [Discord](https://discord.gg/pfwwskxp) to find teammates and brainstorm ideas!
 
 ---
 

@@ -105,7 +105,10 @@ class AgenticConfig:
 
     # Rerank configuration
     use_reranker: bool = True
-    reranker_instruction: str = "Sort based on relevance between query and memory"
+    reranker_instruction: str = (
+        "Determine if the passage contains specific facts, entities (names, dates, locations), "
+        "or details that directly answer the question."
+    )
     reranker_batch_size: int = 10
     reranker_timeout: float = 30.0
 

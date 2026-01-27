@@ -11,7 +11,7 @@ from typing import Optional, List, Dict, Any
 from core.observation.logger import get_logger
 from common_utils.datetime_utils import from_iso_format
 from zoneinfo import ZoneInfo
-from api_specs.dtos.memory_command import RawData
+from api_specs.dtos import RawData
 from api_specs.request_converter import (
     build_raw_data_from_simple_message,
     normalize_refer_list,
@@ -126,6 +126,7 @@ class MemoryRequestLogMapper:
             content=content,
             timestamp=timestamp,
             sender_name=message_data.get("sender_name"),
+            role=message_data.get("role"),
             group_id=message_data.get("group_id"),
             group_name=message_data.get("group_name"),
             refer_list=refer_list,
@@ -171,6 +172,7 @@ class MemoryRequestLogMapper:
             content=log.content or "",
             timestamp=timestamp,
             sender_name=log.sender_name,
+            role=log.role,
             group_id=log.group_id,
             group_name=log.group_name,
             refer_list=log.refer_list or [],

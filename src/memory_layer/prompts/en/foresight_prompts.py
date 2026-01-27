@@ -1,109 +1,7 @@
 """
-Foresight Association Prediction Prompt Templates
+Foresight association prediction prompt template
 
-Used to generate foresight association predictions based on MemCell and EpisodeMemory content
-"""
-
-GROUP_FORESIGHT_GENERATION_PROMPT = """
-You are an advanced foresight analysis agent. Your task is to predict potential subsequent group behaviors, atmosphere changes, and member interaction trends based on recent MemCell events in a group.
-
-## Task Objectives:
-1. **Associative Prediction, Not Summary**: Based on event content, predict potential subsequent group changes rather than repeating or summarizing the original content.
-2. **Scenario Style Matching**: Predictions must match the scenario style of the event:
-   - Life scenarios (e.g., friend gatherings, daily activities) → Use casual language, focus on emotional exchanges, daily arrangements, leisure activities, mutual care, etc.
-   - Work scenarios (e.g., meetings, projects, business) → Use professional language, focus on task advancement, decision-making, efficiency improvement, goal achievement, etc.
-3. **Group-Level Analysis**: Analyze the event's potential impact on group behavior, atmosphere, and collaboration patterns from the group's overall perspective.
-4. **Reasonable Time Dimension**: Each prediction should include a reasonable time dimension, inferred based on event type and common sense.
-5. **Specific and Actionable**: Each prediction should not exceed 40 words, must generate exactly 10 predictions, with specific and verifiable content.
-6. **Member Relationship-Oriented**: Allow referencing specific member IDs (e.g., user_1, user_2), but focus on describing "group relationship changes" or "overall atmosphere trends."
-
-## Output Format:
-Return results as a JSON array, each association includes time information and evidence:
-[
-  {
-    "content": "Team communication frequency will increase in the next week",
-    "evidence": "During the meeting, user_1 emphasized communication efficiency issues",
-    "start_time": "2025-01-15",
-    "end_time": "2025-01-22",
-    "duration_days": 7,
-    "parent_episode_id": "group-2025-001"
-  }
-  ...
-]
-
-## Example Input (Work Scenario):
-{
-  "event_id": "group-2025-001",
-  "group_id": "group_001",
-  "user_id_list": ["user_1", "user_2", "user_3"],
-  "summary": "The team completed a staged project retrospective meeting, discussing task allocation and future directions.",
-  "episode": "During the meeting, user_1 emphasized communication efficiency issues, user_2 proposed new goal directions, and user_3 expressed workload pressure. The overall atmosphere was positive but with disagreements."
-}
-
-## Example Output (Work Scenario):
-[
-  {
-    "content": "user_2 will lead the next phase goal planning",
-    "evidence": "user_2 proposed new goal directions",
-    "start_time": "2025-01-15",
-    "end_time": "2025-01-31",
-    "duration_days": 16,
-    "parent_episode_id": "group-2025-001"
-  },
-  {
-    "content": "Team will reassign workload internally",
-    "evidence": "user_3 expressed workload pressure",
-    "start_time": "2025-01-15",
-    "end_time": "2025-01-22",
-    "duration_days": 7,
-    "parent_episode_id": "group-2025-001"
-  },
-  ...
-]
-
-## Example Input (Life Scenario):
-{
-  "event_id": "group-2025-002",
-  "group_id": "family_001",
-  "user_id_list": ["user_1", "user_2"],
-  "summary": "user_1 sprained their ankle, user_2 helped take care.",
-  "episode": "This afternoon, user_1 accidentally sprained their ankle while walking in the park. user_2 immediately came to help, supported them home and helped buy medicine."
-}
-
-## Example Output (Life Scenario):
-[
-  {
-    "content": "user_2 will frequently check on user_1's recovery in the next few days",
-    "evidence": "user_2 immediately came to help and supported them home",
-    "start_time": "2025-10-23",
-    "end_time": "2025-10-30",
-    "duration_days": 7,
-    "parent_episode_id": "group-2025-002"
-  },
-  {
-    "content": "user_1 will reduce outdoor activities in the near term",
-    "evidence": "user_1 sprained their ankle while walking in the park",
-    "start_time": "2025-10-23",
-    "end_time": "2025-10-30",
-    "duration_days": 7,
-    "parent_episode_id": "group-2025-002"
-  }
-  ...
-]
-
-## Important Notes:
-- **Association-Oriented**: Focus on "group-level foresight associations," predicting potential subsequent group changes based on events, not summarizing individual daily behaviors.
-- **Scenario Adaptation**: Language style must match the event scenario - use casual expressions for life scenarios, professional expressions for work scenarios.
-- **Time Inference**: Reasonably infer time ranges based on event type, common sense, and user status - don't rigidly apply fixed times.
-- **Content Innovation**: Don't repeat original content; generate new group behaviors or atmosphere changes that the event might trigger.
-- **Semantic Retrieval Friendly**: content should be the prediction result (e.g., "will increase communication frequency"), evidence stores the original fact (e.g., "communication issues mentioned in meeting"), enabling AI to retrieve relevant foresights based on user queries and trace back reasons.
-- **Time Information Extraction Rules:**
-  - start_time: Extract the specific date when the event occurred from the MemCell's timestamp field, format: YYYY-MM-DD
-  - end_time: Extract the specific end time from the original content. If there's an explicit end time (e.g., "before October 24", "2025-11-15"), extract the specific date; otherwise, reasonably infer based on event content and common sense
-  - duration_days: Extract duration from the original content. If there's explicit time description (e.g., "within a week", "7 days", "one month"), extract days; otherwise, reasonably infer based on event content and common sense
-  - parent_episode_id: Use the event_id from the input
-  - evidence: Extract specific evidence from the original content that supports this prediction, must be facts or behaviors explicitly mentioned in the original text, no more than 30 words
-  - **Important**: Prioritize extracting explicit time information from the original text; if not available, make reasonable inferences based on event content and common sense. Time cannot be null
+Used to generate personal foresight associations based on MemCell and conversation transcript content
 """
 
 FORESIGHT_GENERATION_PROMPT = """
@@ -117,80 +15,105 @@ You are an advanced personal foresight analysis agent. Your task is to predict t
    - Work scenarios (e.g., career development, skill improvement, work style) → Use professional language, focus on career planning, capability enhancement, work habits, professional development, etc.
 4. **Personal Behavior-Oriented**: Each association should reflect the user's "potential changes" or "behavioral tendencies," focusing on individual-level future development.
 5. **Reasonable Time Dimension**: Each prediction should include a reasonable time dimension, inferred based on event type and personal status.
-6. **Specific and Actionable**: Each prediction should not exceed 40 words, must generate exactly 10 predictions, with specific and verifiable content.
-7. **Direct User ID Usage**: Output should directly use user IDs (e.g., user_1), avoid using generic terms like "the user."
-
+6. **Specific and Actionable**: Each prediction should not exceed 40 words; generate up to 10 predictions (recommended 4-8). Content must be specific and verifiable.
+7. **Prefer user_name**: Prefer using user_name when provided; otherwise use user_id (e.g., user_1). Avoid using generic terms like "the user."
+8. **Semantic Grounding**: Predictions must remain semantically related to the input; store grounded supporting facts in evidence so the system can trace back the source.
 ## Output Format:
 Return results as a JSON array, each association includes time information and evidence:
 [
-  {
-    "content": "user_1 should pay more attention to emotional management recently",
-    "evidence": "user_1 just completed wisdom tooth extraction surgery, may have discomfort",
+  {{
+    "content": "XiaoMing will avoid hot/spicy food for the next week",
+    "evidence": "Doctor advice: keep oral hygiene; avoid hot/spicy food for a week",
     "start_time": "2025-10-21",
     "end_time": "2025-10-28",
-    "duration_days": 7,
-    "parent_episode_id": "test-001"
-  },
+    "duration_days": 7
+  }},
   ...
 ]
 
 ## Example Input (Life Scenario):
-{
-  "event_id": "test-001",
-  "user_id": "XiaoMing",
-  "subject": "XiaoMing completed wisdom tooth extraction surgery and post-operative instructions",
-  "summary": "XiaoMing successfully had wisdom tooth extraction this afternoon, doctor emphasized attention to diet and hygiene for the next week.",
-  "episode": "On the afternoon of October 21, 2025, XiaoMing described the tooth extraction experience, the doctor reminded to maintain oral hygiene and regular follow-ups."
-}
+- user_id: xiaoming-001
+- user_name: XiaoMing
+- conversation:
+```text
+[2025-10-21T14:05:00Z] XiaoMing: The extraction went fine, but it's still sore.
+[2025-10-21T14:06:10Z] Doctor: Keep oral hygiene, avoid hot/spicy food for a week, and follow up if swelling worsens.
+[2025-10-21T14:07:30Z] XiaoMing: Got it, I'll follow the instructions and watch for symptoms.
+```
 
 ## Example Output (Life Scenario):
 [
-  {
-    "content": "XiaoMing will adjust dietary habits for the next week",
-    "evidence": "doctor emphasized attention to diet and hygiene for the next week",
+  {{
+    "content": "XiaoMing will avoid hot/spicy food for the next week",
+    "evidence": "Doctor advice: avoid hot/spicy food; keep oral hygiene for a week",
     "start_time": "2025-10-21",
     "end_time": "2025-10-28",
-    "duration_days": 7,
-    "parent_episode_id": "test-001"
-  },
-  {
-    "content": "XiaoMing will develop a habit of regular dental check-ups",
-    "evidence": "the doctor reminded to maintain oral hygiene and regular follow-ups",
+    "duration_days": 7
+  }},
+  {{
+    "content": "XiaoMing will pay more attention to oral hygiene this week",
+    "evidence": "Doctor advice: keep oral hygiene for a week",
     "start_time": "2025-10-21",
-    "end_time": "2025-11-21",
-    "duration_days": 31,
-    "parent_episode_id": "test-001"
-  }
+    "end_time": "2025-10-28",
+    "duration_days": 7
+  }},
+  {{
+    "content": "If swelling/pain worsens, XiaoMing will seek a follow-up soon",
+    "evidence": "Doctor: follow up if swelling worsens",
+    "start_time": "2025-10-21",
+    "end_time": "2025-11-04",
+    "duration_days": 14
+  }},
+  {{
+    "content": "XiaoMing will avoid hard chewing for the next few days",
+    "evidence": "XiaoMing said it is still sore after the extraction",
+    "start_time": "2025-10-21",
+    "end_time": "2025-10-25",
+    "duration_days": 4
+  }}
   ...
 ]
 
 ## Example Input (Work Scenario):
-{
-  "event_id": "work-001",
-  "user_id": "LiHua",
-  "subject": "LiHua attended project management training",
-  "summary": "LiHua attended a three-day project management training and learned new working methods.",
-  "episode": "From October 21-23, 2025, LiHua attended company-organized project management training, learning agile development methods and team collaboration skills."
-}
+- user_id: LiHua-001
+- user_name: LiHua
+- conversation:
+```text
+[2025-10-21T10:00:00Z] Trainer: Today we'll cover agile planning and sprint rituals.
+[2025-10-21T11:15:20Z] LiHua: The daily standup structure is clearer—I can apply it to my team.
+[2025-10-23T16:40:05Z] Trainer: Review metrics and improve collaboration after each sprint.
+```
 
 ## Example Output (Work Scenario):
 [
-  {
-    "content": "LiHua will apply new project management methods in the future",
-    "evidence": "LiHua learned agile development methods during training",
-    "start_time": "2025-10-24",
-    "end_time": "2025-11-24",
-    "duration_days": 31,
-    "parent_episode_id": "work-001"
-  },
-  {
-    "content": "LiHua will pay attention to more career development opportunities",
-    "evidence": "LiHua attended company-organized project management training",
-    "start_time": "2025-10-24",
-    "end_time": "2025-12-24",
-    "duration_days": 61,
-    "parent_episode_id": "work-001"
-  }
+  {{
+    "content": "LiHua will trial a more structured standup in the team over the next two weeks",
+    "evidence": "LiHua: the daily standup structure is clearer and can be applied to the team",
+    "start_time": "2025-10-21",
+    "end_time": "2025-11-04",
+    "duration_days": 14
+  }},
+  {{
+    "content": "LiHua will try to introduce sprint rituals in the next month",
+    "evidence": "Training covered sprint rituals; LiHua intends to apply learnings",
+    "start_time": "2025-10-21",
+    "end_time": "2025-11-21",
+    "duration_days": 31
+  }},
+  {{
+    "content": "After the next iteration, LiHua will try to review metrics and do a retrospective",
+    "evidence": "Trainer: review metrics and improve collaboration after each sprint",
+    "start_time": "2025-10-21",
+    "end_time": "2025-11-21",
+    "duration_days": 31
+  }},
+  {{
+    "content": "LiHua will pay more attention to concrete collaboration improvement actions this month",
+    "evidence": "Trainer emphasized improving collaboration after each sprint",
+    "start_time": "2025-10-21",
+    "end_time": "2025-11-21",
+    "duration_days": 31
+  }}
   ...
 ]
 
@@ -205,75 +128,18 @@ Return results as a JSON array, each association includes time information and e
   - start_time: Extract the specific date when the event occurred from the MemCell's timestamp field, format: YYYY-MM-DD
   - end_time: Extract the specific end time from the original content. If there's an explicit end time (e.g., "before October 24", "2025-11-15"), extract the specific date; otherwise, reasonably infer based on event content and common sense
   - duration_days: Extract duration from the original content. If there's explicit time description (e.g., "within a week", "7 days", "one month"), extract days; otherwise, reasonably infer based on event content and common sense
-  - parent_episode_id: Use the event_id from the input
-  - evidence: Extract specific evidence from the input content that supports this prediction, must be facts or behaviors explicitly mentioned in the original text, no more than 30 words
+  - evidence: Provide a short grounded summary (1–2 sentences) of the key supporting facts (can merge multiple lines from the transcript/summary); do not introduce new facts; keep it concise (≤40 words)
   - **Important**: Prioritize extracting explicit time information from the original text; if not available, make reasonable inferences based on event content and common sense. Time cannot be null
-"""
 
+## Input (Markdown):
+You will receive the following Markdown structure:
+- user_id: {USER_ID}
+- user_name: {USER_NAME}
+- conversation:
+```text
+{CONVERSATION_TEXT}
+```
 
-def get_group_foresight_generation_prompt(
-    memcell_summary: str, memcell_episode: str, user_ids: list = None
-) -> str:
-    """
-    Generate prompt for group foresight association prediction
-
-    Args:
-        memcell_summary: MemCell summary content
-        memcell_episode: MemCell detailed content
-        user_ids: List of user IDs for generating specific user IDs
-
-    Returns:
-        Complete prompt string
-    """
-    # Build user ID information
-    user_ids_info = ""
-    if user_ids:
-        user_ids_info = f"\n**User ID Information:**\n{', '.join(user_ids)}\n"
-
-    prompt = f"""{GROUP_FORESIGHT_GENERATION_PROMPT}
-
-## Input Content:
-
-**MemCell Summary:**
-{memcell_summary}
-
-**MemCell Detailed Content:**
-{memcell_episode}{user_ids_info}
-## Please generate 10 associations that may impact users' future lives and decisions based on the above content:
+## Please generate 4-8 (up to 10) associations that may impact the user's future life and decisions based on the above content (The generated memories must follow the language of the conversation text):
 
 """
-    return prompt
-
-
-def get_foresight_generation_prompt(
-    episode_memory: str, episode_content: str, user_id: str = None
-) -> str:
-    """
-    Generate prompt for personal foresight association prediction
-
-    Args:
-        episode_memory: EpisodeMemory summary content
-        episode_content: EpisodeMemory detailed content
-        user_id: User ID for generating specific user ID
-
-    Returns:
-        Complete prompt string
-    """
-    # Build user ID information
-    user_id_info = ""
-    if user_id:
-        user_id_info = f"\n**User ID Information:**\n{user_id}\n"
-
-    prompt = f"""{FORESIGHT_GENERATION_PROMPT}
-
-## Input Content:
-
-**EpisodeMemory Summary:**
-{episode_memory}
-
-**EpisodeMemory Detailed Content:**
-{episode_content}{user_id_info}
-## Please generate 10 associations that may impact the user's future life and decisions based on the above content:
-
-"""
-    return prompt

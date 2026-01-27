@@ -142,7 +142,7 @@ git push origin feature/your-feature-name
 
 ## 🐛 Reporting Bugs
 
-Please report bugs by [opening an issue](https://github.com/EverMind-AI/EverMemOS/issues) with:
+Please report bugs by [creating a bug report](https://github.com/EverMind-AI/EverMemOS/issues/new?template=bug_report.md) with:
 
 - Clear, descriptive title
 - Steps to reproduce
@@ -152,7 +152,7 @@ Please report bugs by [opening an issue](https://github.com/EverMind-AI/EverMemO
 
 ## 💡 Suggesting Features
 
-Feature requests are welcome! Please:
+Feature requests are welcome! Please [submit a feature request](https://github.com/EverMind-AI/EverMemOS/issues/new?template=feature_request.md) with:
 
 - Check if the feature is already requested
 - Provide clear use cases

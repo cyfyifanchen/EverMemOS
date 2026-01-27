@@ -246,7 +246,7 @@ class HybridRerankService(RerankServiceInterface):
         """Rerank memories with automatic fallback"""
         start_time = time.perf_counter()
         documents_count = len(hits)
-        
+
         try:
             result = await self.execute_with_fallback(
                 "rerank_memories",
@@ -254,12 +254,14 @@ class HybridRerankService(RerankServiceInterface):
                     query, hits, top_k, instruction
                 ),
                 lambda: (
-                    self.fallback_service.rerank_memories(query, hits, top_k, instruction)
+                    self.fallback_service.rerank_memories(
+                        query, hits, top_k, instruction
+                    )
                     if self.fallback_service
                     else None
                 ),
             )
-            
+
             # Record success metrics
             duration = time.perf_counter() - start_time
             record_rerank_request(
@@ -268,9 +270,9 @@ class HybridRerankService(RerankServiceInterface):
                 duration_seconds=duration,
                 documents_count=documents_count,
             )
-            
+
             return result
-            
+
         except Exception as e:
             # Record error metrics (fallback failure is recorded in execute_with_fallback)
             duration = time.perf_counter() - start_time
@@ -285,6 +287,32 @@ class HybridRerankService(RerankServiceInterface):
     def get_model_name(self) -> str:
         """Get the current model name (from primary service)"""
         return self.primary_service.get_model_name()
+
+    async def rerank_documents(
+        self, query: str, documents: List[str], instruction: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Rerank raw documents (low-level API) with fallback support
+
+        Args:
+            query: Query text
+            documents: List of document strings to rerank
+            instruction: Optional reranking instruction
+
+        Returns:
+            Dict with 'results' key containing list of {index, score, rank}
+        """
+        return await self.execute_with_fallback(
+            "rerank_documents",
+            lambda: self.primary_service.rerank_documents(
+                query, documents, instruction
+            ),
+            lambda: (
+                self.fallback_service.rerank_documents(query, documents, instruction)
+                if self.fallback_service
+                else None
+            ),
+        )
 
     async def execute_with_fallback(
         self, operation_name: str, primary_func, fallback_func
@@ -318,12 +346,11 @@ class HybridRerankService(RerankServiceInterface):
                 f"Primary service ({self.config.primary_provider}) {operation_name} failed "
                 f"(count: {self.config._primary_failure_count}): {primary_error}"
             )
-            
+
             # Record primary error
             error_type = self._classify_error(primary_error)
             record_rerank_error(
-                provider=self.config.primary_provider,
-                error_type=error_type,
+                provider=self.config.primary_provider, error_type=error_type
             )
 
             # Check if fallback is enabled
@@ -347,38 +374,38 @@ class HybridRerankService(RerankServiceInterface):
                 logger.info(
                     f"🔄 Falling back to {self.config.fallback_provider} for {operation_name}"
                 )
-                
+
                 # Record fallback event
                 record_rerank_fallback(
                     primary_provider=self.config.primary_provider,
                     fallback_provider=self.config.fallback_provider,
                     reason=fallback_reason,
                 )
-                
+
                 result = await fallback_func()
                 return result
 
             except Exception as fallback_error:
                 logger.error(f"❌ Fallback also failed: {fallback_error}")
-                
+
                 # Record fallback error
                 fallback_error_type = self._classify_error(fallback_error)
                 record_rerank_error(
                     provider=self.config.fallback_provider,
                     error_type=fallback_error_type,
                 )
-                
+
                 raise RerankError(
                     f"Both primary and fallback services failed. "
                     f"Primary ({self.config.primary_provider}): {primary_error}, "
                     f"Fallback ({self.config.fallback_provider}): {fallback_error}"
                 )
-    
+
     def _classify_error(self, error: Exception) -> str:
         """Classify error type for metrics"""
         error_str = str(error).lower()
         error_type = type(error).__name__.lower()
-        
+
         if 'timeout' in error_str or 'timeout' in error_type:
             return 'timeout'
         elif 'rate' in error_str and 'limit' in error_str:

@@ -136,10 +136,20 @@ class DeepInfraRerankService(RerankServiceInterface):
             "request_id": json_body.get("id"),
         }
 
-    async def _make_rerank_request(
-        self, query: str, documents: List[str], instruction: str = None
+    async def rerank_documents(
+        self, query: str, documents: List[str], instruction: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Make rerank request (with batching support)"""
+        """
+        Rerank raw documents (low-level API)
+
+        Args:
+            query: Query text
+            documents: List of document strings to rerank
+            instruction: Optional reranking instruction
+
+        Returns:
+            Dict with 'results' key containing list of {index, score, rank}
+        """
         if not documents:
             return {"results": []}
 
@@ -280,9 +290,7 @@ class DeepInfraRerankService(RerankServiceInterface):
             logger.debug(
                 f"Starting reranking, query text: {query}, number of texts: {len(all_texts)}"
             )
-            rerank_result = await self._make_rerank_request(
-                query, all_texts, instruction
-            )
+            rerank_result = await self.rerank_documents(query, all_texts, instruction)
 
             if "results" not in rerank_result:
                 raise RerankError("Invalid rerank API response: missing results field")
@@ -320,8 +328,6 @@ class DeepInfraRerankService(RerankServiceInterface):
                 sorted_hits = sorted_hits[:top_k]
             return sorted_hits
 
-
     def get_model_name(self) -> str:
         """Get the current model name"""
         return self.config.model
-

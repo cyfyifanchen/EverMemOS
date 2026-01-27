@@ -1,9 +1,5 @@
 # EverMemOS Evaluation Framework
 
-<p>
-  <a href="README.md">English</a> | <a href="README_zh.md">简体中文</a>
-</p>
-
 A unified, modular evaluation framework for benchmarking memory systems on standard datasets.
 
 ## 📖 Overview
@@ -204,6 +200,9 @@ uv run python -m evaluation.cli --dataset locomo --system evermemos --smoke
 # Custom: first conversation, 20 messages, 5 questions
 uv run python -m evaluation.cli --dataset locomo --system evermemos \
     --smoke --smoke-messages 20 --smoke-questions 5
+
+# You can also evaluate specific conversations with `--from-conv` and `--to-conv` (0-based, end exclusive):
+uv run python -m evaluation.cli --dataset locomo --system evermemos_custom --from-conv 0 --to-conv 1
 ```
 
 
@@ -214,6 +213,11 @@ Run the complete benchmark:
 ```bash
 # Evaluate EverMemOS on LoCoMo
 uv run python -m evaluation.cli --dataset locomo --system evermemos
+
+# Evaluate EverMemOS via local API (start server first)
+uv run python src/run.py
+# Use --clean-groups to clear existing data before Add stage
+uv run python -m evaluation.cli --dataset locomo --system evermemos_local_api --clean-groups
 
 # Evaluate other systems
 uv run python -m evaluation.cli --dataset locomo --system memos

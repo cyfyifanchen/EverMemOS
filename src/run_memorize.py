@@ -144,7 +144,6 @@ class GroupChatMemorizer:
 
                 # Build conversation-meta request data
                 conversation_meta_request = {
-                    "version": group_chat_data.get("version", "1.0.0"),
                     "scene": self.scene,  # Use scene passed from command line
                     "scene_desc": meta.get("scene_desc", {}),
                     "name": meta.get("name", "Unnamed conversation"),

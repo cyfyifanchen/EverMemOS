@@ -404,6 +404,7 @@ class MemoryControllerTester:
                 "sender": "assistant_001",
                 "sender_name": "AI Assistant",
                 "content": "Of course! Coffee comes in many varieties, from strong espresso to mild Americano. You can choose based on your taste. I suggest starting with Americano.",
+                "role": "assistant",
                 "refer_list": [],
             },
             {
@@ -426,6 +427,7 @@ class MemoryControllerTester:
                 "sender": "assistant_001",
                 "sender_name": "AI Assistant",
                 "content": "I understand your preference! Black Americano can fully experience the flavor of coffee beans. I suggest choosing dark roasted beans for a stronger taste.",
+                "role": "assistant",
                 "refer_list": [],
             },
             # Scenario 2: Start new topic (trigger boundary via longer time gap + topic switch)
@@ -438,6 +440,7 @@ class MemoryControllerTester:
                 "sender": self.user_id,
                 "sender_name": "Test User",
                 "content": "By the way, how is the weekend project progressing?",
+                "role": "user",
                 "refer_list": [],
             },
             {
@@ -805,8 +808,9 @@ class MemoryControllerTester:
                 assert isinstance(memory, dict), f"Memory {idx} should be a dictionary"
                 assert "content" in memory, f"Memory {idx} should contain content"
                 assert (
-                    "parent_episode_id" in memory
-                ), f"Memory {idx} should contain parent_episode_id"
+                    "parent_type" in memory
+                ), f"Memory {idx} should contain parent_type"
+                assert "parent_id" in memory, f"Memory {idx} should contain parent_id"
                 # Foresight user_id may be None (group scenario), so not enforced
 
             print(
@@ -2486,7 +2490,6 @@ class MemoryControllerTester:
             "scene": "assistant",
             "scene_desc": {
                 "description": "Project collaboration group chat",
-                "bot_ids": ["bot_001"],
                 "extra": {"category": "test"},
             },
             "name": "Test Project Discussion Group",
@@ -2497,7 +2500,7 @@ class MemoryControllerTester:
             "user_details": {
                 self.user_id: {
                     "full_name": "Test User",
-                    "role": "developer",
+                    "custom_role": "developer",
                     "extra": {"department": "Engineering"},
                 }
             },

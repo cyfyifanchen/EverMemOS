@@ -56,6 +56,7 @@ class Relationship(DocumentBase, AuditBase):
                 "extend": {"strength": "strong", "context": "work environment"},
             }
         },
+        extra="allow",
     )
 
     class Settings:

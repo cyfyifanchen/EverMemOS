@@ -78,14 +78,10 @@ _PROMPT_REGISTRY = {
         "en": ("memory_layer.prompts.en.group_profile_prompts", False),
         "zh": ("memory_layer.prompts.zh.group_profile_prompts", False),
     },
-    # Foresight (functions)
-    "get_foresight_generation_prompt": {
-        "en": ("memory_layer.prompts.en.foresight_prompts", True),
-        "zh": ("memory_layer.prompts.zh.foresight_prompts", True),
-    },
-    "get_group_foresight_generation_prompt": {
-        "en": ("memory_layer.prompts.en.foresight_prompts", True),
-        "zh": ("memory_layer.prompts.zh.foresight_prompts", True),
+    # Foresight
+    "FORESIGHT_GENERATION_PROMPT": {
+        "en": ("memory_layer.prompts.en.foresight_prompts", False),
+        "zh": ("memory_layer.prompts.zh.foresight_prompts", False),
     },
     # Event Log
     "EVENT_LOG_PROMPT": {

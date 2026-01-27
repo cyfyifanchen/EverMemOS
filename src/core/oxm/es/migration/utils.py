@@ -41,9 +41,6 @@ def find_document_class_by_index_name(index_name: str) -> Type[AsyncDocument]:
             matched_classes.append(cls)
 
     if not matched_classes:
-        import ipdb
-
-        ipdb.set_trace()
         available_indexes = [cls.get_index_name() for cls in all_doc_classes]
         logger.error(
             "Cannot find document class corresponding to index alias '%s'", index_name

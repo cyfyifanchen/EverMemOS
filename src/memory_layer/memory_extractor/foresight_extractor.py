@@ -13,13 +13,7 @@ from memory_layer.memory_extractor.base_memory_extractor import (
     MemoryExtractor,
     MemoryExtractRequest,
 )
-from api_specs.memory_types import (
-    MemoryType,
-    MemCell,
-    Foresight,
-    BaseMemory,
-    EpisodeMemory,
-)
+from api_specs.memory_types import MemoryType, MemCell, Foresight, BaseMemory
 from agentic_layer.vectorize_service import get_vectorize_service
 from core.observation.logger import get_logger
 from common_utils.datetime_utils import get_now_with_timezone
@@ -31,9 +25,8 @@ class ForesightExtractor(MemoryExtractor):
     """
     Foresight Extractor - Based on associative prediction method
 
-    Supports two modes:
-    1. use_group_prompt=False: Generate associations based on EpisodeMemory object, add foresights field to returned EpisodeMemory object
-    2. use_group_prompt=True: Generate associations based on MemCell object, add foresights field to returned MemCell object
+    Supports conversation mode:
+    - Generate associations based on raw conversation transcript text (assistant scene).
 
     New strategy implementation:
     1. Based on content, large model associates 10 potential impacts on user's subsequent life and decisions
@@ -41,8 +34,7 @@ class ForesightExtractor(MemoryExtractor):
     3. Focus on personal-level impacts for the user
 
     Main methods:
-    - generate_foresights_for_memcell(): Generate foresights for MemCell
-    - generate_foresights_for_episode(): Generate foresights for EpisodeMemory
+    - generate_foresights_for_conversation(): Generate foresights from raw conversation text
     """
 
     def __init__(self, llm_provider: LLMProvider):
@@ -64,7 +56,7 @@ class ForesightExtractor(MemoryExtractor):
         Implement abstract base class required extract_memory method
 
         Note: ForesightExtractor should not directly use extract_memory method
-        Use generate_foresights_for_memcell or generate_foresights_for_episode instead
+        Use generate_foresights_for_conversation instead
 
         Args:
             request: Memory extraction request
@@ -74,43 +66,50 @@ class ForesightExtractor(MemoryExtractor):
         """
         raise NotImplementedError(
             "ForesightExtractor should not directly use extract_memory method."
-            "Please use generate_foresights_for_memcell or generate_foresights_for_episode method."
+            "Please use generate_foresights_for_conversation method."
         )
 
-    async def generate_foresights_for_memcell(
-        self, memcell: MemCell
+    async def generate_foresights_for_conversation(
+        self,
+        conversation_text: str,
+        timestamp: datetime,
+        user_id: str,
+        user_name: Optional[str] = None,
+        group_id: Optional[str] = None,
+        ori_event_id_list: Optional[List[str]] = None,
     ) -> List[Foresight]:
         """
-        Generate foresight association predictions for MemCell
-
-        This is the new strategy: Based on MemCell content, large model associates 10 potential impacts on user's subsequent life and decisions
+        Generate foresight association predictions from raw conversation text.
 
         Args:
-            memcell: MemCell object
+            conversation_text: Raw conversation transcript text
+            timestamp: Conversation timestamp (used as base time)
+            user_id: Target user id
+            user_name: Optional user display name
+            group_id: Optional group id
+            ori_event_id_list: Optional original event id list
 
         Returns:
-            List of foresight items (10 items), including time information
+            List of foresight items (up to 10 items), including time information
         """
         # Maximum 5 retries
         for retry in range(5):
             try:
                 if retry == 0:
                     logger.info(
-                        f"🎯 Generating foresight associations for MemCell: {memcell.subject}"
+                        f"🎯 Generating foresight associations for conversation: user_id={user_id}"
                     )
                 else:
                     logger.info(
-                        f"🎯 Generating foresight associations for MemCell: {memcell.subject}, retry {retry}/5"
+                        f"🎯 Generating foresight associations for conversation: user_id={user_id}, retry {retry}/5"
                     )
 
-                # Build prompt (get function type prompt via PromptManager)
-                get_group_foresight_generation_prompt = get_prompt_by(
-                    "get_group_foresight_generation_prompt"
-                )
-                prompt = get_group_foresight_generation_prompt(
-                    memcell_summary=memcell.summary or "",
-                    memcell_episode=memcell.episode or "",
-                    user_ids=memcell.user_id_list,
+                # Build prompt (static prompt template via PromptManager)
+                prompt_template = get_prompt_by("FORESIGHT_GENERATION_PROMPT")
+                prompt = prompt_template.format(
+                    USER_ID=user_id,
+                    USER_NAME=user_name,
+                    CONVERSATION_TEXT=conversation_text,
                 )
 
                 # Call LLM to generate associations
@@ -125,110 +124,26 @@ class ForesightExtractor(MemoryExtractor):
                 )
 
                 # Parse JSON response
-                start_time = self._extract_start_time_from_timestamp(memcell.timestamp)
-                # For memcell, user_id comes from user_id_list (first user)
-                user_id = memcell.user_id_list[0] if memcell.user_id_list else ""
+                start_time = self._extract_start_time_from_timestamp(timestamp)
                 foresights = await self._parse_foresights_response(
                     response,
                     start_time=start_time,
                     user_id=user_id,
-                    timestamp=memcell.timestamp,
-                    ori_event_id_list=[memcell.event_id] if memcell.event_id else [],
-                    group_id=memcell.group_id,
+                    timestamp=timestamp,
+                    ori_event_id_list=ori_event_id_list or [],
+                    group_id=group_id,
                 )
 
                 # Validate at least 1 item is returned
                 if len(foresights) == 0:
                     raise ValueError("LLM returned empty foresight list")
 
-                # Ensure exactly 10 items are returned (warn if insufficient, but do not retry)
+                # Ensure at most 10 items are returned
                 if len(foresights) > 10:
                     foresights = foresights[:10]
-                elif len(foresights) < 10:
+                elif len(foresights) < 4:
                     logger.warning(
-                        f"Generated foresight associations less than 10, actual count: {len(foresights)}"
-                    )
-
-                logger.info(
-                    f"✅ Successfully generated {len(foresights)} foresight associations"
-                )
-                for i, memory in enumerate(foresights[:3], 1):
-                    logger.info(f"  Association {i}: {memory.foresight}")
-
-                return foresights
-
-            except Exception as e:
-                logger.warning(f"Foresight generation retry {retry+1}/5: {e}")
-                if retry == 4:
-                    logger.error(f"Foresight generation failed after 5 retries")
-                    return []
-                continue
-
-        return []
-
-    async def generate_foresights_for_episode(
-        self, episode: EpisodeMemory
-    ) -> List[Foresight]:
-        """
-        Generate foresight association predictions for EpisodeMemory
-
-        This is personal mode: Based on EpisodeMemory content, large model associates 10 potential impacts on user's subsequent life and decisions
-
-        Args:
-            episode: EpisodeMemory object
-
-        Returns:
-            List of foresight items (10 items), including time information
-        """
-        # Maximum 5 retries
-        for retry in range(5):
-            try:
-                if retry == 0:
-                    logger.info(
-                        f"🎯 Generating foresight associations for EpisodeMemory: {episode.subject}"
-                    )
-                else:
-                    logger.info(
-                        f"🎯 Generating foresight associations for EpisodeMemory: {episode.subject}, retry {retry+1}/5"
-                    )
-
-                # Build prompt (get function type prompt via PromptManager)
-                # Directly use episode's user_id
-                get_foresight_generation_prompt = get_prompt_by(
-                    "get_foresight_generation_prompt"
-                )
-                prompt = get_foresight_generation_prompt(
-                    episode_memory=episode.summary or "",
-                    episode_content=episode.episode or "",
-                    user_id=episode.user_id,
-                )
-
-                # Call LLM to generate associations
-                response = await self.llm_provider.generate(
-                    prompt=prompt, temperature=0.3
-                )
-
-                # Parse JSON response
-                start_time = self._extract_start_time_from_timestamp(episode.timestamp)
-                foresights = await self._parse_foresights_response(
-                    response,
-                    start_time=start_time,
-                    user_id=episode.user_id,
-                    timestamp=episode.timestamp,
-                    ori_event_id_list=episode.ori_event_id_list or [],
-                    group_id=episode.group_id,
-                )
-
-                # Validate at least 1 item is returned
-                if len(foresights) == 0:
-                    raise ValueError("LLM returned empty foresight list")
-
-                # Ensure exactly 10 items are returned (warn if insufficient, but do not retry)
-                if len(foresights) > 10:
-                    foresights = foresights[:10]
-                elif len(foresights) < 10:
-                    logger.warning(
-                        f"Generated foresight associations less than 10, actual count: {len(foresights)}"
+                        f"Generated foresight associations less than 4, actual count: {len(foresights)}"
                     )
 
                 logger.info(
@@ -360,7 +275,6 @@ class ForesightExtractor(MemoryExtractor):
                             'start_time': item_start_time,
                             'end_time': item_end_time,
                             'duration_days': item_duration_days,
-                            'parent_episode_id': item.get('parent_episode_id'),
                         }
                     )
 
@@ -391,7 +305,6 @@ class ForesightExtractor(MemoryExtractor):
                         start_time=item_data['start_time'],
                         end_time=item_data['end_time'],
                         duration_days=item_data['duration_days'],
-                        parent_episode_id=item_data['parent_episode_id'],
                         vector=vector,
                         vector_model=vs.get_model_name(),
                     )

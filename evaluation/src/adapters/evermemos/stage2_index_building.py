@@ -12,10 +12,8 @@ from rank_bm25 import BM25Okapi
 import asyncio
 
 
-
-
 from evaluation.src.adapters.evermemos.config import ExperimentConfig
-from agentic_layer import vectorize_service
+from agentic_layer.vectorize_service import get_vectorize_service
 
 
 def ensure_nltk_data():
@@ -25,7 +23,7 @@ def ensure_nltk_data():
     except LookupError:
         print("Downloading punkt...")
         nltk.download("punkt", quiet=True)
-    
+
     try:
         nltk.data.find("tokenizers/punkt_tab")
     except LookupError:
@@ -37,10 +35,11 @@ def ensure_nltk_data():
     except LookupError:
         print("Downloading stopwords...")
         nltk.download("stopwords", quiet=True)
-    
+
     # Verify stopwords availability
     try:
         from nltk.corpus import stopwords
+
         test_stopwords = stopwords.words("english")
         if not test_stopwords:
             raise ValueError("Stopwords is empty")
@@ -171,24 +170,26 @@ def build_bm25_index(
 async def build_emb_index(config: ExperimentConfig, data_dir: Path, emb_save_dir: Path):
     """
     Build Embedding index (stable version).
-    
+
     Performance optimization strategy:
     1. Controlled concurrency: strictly follow API Semaphore(5) limit
     2. Conservative batch size: 256 texts/batch (avoid timeouts)
     3. Serial batch submission: grouped submission to avoid queue buildup
     4. Progress monitoring: real-time progress and speed display
-    
+
     Optimization effects:
     - Stability first, avoid timeouts and API overload
     - API concurrency: 5 (controlled by vectorize_service.Semaphore)
     - Batch size: 256 (balance stability and efficiency)
     """
     # Conservative batch size (avoid timeouts)
-    BATCH_SIZE = 256  # Use larger batches (single API call processes more, reduce request count)
+    BATCH_SIZE = (
+        256  # Use larger batches (single API call processes more, reduce request count)
+    )
     MAX_CONCURRENT_BATCHES = 5  # Strictly control concurrency (match Semaphore(5))
-    
+
     import time  # For performance statistics
-    
+
     for i in range(config.num_conv):
         file_path = data_dir / f"memcell_list_conv_{i}.json"
         if not file_path.exists():
@@ -220,7 +221,7 @@ async def build_emb_index(config: ExperimentConfig, data_dir: Path, emb_save_dir
                         elif isinstance(fact, str):
                             # Old format: pure string
                             fact_text = fact
-                        
+
                         # Ensure fact is non-empty
                         if fact_text and fact_text.strip():
                             texts_to_embed.append(fact_text)
@@ -246,62 +247,76 @@ async def build_emb_index(config: ExperimentConfig, data_dir: Path, emb_save_dir
         print(f"Total batches: {total_batches}")
         print(f"Max concurrent batches: {MAX_CONCURRENT_BATCHES}")
         print(f"\nStarting parallel embedding generation...")
-        
+
         # Stable batch processing (avoid timeouts)
         start_time = time.time()
-        
-        async def process_batch_with_retry(batch_idx: int, batch_texts: list, max_retries: int = 3) -> tuple[int, list]:
+
+        async def process_batch_with_retry(
+            batch_idx: int, batch_texts: list, max_retries: int = 3
+        ) -> tuple[int, list]:
             """Process single batch (async + retry)."""
             for attempt in range(max_retries):
                 try:
                     # Call API to get embeddings (concurrency controlled by Semaphore(5))
-                    batch_embeddings = await vectorize_service.get_text_embeddings(batch_texts)
+                    batch_embeddings = await get_vectorize_service().get_embeddings(
+                        batch_texts
+                    )
                     return (batch_idx, batch_embeddings)
                 except Exception as e:
                     if attempt < max_retries - 1:
-                        wait_time = 2.0 * (2 ** attempt)  # Exponential backoff: 2s, 4s
-                        print(f"  ⚠️  Batch {batch_idx + 1}/{total_batches} failed (attempt {attempt + 1}), retrying in {wait_time:.1f}s: {e}")
+                        wait_time = 2.0 * (2**attempt)  # Exponential backoff: 2s, 4s
+                        print(
+                            f"  ⚠️  Batch {batch_idx + 1}/{total_batches} failed (attempt {attempt + 1}), retrying in {wait_time:.1f}s: {e}"
+                        )
                         await asyncio.sleep(wait_time)
                     else:
-                        print(f"  ❌ Batch {batch_idx + 1}/{total_batches} failed after {max_retries} attempts: {e}")
+                        print(
+                            f"  ❌ Batch {batch_idx + 1}/{total_batches} failed after {max_retries} attempts: {e}"
+                        )
                         return (batch_idx, [])
-        
-        #Grouped serial submission (avoid queue buildup causing timeouts)
-        print(f"Processing {total_batches} batches in groups of {MAX_CONCURRENT_BATCHES}...")
-        
+
+        # Grouped serial submission (avoid queue buildup causing timeouts)
+        print(
+            f"Processing {total_batches} batches in groups of {MAX_CONCURRENT_BATCHES}..."
+        )
+
         batch_results = []
         completed = 0
-        
+
         # Grouped submission, max MAX_CONCURRENT_BATCHES concurrent per group
         for group_start in range(0, total_texts, BATCH_SIZE * MAX_CONCURRENT_BATCHES):
             # Calculate batch range for current group
-            group_end = min(group_start + BATCH_SIZE * MAX_CONCURRENT_BATCHES, total_texts)
+            group_end = min(
+                group_start + BATCH_SIZE * MAX_CONCURRENT_BATCHES, total_texts
+            )
             group_tasks = []
-            
+
             for j in range(group_start, group_end, BATCH_SIZE):
                 batch_idx = j // BATCH_SIZE
                 batch_texts = texts_to_embed[j : j + BATCH_SIZE]
                 task = process_batch_with_retry(batch_idx, batch_texts)
                 group_tasks.append(task)
-            
+
             # Process current group concurrently (max MAX_CONCURRENT_BATCHES)
-            print(f"  Group {group_start//BATCH_SIZE//MAX_CONCURRENT_BATCHES + 1}: Processing {len(group_tasks)} batches concurrently...")
+            print(
+                f"  Group {group_start//BATCH_SIZE//MAX_CONCURRENT_BATCHES + 1}: Processing {len(group_tasks)} batches concurrently..."
+            )
             group_results = await asyncio.gather(*group_tasks, return_exceptions=False)
             batch_results.extend(group_results)
-            
+
             completed += len(group_tasks)
             progress = (completed / total_batches) * 100
             print(f"  Progress: {completed}/{total_batches} batches ({progress:.1f}%)")
-            
+
             # Inter-group delay (give API server breathing room)
             if group_end < total_texts:
                 await asyncio.sleep(1.0)  # 1s inter-group delay
-        
+
         # Reorganize results by batch order
         all_embeddings = []
         for batch_idx, batch_embeddings in sorted(batch_results, key=lambda x: x[0]):
             all_embeddings.extend(batch_embeddings)
-        
+
         elapsed_time = time.time() - start_time
         speed = total_texts / elapsed_time if elapsed_time > 0 else 0
         print(f"\n✅ Embedding generation complete!")
@@ -310,17 +325,19 @@ async def build_emb_index(config: ExperimentConfig, data_dir: Path, emb_save_dir
         print(f"   - Time elapsed: {elapsed_time:.2f}s")
         print(f"   - Speed: {speed:.1f} texts/sec")
         print(f"   - Average batch time: {elapsed_time/total_batches:.2f}s")
-        
+
         # Verify result completeness
         if len(all_embeddings) != total_texts:
-            print(f"   ⚠️  Warning: Expected {total_texts} embeddings, got {len(all_embeddings)}")
+            print(
+                f"   ⚠️  Warning: Expected {total_texts} embeddings, got {len(all_embeddings)}"
+            )
         else:
             print(f"   ✓ All embeddings generated successfully")
 
         # Re-associate embeddings with their original documents and fields
         # Support multiple atomic_fact embeddings per document (for MaxSim strategy)
         doc_embeddings = [{"doc": doc, "embeddings": {}} for doc in original_docs]
-        
+
         for (doc_idx, field), emb in zip(doc_field_map, all_embeddings):
             # If atomic_fact field, save as list (support multiple atomic_facts)
             if field.startswith("atomic_fact_"):
@@ -361,12 +378,8 @@ async def main():
     # The directory containing the JSON files
     config = ExperimentConfig()
     data_dir = Path(__file__).parent / config.experiment_name / "memcells"
-    bm25_save_dir = (
-        Path(__file__).parent / config.experiment_name / "bm25_index"
-    )
-    emb_save_dir = (
-        Path(__file__).parent / config.experiment_name / "vectors"
-    )
+    bm25_save_dir = Path(__file__).parent / config.experiment_name / "bm25_index"
+    emb_save_dir = Path(__file__).parent / config.experiment_name / "vectors"
     os.makedirs(bm25_save_dir, exist_ok=True)
     os.makedirs(emb_save_dir, exist_ok=True)
     build_bm25_index(config, data_dir, bm25_save_dir)

@@ -10,6 +10,7 @@ from pymongo.asynchronous.client_session import AsyncClientSession
 
 from core.oxm.mongo.base_repository import BaseRepository
 from core.di.decorators import repository
+from core.constants.exceptions import ValidationException
 from infra_layer.adapters.out.persistence.document.memory.conversation_meta import (
     ConversationMeta,
 )
@@ -33,37 +34,47 @@ class ConversationMetaRawRepository(BaseRepository[ConversationMeta]):
         """Initialize repository"""
         super().__init__(ConversationMeta)
 
-    def _validate_scene(self, scene: str) -> bool:
+    def _validate_scene(self, scene: str) -> None:
         """
         Validate if scene is valid
 
         Args:
             scene: Scene identifier
 
-        Returns:
-            bool: Returns True if valid, False otherwise
+        Raises:
+            ValidationException: When scene validation fails
         """
         if scene not in ALLOWED_SCENES:
-            logger.warning(
-                "❌ Invalid scene value: %s, allowed values: %s", scene, ALLOWED_SCENES
+            error_message = (
+                f"invalid scene value: {scene}, "
+                f"allowed values: {ALLOWED_SCENES}"
             )
-            return False
-        return True
+            logger.error("❌ Scene validation failed: %s", error_message)
+            raise ValidationException(
+                message=error_message,
+                field="scene",
+                details={
+                    "invalid_value": scene,
+                    "allowed_values": ALLOWED_SCENES,
+                },
+            )
 
     async def get_by_group_id(
-        self, group_id: str, session: Optional[AsyncClientSession] = None
+        self, group_id: Optional[str], session: Optional[AsyncClientSession] = None
     ) -> Optional[ConversationMeta]:
         """
-        Get conversation metadata by group ID
+        Get conversation metadata by group ID with automatic fallback to default config
 
         Args:
-            group_id: Group ID
+            group_id: Group ID (can be None to get default config directly)
             session: Optional MongoDB session, used for transaction support
 
         Returns:
-            Conversation metadata object or None
+            Conversation metadata object or None.
+            If group_id is provided but not found, automatically falls back to default config.
         """
         try:
+            # First try to find by exact group_id
             conversation_meta = await self.model.find_one(
                 {"group_id": group_id}, session=session
             )
@@ -72,7 +83,26 @@ class ConversationMetaRawRepository(BaseRepository[ConversationMeta]):
                     "✅ Successfully retrieved conversation metadata by group_id: %s",
                     group_id,
                 )
-            return conversation_meta
+                return conversation_meta
+
+            # If group_id is None or not found, no fallback needed for None case
+            if group_id is None:
+                logger.debug("⚠️ Default conversation metadata not found")
+                return None
+
+            # Fallback to default config (group_id is None)
+            logger.debug(
+                "⚡ group_id %s not found, falling back to default config", group_id
+            )
+            default_meta = await self.model.find_one(
+                {"group_id": None}, session=session
+            )
+            if default_meta:
+                logger.debug("✅ Using default conversation metadata")
+            else:
+                logger.debug("⚠️ No default conversation metadata found")
+            return default_meta
+
         except Exception as e:
             logger.error(
                 "❌ Failed to retrieve conversation metadata by group_id: %s", e
@@ -100,13 +130,7 @@ class ConversationMetaRawRepository(BaseRepository[ConversationMeta]):
         """
         try:
             # Validate scene field
-            if not self._validate_scene(scene):
-                logger.warning(
-                    "❌ Invalid scene value when querying conversation metadata list: %s, allowed values: %s",
-                    scene,
-                    ALLOWED_SCENES,
-                )
-                return []
+            self._validate_scene(scene=scene)
 
             query = self.model.find({"scene": scene}, session=session)
             if skip:
@@ -121,6 +145,9 @@ class ConversationMetaRawRepository(BaseRepository[ConversationMeta]):
                 len(result),
             )
             return result
+        except ValidationException:
+            # Re-raise ValidationException to propagate detailed error info
+            raise
         except Exception as e:
             logger.error(
                 "❌ Failed to retrieve conversation metadata list by scene: %s", e
@@ -144,13 +171,7 @@ class ConversationMetaRawRepository(BaseRepository[ConversationMeta]):
         """
         try:
             # Validate scene field
-            if not self._validate_scene(conversation_meta.scene):
-                logger.error(
-                    "❌ Failed to create conversation metadata: invalid scene value: %s, allowed values: %s",
-                    conversation_meta.scene,
-                    ALLOWED_SCENES,
-                )
-                return None
+            self._validate_scene(scene=conversation_meta.scene)
 
             await conversation_meta.insert(session=session)
             logger.info(
@@ -159,6 +180,9 @@ class ConversationMetaRawRepository(BaseRepository[ConversationMeta]):
                 conversation_meta.scene,
             )
             return conversation_meta
+        except ValidationException:
+            # Re-raise ValidationException to propagate detailed error info
+            raise
         except Exception as e:
             logger.error(
                 "❌ Failed to create conversation metadata: %s", e, exc_info=True
@@ -167,7 +191,7 @@ class ConversationMetaRawRepository(BaseRepository[ConversationMeta]):
 
     async def update_by_group_id(
         self,
-        group_id: str,
+        group_id: Optional[str],
         update_data: Dict[str, Any],
         session: Optional[AsyncClientSession] = None,
     ) -> Optional[ConversationMeta]:
@@ -175,24 +199,20 @@ class ConversationMetaRawRepository(BaseRepository[ConversationMeta]):
         Update conversation metadata by group ID
 
         Args:
-            group_id: Group ID
+            group_id: Group ID (can be None for default config)
             update_data: Dictionary of update data
             session: Optional MongoDB session, used for transaction support
 
         Returns:
             Updated conversation metadata object or None
+
+        Raises:
+            ValidationException: When scene validation fails
         """
         try:
-            # If scene is in update data, validate first
-            if "scene" in update_data and not self._validate_scene(
-                update_data["scene"]
-            ):
-                logger.error(
-                    "❌ Failed to update conversation metadata: invalid scene value: %s, allowed values: %s",
-                    update_data["scene"],
-                    ALLOWED_SCENES,
-                )
-                return None
+            # Validate scene if present in update data
+            if "scene" in update_data:
+                self._validate_scene(update_data["scene"])
 
             conversation_meta = await self.get_by_group_id(group_id, session=session)
             if conversation_meta:
@@ -206,6 +226,9 @@ class ConversationMetaRawRepository(BaseRepository[ConversationMeta]):
                 )
                 return conversation_meta
             return None
+        except ValidationException:
+            # Re-raise ValidationException to propagate detailed error info
+            raise
         except Exception as e:
             logger.error(
                 "❌ Failed to update conversation metadata by group_id: %s",
@@ -216,7 +239,7 @@ class ConversationMetaRawRepository(BaseRepository[ConversationMeta]):
 
     async def upsert_by_group_id(
         self,
-        group_id: str,
+        group_id: Optional[str],
         conversation_data: Dict[str, Any],
         session: Optional[AsyncClientSession] = None,
     ) -> Optional[ConversationMeta]:
@@ -226,24 +249,20 @@ class ConversationMetaRawRepository(BaseRepository[ConversationMeta]):
         Uses MongoDB atomic upsert operation to avoid concurrency race conditions
 
         Args:
-            group_id: Group ID
+            group_id: Group ID (can be None for default config)
             conversation_data: Conversation metadata dictionary
             session: Optional MongoDB session
 
         Returns:
             Updated or created conversation metadata object
+
+        Raises:
+            ValidationException: When scene validation fails
         """
         try:
-            # If data contains scene, validate first
-            if "scene" in conversation_data and not self._validate_scene(
-                conversation_data["scene"]
-            ):
-                logger.error(
-                    "❌ Failed to upsert conversation metadata: invalid scene value: %s, allowed values: %s",
-                    conversation_data["scene"],
-                    ALLOWED_SCENES,
-                )
-                return None
+            # Validate scene if present in conversation data
+            if "scene" in conversation_data:
+                self._validate_scene(conversation_data["scene"])
 
             # 1. First try to find existing record
             existing_doc = await self.model.find_one(
@@ -267,8 +286,9 @@ class ConversationMetaRawRepository(BaseRepository[ConversationMeta]):
                 new_doc = ConversationMeta(group_id=group_id, **conversation_data)
                 await new_doc.insert(session=session)
                 logger.info(
-                    "✅ Successfully created new conversation metadata: group_id=%s",
+                    "✅ Successfully created new conversation metadata: group_id=%s (is_default=%s)",
                     group_id,
+                    group_id is None,
                 )
                 return new_doc
             except Exception as create_error:
@@ -279,6 +299,9 @@ class ConversationMetaRawRepository(BaseRepository[ConversationMeta]):
                 )
                 return None
 
+        except ValidationException:
+            # Re-raise ValidationException to propagate detailed error info
+            raise
         except Exception as e:
             logger.error(
                 "❌ Failed to upsert conversation metadata: %s", e, exc_info=True
@@ -286,13 +309,13 @@ class ConversationMetaRawRepository(BaseRepository[ConversationMeta]):
             return None
 
     async def delete_by_group_id(
-        self, group_id: str, session: Optional[AsyncClientSession] = None
+        self, group_id: Optional[str], session: Optional[AsyncClientSession] = None
     ) -> bool:
         """
         Delete conversation metadata by group ID
 
         Args:
-            group_id: Group ID
+            group_id: Group ID (can be None for default config)
             session: Optional MongoDB session
 
         Returns:

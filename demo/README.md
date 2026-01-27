@@ -1,6 +1,5 @@
 # Demo - EverMemOS Interactive Examples
 
-[English](README.md) | [简体中文](README_zh.md)
 
 This directory contains interactive demos showcasing the core functionality of EverMemOS.
 
@@ -36,7 +35,6 @@ demo/
 ├── chat_history/                # 📁 Output: Chat logs (auto-generated)
 │
 ├── README.md                    # 📖 Documentation (English)
-└── README_zh.md                 # 📖 Documentation (Chinese)
 ```
 
 **Notes**:
@@ -81,7 +79,7 @@ await memory.search("What is the user's favorite team?")
 
 ```bash
 # Terminal 1: Start the API server
-uv run python src/run.py --port 8001
+uv run python src/run.py 
 
 # Terminal 2: Run the simple demo
 uv run python src/bootstrap.py demo/simple_demo.py
@@ -106,7 +104,7 @@ Batch process conversation data and extract memories via HTTP API.
 - Server-side automatically extracts MemCells, generates episodes and profiles
 - All data is stored in databases (MongoDB, Elasticsearch, Milvus)
 
-**Prerequisites**: API server must be running (`uv run python src/run.py --port 8001`)
+**Prerequisites**: API server must be running (`uv run python src/run.py `)
 
 **Dependencies**: HTTP API, `clear_all_data` tool
 
@@ -159,7 +157,7 @@ The fastest way to experience EverMemOS! Just 2 terminals:
 
 ```bash
 # Terminal 1: Start the API server (required)
-uv run python src/run.py --port 8001
+uv run python src/run.py 
 
 # Terminal 2: Run the simple demo
 uv run python src/bootstrap.py demo/simple_demo.py
@@ -171,7 +169,7 @@ uv run python src/bootstrap.py demo/simple_demo.py
 3. 🔍 Searches memories with 3 different queries
 4. 📊 Shows results with relevance scores and explanations
 
-**Note**: The API server (`src/run.py --port 8001`) must be running in a separate terminal for the demo to work.
+**Note**: The API server (`src/run.py `) must be running in a separate terminal for the demo to work.
 
 ---
 
@@ -183,7 +181,7 @@ Run the extraction script to extract memories from conversation data:
 
 ```bash
 # Start API server (if not already running)
-uv run python src/run.py --port 8001
+uv run python src/run.py 
 
 # In another terminal, run the extraction script
 uv run python src/bootstrap.py demo/extract_memory.py
@@ -329,13 +327,13 @@ MONGODB_URI=mongodb://admin:memsys123@localhost:27017
 **A**: The `MEMORY_LANGUAGE` on the API server doesn't match your data file. Set it in `.env` to match your data (`en` or `zh`), then **restart the server** and re-run extraction.
 
 ### Q: Cannot connect to API server?
-**A**: Ensure the API server is running first: `uv run python src/run.py --port 8001`
+**A**: Ensure the API server is running first: `uv run python src/run.py `
 
 ### Q: How to use custom data with extract_memory.py?
 **A**: Edit the script and modify these variables:
 - `data_file`: Point to your JSON data file
 - `profile_scene`: Set to `"assistant"` or `"group_chat"`
-- `base_url`: API server address (default `http://localhost:8001`)
+- `base_url`: API server address (default `http://localhost:1995`)
 
 ### Q: Where is data stored?
 **A**: All memory data is stored via HTTP API to databases:

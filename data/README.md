@@ -1,6 +1,5 @@
 # Data - Sample Conversation Data
 
-[English](README.md) | [简体中文](README_zh.md)
 
 This directory contains sample conversation data files used for testing and demonstration purposes.
 
@@ -34,14 +33,15 @@ All conversation data files follow the standardized [GroupChatFormat](../data_fo
 {
   "version": "1.0.0",
   "conversation_meta": {
-    "scene": "work",
+    "scene": "group_chat",
     "scene_desc": {},
     "group_id": "group_001",
     "name": "Project Discussion Group",
     "user_details": {
       "user_101": {
         "full_name": "Alice",
-        "role": "Product Manager"
+        "role": "user",
+        "custom_role": "Product Manager"
       }
     }
   },
@@ -60,13 +60,13 @@ All conversation data files follow the standardized [GroupChatFormat](../data_fo
 
 EverMemOS supports two core conversation scenarios:
 
-- **🤖 Company Scenario** (`scene: "company"`)
+- **🤖 Assistant Scenario** (`scene: "assistant"`)
   - Human-AI assistant dialogue
   - One-on-one conversation format
-  - `scene_desc` contains `bot_ids` array to identify assistant robots
+  - `scene_desc` contains `description` field to describe the conversation scene
   - Example: `assistant_chat_en.json`, `assistant_chat_zh.json`
 
-- **👥 Work Scenario** (`scene: "work"`)
+- **👥 Group Chat Scenario** (`scene: "group_chat"`)
   - Multi-person group chat
   - Work collaboration format
   - `scene_desc` is typically an empty object
@@ -134,12 +134,12 @@ uv run python src/bootstrap.py src/run_memorize.py \
 # Store to memory system (English version)
 uv run python src/bootstrap.py src/run_memorize.py \
   --input data/group_chat_en.json \
-  --api-url http://localhost:8001/api/v1/memories
+  --api-url http://localhost:1995/api/v1/memories
 
 # Store to memory system (Chinese version)
 uv run python src/bootstrap.py src/run_memorize.py \
   --input data/group_chat_zh.json \
-  --api-url http://localhost:8001/api/v1/memories
+  --api-url http://localhost:1995/api/v1/memories
 ```
 
 ## 📝 Adding Your Own Data

@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
   "conversation_meta": {
-    "scene": "work",
+    "scene": "group_chat",
     "scene_desc": {},
     "name": "Intelligent Sales Assistant Project Team",
     "description": "Development Discussion Group for the Intelligent Sales Assistant Project",
@@ -9,7 +9,8 @@
     "user_details": {
       "user_103": {
         "full_name": "Chen",
-        "role": "Product Owner/Project Initiator",
+        "role": "user",
+        "custom_role": "Product Owner/Project Initiator",
         "department": "Management",
         "email": "chen@example.com",
         "extra": {
@@ -23,7 +24,8 @@
       },
       "user_102": {
         "full_name": "Betty",
-        "role": "Product Manager",
+        "role": "user",
+        "custom_role": "Product Manager",
         "department": "Product Department",
         "email": "betty@example.com",
         "extra": {
@@ -37,7 +39,8 @@
       },
       "user_101": {
         "full_name": "Alex",
-        "role": "Algorithm/Technical Lead",
+        "role": "user",
+        "custom_role": "Algorithm/Technical Lead",
         "department": "Technical Department",
         "email": "alex@example.com",
         "extra": {
@@ -52,7 +55,8 @@
       },
       "user_104": {
         "full_name": "Dylan",
-        "role": "Backend/Infrastructure Engineer",
+        "role": "user",
+        "custom_role": "Backend/Infrastructure Engineer",
         "department": "Technical Department",
         "email": "dylan@example.com",
         "extra": {
@@ -67,7 +71,8 @@
       },
       "user_105": {
         "full_name": "Emily",
-        "role": "Frontend/UX Designer",
+        "role": "user",
+        "custom_role": "Frontend/UX Designer",
         "department": "Technical Department",
         "email": "emily@example.com",
         "extra": {

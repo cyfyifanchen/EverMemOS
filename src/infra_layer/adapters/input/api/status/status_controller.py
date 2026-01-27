@@ -8,7 +8,7 @@ Mainly used for tracking requests that are moved to background processing.
 
 from typing import Optional
 
-from fastapi import Header, HTTPException, Request as FastAPIRequest
+from fastapi import Header, HTTPException, Query, Request as FastAPIRequest
 
 from core.di.decorators import component
 from core.di.utils import get_bean_by_type
@@ -65,8 +65,13 @@ class StatusController(BaseController):
         - Support viewing request duration, HTTP status code, and other information
 
         ## Parameter passing method:
-        Pass parameters via HTTP Header:
+        Pass parameters via Query Parameter (recommended):
+        - request_id: Request ID
+
+        Or via HTTP Header (deprecated, will be removed in future versions):
         - X-Request-Id: Request ID
+
+        If both are provided, Query Parameter takes precedence.
 
         ## Use cases:
         - Tracking status of background requests
@@ -76,7 +81,7 @@ class StatusController(BaseController):
         - Request status data has a TTL of 1 hour; it will no longer be queryable after expiration
 
         ## API path:
-        GET /api/v1/stats/request
+        GET /api/v1/stats/request?request_id=xxx
         """,
         responses={
             200: {
@@ -107,7 +112,7 @@ class StatusController(BaseController):
                 "content": {
                     "application/json": {
                         "example": {
-                            "detail": "Missing required Header parameter: X-Request-Id"
+                            "detail": "Missing required parameter: request_id (query param) or X-Request-Id (header)"
                         }
                     }
                 },
@@ -117,24 +122,31 @@ class StatusController(BaseController):
     async def get_request_status(
         self,
         request: FastAPIRequest,
+        request_id: Optional[str] = Query(None, description="Request ID (recommended)"),
         x_request_id: Optional[str] = Header(
-            None, alias="X-Request-Id", description="Request ID"
+            None,
+            alias="X-Request-Id",
+            description="Request ID (deprecated, use request_id query param instead)",
         ),
     ) -> RequestStatusResponse:
         """
         Query request status
 
-        Pass parameters via HTTP Header:
+        Pass parameters via Query Parameter (recommended):
+        - request_id: Request ID
+
+        Or via HTTP Header (deprecated):
         - X-Request-Id: Request ID
 
         Returns:
             RequestStatusResponse: Request status response
         """
-        # Parameter validation
-        if not x_request_id:
+        # Parameter validation - query param takes precedence over header
+        effective_request_id = request_id or x_request_id
+        if not effective_request_id:
             raise HTTPException(
                 status_code=400,
-                detail="Missing required Header parameter: X-Request-Id",
+                detail="Missing required parameter: request_id (query param) or X-Request-Id (header)",
             )
 
         try:
@@ -144,7 +156,7 @@ class StatusController(BaseController):
 
             # Query status
             data = await self.request_status_service.get_request_status(
-                tenant_info, x_request_id
+                tenant_info, effective_request_id
             )
 
             if data is None:
@@ -162,7 +174,7 @@ class StatusController(BaseController):
         except Exception as e:
             logger.error(
                 "Exception when querying request status: req=%s, error=%s",
-                x_request_id,
+                effective_request_id,
                 str(e),
                 exc_info=True,
             )

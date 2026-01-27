@@ -154,6 +154,7 @@ class GroupProfile(DocumentBase, AuditBase):
                 "extend": {"priority": "high"},
             }
         },
+        extra="allow",
     )
 
     class Settings:

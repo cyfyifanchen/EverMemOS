@@ -10,7 +10,7 @@ This module contains the following features:
 """
 
 import time
-from api_specs.dtos.memory_command import MemorizeRequest
+from api_specs.dtos import MemorizeRequest
 from api_specs.memory_types import MemCell, RawDataType
 from memory_layer.memory_extractor.profile_memory_extractor import ProfileMemory
 from memory_layer.memory_extractor.group_profile_memory_extractor import (
@@ -328,7 +328,8 @@ def _convert_foresight_to_doc(
             foresight, "user_name", getattr(parent_doc, "user_name", None)
         ),
         content=foresight.foresight,  # Foresight class uses 'foresight' field, but DB uses 'content'
-        parent_episode_id=str(parent_doc.event_id),
+        parent_type=foresight.parent_type,
+        parent_id=foresight.parent_id,
         start_time=foresight.start_time,
         end_time=foresight.end_time,
         duration_days=foresight.duration_days,
@@ -375,7 +376,8 @@ def _convert_event_log_to_docs(
             user_id=event_log.user_id,
             user_name=event_log.user_name or '',
             atomic_fact=fact,
-            parent_episode_id=str(parent_doc.event_id),
+            parent_type=event_log.parent_type,
+            parent_id=event_log.parent_id,
             timestamp=parent_doc.timestamp or current_time,
             group_id=event_log.group_id,
             group_name=event_log.group_name,
@@ -894,12 +896,10 @@ def _convert_memcell_to_document(
         # Create document model - pass timezone-aware datetime object directly instead of string
         # This avoids infinite recursion triggered by base class datetime validator
         doc_memcell = DocMemCell(
-            event_id=memcell.event_id,
             user_id=primary_user_id,
             timestamp=timestamp_dt,  # Pass timezone-aware datetime directly
             summary=memcell.summary,
             group_id=memcell.group_id,
-            group_name=memcell.group_name,
             original_data=doc_original_data,
             participants=memcell.participants,
             type=doc_type,
@@ -1349,4 +1349,3 @@ async def _update_status_after_memcell_extraction(
     except Exception as e:
         logger.error(f"Status update after MemCell extraction failed: {e}")
         return False
-

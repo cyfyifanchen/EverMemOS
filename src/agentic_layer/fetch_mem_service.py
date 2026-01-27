@@ -7,6 +7,7 @@ Provides ID-based query functionality, supporting retrieval of various memory ty
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from abc import ABC, abstractmethod
 from typing import Optional, Tuple, Union
@@ -46,16 +47,22 @@ from infra_layer.adapters.out.persistence.document.memory.foresight_record impor
 from infra_layer.adapters.out.persistence.repository.user_profile_raw_repository import (
     UserProfileRawRepository,
 )
-from api_specs.dtos.memory_query import FetchMemResponse
+from infra_layer.adapters.out.persistence.repository.global_user_profile_raw_repository import (
+    GlobalUserProfileRawRepository,
+)
+from api_specs.dtos import FetchMemResponse
 from api_specs.memory_models import (
     MemoryType,
     BaseMemoryModel,
+    ProfileModel,
+    GlobalUserProfileModel,
+    CombinedProfileModel,
     PreferenceModel,
     EpisodicMemoryModel,
     BehaviorHistoryModel,
     CoreMemoryModel,
     EventLogModel,
-    ForesightRecordModel,
+    ForesightModel,
     Metadata,
 )
 
@@ -110,6 +117,7 @@ class FetchMemoryServiceImpl(FetchMemoryServiceInterface):
         self._event_log_repo = None
         self._foresight_record_repo = None
         self._user_profile_repo = None
+        self._global_user_profile_repo = None
         logger.info("FetchMemoryServiceImpl initialized")
 
     def _get_repositories(self):
@@ -130,6 +138,10 @@ class FetchMemoryServiceImpl(FetchMemoryServiceInterface):
             self._foresight_record_repo = get_bean_by_type(ForesightRecordRawRepository)
         if self._user_profile_repo is None:
             self._user_profile_repo = get_bean_by_type(UserProfileRawRepository)
+        if self._global_user_profile_repo is None:
+            self._global_user_profile_repo = get_bean_by_type(
+                GlobalUserProfileRawRepository
+            )
 
     async def _get_user_details_cache(self, group_id: str) -> dict:
         """
@@ -203,33 +215,51 @@ class FetchMemoryServiceImpl(FetchMemoryServiceInterface):
             },
         )
 
-    def _convert_user_profile(self, user_profile) -> dict:
-        """Convert user profile document to dictionary
+    def _convert_user_profile(self, user_profile) -> ProfileModel:
+        """Convert user profile document to ProfileModel
 
         Args:
             user_profile: User profile document
 
         Returns:
-            Dictionary with user profile data
+            ProfileModel instance
         """
-        return {
-            "id": str(user_profile.id),
-            "user_id": user_profile.user_id,
-            "group_id": user_profile.group_id,
-            "profile_data": user_profile.profile_data,
-            "scenario": user_profile.scenario,
-            "confidence": user_profile.confidence,
-            "version": user_profile.version,
-            "cluster_ids": user_profile.cluster_ids,
-            "memcell_count": user_profile.memcell_count,
-            "last_updated_cluster": user_profile.last_updated_cluster,
-            "created_at": (
-                user_profile.created_at.isoformat() if user_profile.created_at else None
-            ),
-            "updated_at": (
-                user_profile.updated_at.isoformat() if user_profile.updated_at else None
-            ),
-        }
+        return ProfileModel(
+            id=str(user_profile.id),
+            user_id=user_profile.user_id,
+            group_id=user_profile.group_id,
+            profile_data=user_profile.profile_data,
+            scenario=user_profile.scenario,
+            confidence=user_profile.confidence,
+            version=user_profile.version,
+            cluster_ids=user_profile.cluster_ids,
+            memcell_count=user_profile.memcell_count,
+            last_updated_cluster=user_profile.last_updated_cluster,
+            created_at=user_profile.created_at,
+            updated_at=user_profile.updated_at,
+        )
+
+    def _convert_global_user_profile(
+        self, global_user_profile
+    ) -> GlobalUserProfileModel:
+        """Convert global user profile document to GlobalUserProfileModel
+
+        Args:
+            global_user_profile: Global user profile document
+
+        Returns:
+            GlobalUserProfileModel instance
+        """
+        return GlobalUserProfileModel(
+            id=str(global_user_profile.id),
+            user_id=global_user_profile.user_id,
+            profile_data=global_user_profile.profile_data,
+            custom_profile_data=global_user_profile.custom_profile_data,
+            confidence=global_user_profile.confidence,
+            memcell_count=global_user_profile.memcell_count,
+            created_at=global_user_profile.created_at,
+            updated_at=global_user_profile.updated_at,
+        )
 
     def _convert_preferences_from_core_memory(
         self, core_memory
@@ -414,7 +444,8 @@ class FetchMemoryServiceImpl(FetchMemoryServiceInterface):
             id=str(event_log.id),
             user_id=event_log.user_id,
             atomic_fact=event_log.atomic_fact,
-            parent_episode_id=event_log.parent_episode_id,
+            parent_type=event_log.parent_type,
+            parent_id=event_log.parent_id,
             timestamp=event_log.timestamp,
             user_name=event_log.user_name,
             group_id=event_log.group_id,
@@ -435,7 +466,7 @@ class FetchMemoryServiceImpl(FetchMemoryServiceInterface):
         self,
         foresight_record: Union[ForesightRecord, ForesightRecordProjection],
         user_details_cache: dict = None,
-    ) -> ForesightRecordModel:
+    ) -> ForesightModel:
         """Convert foresight record document to model
 
         Supports both ForesightRecord and ForesightRecordProjection types.
@@ -458,10 +489,11 @@ class FetchMemoryServiceImpl(FetchMemoryServiceInterface):
             phone=user_info.get('phone'),
         )
 
-        return ForesightRecordModel(
+        return ForesightModel(
             id=str(foresight_record.id),
             content=foresight_record.content,
-            parent_episode_id=foresight_record.parent_episode_id,
+            parent_type=foresight_record.parent_type,
+            parent_id=foresight_record.parent_id,
             user_id=foresight_record.user_id,
             user_name=foresight_record.user_name,
             group_id=foresight_record.group_id,
@@ -603,13 +635,48 @@ class FetchMemoryServiceImpl(FetchMemoryServiceInterface):
                 case MemoryType.PROFILE:
                     # Profile: supports user_id and group_id filtering, no time filtering
                     # Uses created_at/updated_at fields (not time range filterable)
-                    user_profiles = await self._user_profile_repo.find_by_filters(
+                    # Also fetches global_user_profile and returns CombinedProfileModel
+
+                    # Fetch user_profiles and global_user_profile concurrently
+                    user_profiles_task = self._user_profile_repo.find_by_filters(
                         user_id=user_id, group_id=group_id, limit=limit
                     )
 
-                    memories = [
+                    global_profile_task = None
+                    if user_id and user_id != MAGIC_ALL:
+                        global_profile_task = (
+                            self._global_user_profile_repo.get_by_user_id(
+                                user_id=user_id
+                            )
+                        )
+
+                    # Execute concurrently
+                    if global_profile_task:
+                        user_profiles, global_user_profile = await asyncio.gather(
+                            user_profiles_task, global_profile_task
+                        )
+                    else:
+                        user_profiles = await user_profiles_task
+                        global_user_profile = None
+
+                    profile_models = [
                         self._convert_user_profile(up) for up in user_profiles[:limit]
                     ]
+
+                    global_profile_model = None
+                    if global_user_profile:
+                        global_profile_model = self._convert_global_user_profile(
+                            global_user_profile
+                        )
+
+                    # Return CombinedProfileModel containing both profiles
+                    combined_profile = CombinedProfileModel(
+                        user_id=user_id,
+                        group_id=group_id,
+                        profiles=profile_models,
+                        global_profile=global_profile_model,
+                    )
+                    memories = [combined_profile]
 
                 case MemoryType.BASE_MEMORY:
                     # Base memory: extract basic information from core memory
@@ -672,6 +739,9 @@ class FetchMemoryServiceImpl(FetchMemoryServiceInterface):
             )
 
         except Exception as e:
+            import traceback
+
+            traceback.print_exc()
             logger.error(
                 f"Error fetching memories for user_id={user_id}, group_id={group_id}: {e}",
                 exc_info=True,

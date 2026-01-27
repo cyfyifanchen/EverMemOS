@@ -22,7 +22,7 @@ class VllmRerankConfig:
 
     api_key: str = "EMPTY"
     base_url: str = "http://localhost:12000/v1/rerank"
-    model: str = "Qwen/Qwen3-Reranker-4B"
+    model: str = "Qwen/Qwen3-Reranker-4B"  # skip-sensitive-check
     timeout: int = 30
     max_retries: int = 3
     batch_size: int = 10
@@ -62,12 +62,12 @@ class VllmRerankService(RerankServiceInterface):
     ):
         """
         Format rerank request texts (Qwen-Reranker official format)
-        
+
         Reference: https://docs.vllm.ai/en/v0.9.2/examples/offline_inference/qwen3_reranker.html
         """
         prefix = '<|im_start|>system\nJudge whether the Document meets the requirements based on the Query and the Instruct provided. Note that the answer can only be "yes" or "no".<|im_end|>\n<|im_start|>user\n'
         suffix = "<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"
-        
+
         # Use vLLM official default instruction for optimal performance
         instruction = (
             instruction
@@ -147,6 +147,74 @@ class VllmRerankService(RerankServiceInterface):
                     logger.error(f"Unexpected error in vLLM rerank request: {e}")
                     raise RerankError(f"Unexpected rerank error: {e}")
 
+    async def rerank_documents(
+        self, query: str, documents: List[str], instruction: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Rerank raw documents (low-level API)
+
+        Args:
+            query: Query text
+            documents: List of document strings to rerank
+            instruction: Optional reranking instruction
+
+        Returns:
+            Dict with 'results' key containing list of {index, score, rank}
+        """
+        if not documents:
+            return {"results": []}
+
+        batch_size = self.config.batch_size
+        if batch_size <= 0:
+            batch_size = 10
+
+        batches = [
+            documents[i : i + batch_size] for i in range(0, len(documents), batch_size)
+        ]
+
+        batch_tasks = []
+        for i, batch in enumerate(batches):
+            start_index = i * batch_size
+            batch_tasks.append(
+                self._send_rerank_request_batch(query, batch, start_index, instruction)
+            )
+
+        batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
+
+        all_scores = []
+        for i, result in enumerate(batch_results):
+            if isinstance(result, Exception):
+                logger.error(f"Rerank batch {i} failed: {result}")
+                batch_len = len(batches[i])
+                all_scores.extend([-100.0] * batch_len)
+                continue
+
+            # vLLM returns {"results": [{"index": ..., "relevance_score": ...}, ...]}
+            results = result.get("results", [])
+            results_sorted = sorted(results, key=lambda x: x.get("index", 0))
+            for r in results_sorted:
+                all_scores.append(r.get("relevance_score", 0.0))
+
+        # Convert to same format as DeepInfra
+        return self._convert_response_format(all_scores, len(documents))
+
+    def _convert_response_format(
+        self, scores: List[float], num_documents: int
+    ) -> Dict[str, Any]:
+        """Convert scores to standard format (same as DeepInfra)"""
+        if len(scores) < num_documents:
+            scores.extend([0.0] * (num_documents - len(scores)))
+        scores = scores[:num_documents]
+
+        indexed_scores = [(i, score) for i, score in enumerate(scores)]
+        indexed_scores.sort(key=lambda x: x[1], reverse=True)
+
+        results = []
+        for rank, (original_index, score) in enumerate(indexed_scores):
+            results.append({"index": original_index, "score": score, "rank": rank})
+
+        return {"results": results}
+
     def _extract_text_from_hit(self, hit: Dict[str, Any]) -> str:
         """Extract and concatenate text based on memory_type"""
         source = hit.get('_source', hit)
@@ -215,7 +283,6 @@ class VllmRerankService(RerankServiceInterface):
 
         if not documents:
             return []
-
 
         # Send rerank request
         try:

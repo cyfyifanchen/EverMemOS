@@ -41,6 +41,7 @@ class Entity(DocumentBase, AuditBase):
                 },
             }
         },
+        extra="allow",
     )
 
     @property

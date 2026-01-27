@@ -1,11 +1,9 @@
 {
   "version": "1.0.0",
   "conversation_meta": {
-    "scene": "company",
+    "scene": "assistant",
     "scene_desc": {
-      "bot_ids": [
-        "robot_001"
-      ]
+      "description": "Project discussion group chat"
     },
     "name": "User health consultation dialogue",
     "description": "Conversation records between users and AI assistants on topics such as tourism in Beijing, health management, and sports rehabilitation.",
@@ -15,7 +13,7 @@
     "user_details": {
       "user_001": {
         "full_name": "User",
-        "role": "User",
+        "role": "user",
         "extra": {
           "height": 170,
           "weight": 86,
@@ -30,7 +28,7 @@
       },
       "robot_001": {
         "full_name": "AI Assistant",
-        "role": "Assistant",
+        "role": "assistant",
         "extra": {
           "type": "assistant"
         }

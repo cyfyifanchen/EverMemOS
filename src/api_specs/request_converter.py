@@ -6,15 +6,14 @@ This module contains various functions to convert external request formats to in
 
 from __future__ import annotations
 
+import hashlib
 from typing import Any, Dict, List, Union, Optional
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from api_specs.memory_models import MemoryType
-from api_specs.dtos.memory_query import RetrieveMemRequest, FetchMemRequest
-from api_specs.dtos.memory_command import MemorizeRequest
+from api_specs.dtos import RetrieveMemRequest, FetchMemRequest, MemorizeRequest, RawData
 from api_specs.memory_types import RawDataType
-from api_specs.dtos.memory_command import RawData
 from core.oxm.constants import MAGIC_ALL
 
 from typing import Dict, Any, Optional
@@ -24,6 +23,26 @@ from core.observation.logger import get_logger
 from api_specs.memory_models import RetrieveMethod, MemoryType
 
 logger = get_logger(__name__)
+
+
+def generate_single_user_group_id(sender: str) -> str:
+    """
+    Generate a group_id for single-user mode based on sender (user_id) hash.
+
+    This function creates a deterministic group_id by hashing the sender
+    and appending '_group' suffix. This is used when group_id is not provided,
+    representing single-user mode where each user's messages are extracted
+    into separate memory spaces.
+
+    Args:
+        sender: The sender user ID (equivalent to user_id internally)
+
+    Returns:
+        str: Generated group_id in format: {hash(sender)[:16]}_group
+    """
+    # Use MD5 hash for deterministic and compact result
+    hash_value = hashlib.md5(sender.encode('utf-8')).hexdigest()[:16]
+    return f"{hash_value}_group"
 
 
 class DataFields:
@@ -73,8 +92,6 @@ def convert_dict_to_fetch_mem_request(data: Dict[str, Any]) -> FetchMemRequest:
             memory_type=memory_type,
             limit=limit,
             offset=offset,
-            sort_by=data.get("sort_by"),
-            sort_order=data.get("sort_order", "desc"),
             version_range=data.get("version_range", None),
             start_time=data.get("start_time"),
             end_time=data.get("end_time"),
@@ -211,6 +228,7 @@ def build_raw_data_from_simple_message(
     content: str,
     timestamp: datetime,
     sender_name: Optional[str] = None,
+    role: Optional[str] = None,
     group_id: Optional[str] = None,
     group_name: Optional[str] = None,
     refer_list: Optional[List[str]] = None,
@@ -229,6 +247,7 @@ def build_raw_data_from_simple_message(
         content: Message content (required)
         timestamp: Message timestamp as datetime object (required)
         sender_name: Sender display name (defaults to sender if not provided)
+        role: Message sender role, "user" for human or "assistant" for AI (optional)
         group_id: Group ID (optional)
         group_name: Group name (optional)
         refer_list: Normalized list of referenced message IDs (optional)
@@ -248,6 +267,7 @@ def build_raw_data_from_simple_message(
     # Build content dictionary with all required fields
     raw_content = {
         "speaker_name": sender_name,
+        "role": role,  # Message sender role: "user" or "assistant"
         "receiverId": None,
         "roomId": group_id,
         "groupName": group_name,
@@ -290,12 +310,14 @@ async def convert_simple_message_to_memorize_request(
 
     Args:
         message_data: Simple single message data, containing:
-            - group_id (optional): Group ID
+            - sender (required): Sender user ID (also used as user_id internally)
+            - group_id (optional): Group ID. If not provided, will auto-generate based on
+              hash(sender) + '_group' suffix for single-user mode
             - group_name (optional): Group name
             - message_id (required): Message ID
             - create_time (required): Creation time (ISO 8601 format)
-            - sender (required): Sender user ID
             - sender_name (optional): Sender name
+            - role (optional): Message sender role ("user" for human, "assistant" for AI)
             - content (required): Message content
             - refer_list (optional): List of referenced message IDs
 
@@ -312,18 +334,26 @@ async def convert_simple_message_to_memorize_request(
     create_time_str = message_data.get("create_time")
     sender = message_data.get("sender")
     sender_name = message_data.get("sender_name", sender)
+    role = message_data.get("role")  # "user" or "assistant"
     content = message_data.get("content", "")
     refer_list = message_data.get("refer_list", [])
 
     # Validate required fields
+    if not sender:
+        raise ValueError("Missing required field: sender")
     if not message_id:
         raise ValueError("Missing required field: message_id")
     if not create_time_str:
         raise ValueError("Missing required field: create_time")
-    if not sender:
-        raise ValueError("Missing required field: sender")
     if not content:
         raise ValueError("Missing required field: content")
+
+    # Auto-generate group_id if not provided (single-user mode)
+    if not group_id:
+        group_id = generate_single_user_group_id(sender)
+        logger.debug(
+            f"Auto-generated group_id for single-user mode: {group_id} (sender: {sender})"
+        )
 
     # Normalize refer_list
     normalized_refer_list = normalize_refer_list(refer_list)
@@ -338,6 +368,7 @@ async def convert_simple_message_to_memorize_request(
         content=content,
         timestamp=timestamp,
         sender_name=sender_name,
+        role=role,
         group_id=group_id,
         group_name=group_name,
         refer_list=normalized_refer_list,

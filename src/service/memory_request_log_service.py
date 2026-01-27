@@ -16,8 +16,7 @@ from core.di.utils import get_bean_by_type
 from core.observation.logger import get_logger
 from core.context.context import get_current_app_info
 from core.oxm.constants import MAGIC_ALL
-from api_specs.dtos.memory_command import MemorizeRequest, RawData
-from api_specs.dtos.memory_query import PendingMessage
+from api_specs.dtos import MemorizeRequest, RawData, PendingMessage
 from infra_layer.adapters.out.persistence.document.request.memory_request_log import (
     MemoryRequestLog,
 )
@@ -174,6 +173,8 @@ class MemoryRequestLogService:
             or sender
         )
         content = content_dict.get("content")
+        # Message sender role ("user" for human, "assistant" for AI)
+        role = content_dict.get("role")
         # Support multiple timestamp field names
         message_create_time = self._parse_create_time(
             content_dict.get("timestamp")
@@ -202,6 +203,7 @@ class MemoryRequestLogService:
             message_create_time=message_create_time,
             sender=sender,
             sender_name=sender_name,
+            role=role,
             content=content,
             group_name=group_name,
             refer_list=self._normalize_refer_list(refer_list),

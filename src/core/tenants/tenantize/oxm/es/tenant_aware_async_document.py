@@ -21,6 +21,7 @@ from core.tenants.tenantize.oxm.es.config_utils import (
 )
 from core.tenants.tenantize.tenant_cache_utils import get_or_compute_tenant_cache
 from core.oxm.es.doc_base import AliasSupportDoc
+from core.oxm.es.mapping_templates import DYNAMIC_TEMPLATES
 
 logger = get_logger(__name__)
 
@@ -363,7 +364,10 @@ class TenantAwareAsyncDocument(AliasSupportDoc):
 
 
 def TenantAwareAliasDoc(
-    doc_name: str, number_of_shards: int = 2
+    doc_name: str,
+    number_of_shards: int = 2,
+    number_of_replicas: int = 1,
+    refresh_interval: str = "10s",
 ) -> Type[TenantAwareAsyncDocument]:
     """
     Create a tenant-aware ES document class that supports alias pattern
@@ -400,14 +404,20 @@ def TenantAwareAliasDoc(
             name = doc_name
             settings = {
                 "number_of_shards": number_of_shards,
-                "number_of_replicas": 1,
-                "refresh_interval": "60s",
+                "number_of_replicas": number_of_replicas,
+                "refresh_interval": refresh_interval,
                 "max_ngram_diff": 50,
                 "max_shingle_diff": 10,
             }
 
         class Meta:
-            dynamic = MetaField("strict")
+            dynamic = MetaField("true")
+            # Disable date auto-detection to prevent "2023/10/01" from being incorrectly converted and causing subsequent errors
+            date_detection = MetaField(False)
+            # Disable numeric detection to prevent string numbers from being confused
+            numeric_detection = MetaField(False)
+            # Dynamic mapping rules based on field suffixes (see mapping_templates.py)
+            dynamic_templates = MetaField(DYNAMIC_TEMPLATES)
 
         @classmethod
         def get_original_index_name(cls) -> str:

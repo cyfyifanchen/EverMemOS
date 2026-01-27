@@ -12,9 +12,8 @@ import re
 
 from memory_layer.prompts import get_prompt_by
 from memory_layer.llm.llm_provider import LLMProvider
-from common_utils.datetime_utils import get_now_with_timezone
-
-from api_specs.memory_types import EventLog, MemoryType
+from common_utils.datetime_utils import get_now_with_timezone, from_iso_format
+from api_specs.memory_types import EventLog, MemoryType, MemCell
 
 from core.observation.logger import get_logger
 
@@ -31,9 +30,7 @@ class EventLogExtractor:
     """
 
     def __init__(
-        self,
-        llm_provider: LLMProvider,
-        event_log_prompt: Optional[str] = None,
+        self, llm_provider: LLMProvider, event_log_prompt: Optional[str] = None
     ):
         """
         Initialize the event log extractor.
@@ -43,7 +40,7 @@ class EventLogExtractor:
             event_log_prompt: Optional custom event log prompt
         """
         self.llm_provider = llm_provider
-        
+
         # Use custom prompt or get default via PromptManager
         self.event_log_prompt = event_log_prompt or get_prompt_by("EVENT_LOG_PROMPT")
 
@@ -155,7 +152,7 @@ class EventLogExtractor:
 
     async def _extract_event_log(
         self,
-        episode_text: str,
+        input_text: str,
         timestamp: Any,
         user_id: str = "",
         ori_event_id_list: Optional[List[str]] = None,
@@ -180,7 +177,7 @@ class EventLogExtractor:
         time_str = self._format_timestamp(dt)
 
         # 2. Build prompt (using instance variable self.event_log_prompt)
-        prompt = self.event_log_prompt.replace("{{EPISODE_TEXT}}", episode_text)
+        prompt = self.event_log_prompt.replace("{{INPUT_TEXT}}", input_text)
         prompt = prompt.replace("{{TIME}}", time_str)
 
         # 3. Call LLM to generate event log
@@ -246,7 +243,7 @@ class EventLogExtractor:
 
     async def extract_event_log(
         self,
-        episode_text: str,
+        memcell: MemCell,
         timestamp: Any,
         user_id: str = "",
         ori_event_id_list: Optional[List[str]] = None,
@@ -255,10 +252,23 @@ class EventLogExtractor:
         """
         Extract event log
         """
+        input_text = ""
+        for data in memcell.original_data:
+            speaker = data.get('speaker_name') or data.get('sender', 'Unknown')
+            content = data['content']
+            msg_ts = data.get('timestamp')
+            ts_str = from_iso_format(msg_ts)
+            input_text += f"[{ts_str}] {speaker}: {content}\n"
+
+        # Episode Mode
+        # if memcell.episode:
+        #    input_text = memcell.episode
+        #    timestamp = memcell.timestamp
+
         for retry in range(5):
             try:
                 return await self._extract_event_log(
-                    episode_text,
+                    input_text,
                     timestamp,
                     user_id=user_id,
                     ori_event_id_list=ori_event_id_list,
@@ -270,41 +280,6 @@ class EventLogExtractor:
                     logger.error(f"Failed to extract event log after 5 retries")
                     raise Exception(f"Failed to extract event log: {e}")
                 continue
-
-    async def extract_event_logs_batch(
-        self, episodes: List[Dict[str, Any]]
-    ) -> List[Optional[EventLog]]:
-        """
-        Batch extract event logs
-
-        Args:
-            episodes: List of episodes, each episode contains 'episode' and 'timestamp' fields
-
-        Returns:
-            List[Optional[EventLog]]: List of extracted event logs
-        """
-        import asyncio
-
-        # Concurrently extract all event logs
-        tasks = [
-            self.extract_event_log(
-                episode_text=ep.get("episode", ""), timestamp=ep.get("timestamp")
-            )
-            for ep in episodes
-        ]
-
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-
-        # Handle exceptions
-        event_logs = []
-        for i, result in enumerate(results):
-            if isinstance(result, Exception):
-                logger.error(f"Failed to extract {i}th event log in batch: {result}")
-                event_logs.append(None)
-            else:
-                event_logs.append(result)
-
-        return event_logs
 
 
 def format_event_log_for_bm25(event_log: EventLog) -> str:

@@ -6,10 +6,9 @@ A conversation metadata document model based on Beanie ODM, storing complete met
 
 from datetime import datetime
 from typing import List, Optional, Dict, Any
-from beanie import Indexed
 from core.oxm.mongo.document_base import DocumentBase
 from pydantic import Field, ConfigDict, BaseModel
-from pymongo import IndexModel, ASCENDING, DESCENDING, TEXT
+from pymongo import DESCENDING, IndexModel, ASCENDING
 from core.oxm.mongo.audit_base import AuditBase
 from common_utils.datetime_utils import get_timezone
 
@@ -37,9 +36,6 @@ class ConversationMeta(DocumentBase, AuditBase):
     Used for context management and memory retrieval in multi-turn conversations.
     """
 
-    # Version information
-    version: str = Field(..., description="Data version number, e.g.: 1.0.0")
-
     # Scene information
     scene: str = Field(
         ...,
@@ -47,7 +43,7 @@ class ConversationMeta(DocumentBase, AuditBase):
     )
     scene_desc: Optional[Dict[str, Any]] = Field(
         default=None,
-        description="Scene description information, typically containing fields like bot_ids",
+        description="Scene description information, typically containing fields like description",
     )
 
     # Conversation basic information
@@ -55,8 +51,9 @@ class ConversationMeta(DocumentBase, AuditBase):
     description: Optional[str] = Field(
         default=None, description="Conversation description"
     )
-    group_id: Indexed(str) = Field(
-        ..., description="Group ID, used to associate a group of conversations"
+    group_id: Optional[str] = Field(
+        default=None,
+        description="Group ID, used to associate a group of conversations. When None, represents default settings.",
     )
 
     # Time information
@@ -90,12 +87,11 @@ class ConversationMeta(DocumentBase, AuditBase):
         # Example data
         json_schema_extra={
             "example": {
-                "version": "1.0.0",
                 "scene": "scene_a",
-                "scene_desc": {"bot_ids": ["aaa", "bbb", "ccc"]},
+                "scene_desc": {"description": "Scene description"},
                 "name": "User health consultation conversation",
                 "description": "Conversation records between user and AI assistant regarding Beijing travel, health management, sports rehabilitation, etc.",
-                "group_id": "chat_user_001_assistant",
+                "group_id": "example_group_id",  # Can be None for default settings
                 "conversation_created_at": "2025-08-26T00:00:00Z",
                 "default_timezone": "UTC",
                 "user_details": {
@@ -128,6 +124,7 @@ class ConversationMeta(DocumentBase, AuditBase):
                 ],
             }
         },
+        extra="allow",
     )
 
     class Settings:
@@ -135,15 +132,19 @@ class ConversationMeta(DocumentBase, AuditBase):
 
         name = "conversation_metas"
         indexes = [
-            # group_id index (high-frequency query)
-            IndexModel([("group_id", ASCENDING)], name="idx_group_id"),
-            # scene index (scene query)
-            IndexModel([("scene", ASCENDING)], name="idx_scene"),
-            # Composite index: group_id + scene (common compound query)
             IndexModel(
-                [("group_id", ASCENDING), ("scene", ASCENDING)],
-                name="idx_group_id_scene",
+                [("conversation_created_at", ASCENDING)],
+                name="idx_conversation_created_at",
             ),
+            # Creation time index
+            IndexModel([("created_at", DESCENDING)], name="idx_created_at"),
+            # Update time index
+            IndexModel([("updated_at", DESCENDING)], name="idx_updated_at"),
+            IndexModel(
+                [("group_id", ASCENDING)], name="idx_group_id_unique", unique=True
+            ),
+            # Name index for search optimization (prefix match)
+            IndexModel([("name", ASCENDING)], name="idx_name"),
         ]
         validate_on_save = True
         use_state_management = True

@@ -60,6 +60,7 @@ class BehaviorHistory(DocumentBase, AuditBase):
                 "extend": {"priority": "high", "location": "office"},
             }
         },
+        extra="allow",
     )
 
     class Settings:

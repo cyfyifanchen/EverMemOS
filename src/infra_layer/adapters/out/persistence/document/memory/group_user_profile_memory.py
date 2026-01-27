@@ -109,6 +109,7 @@ class GroupUserProfileMemory(DocumentBase, AuditBase):
                 "extend": {"priority": "high"},
             }
         },
+        extra="allow",
     )
 
     class Settings:

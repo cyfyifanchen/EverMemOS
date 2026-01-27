@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from typing import List, Dict, Any, Optional
 from memory_layer.llm.llm_provider import LLMProvider
 from api_specs.memory_types import RawDataType, BaseMemory, MemCell
-from api_specs.dtos.memory_command import RawData
+from api_specs.dtos import RawData
 
 
 @dataclass

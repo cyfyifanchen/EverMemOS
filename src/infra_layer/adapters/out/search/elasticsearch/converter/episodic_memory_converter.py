@@ -87,6 +87,9 @@ class EpisodicMemoryConverter(BaseEsConverter[EpisodicMemoryDoc]):
                 memcell_event_id_list=getattr(
                     source_doc, 'memcell_event_id_list', None
                 ),
+                # Parent info
+                parent_type=getattr(source_doc, 'parent_type', None),
+                parent_id=getattr(source_doc, 'parent_id', None),
                 # Extension fields
                 extend=getattr(source_doc, 'extend', None),
                 # Audit fields
@@ -138,7 +141,7 @@ class EpisodicMemoryConverter(BaseEsConverter[EpisodicMemoryDoc]):
         return search_content
 
     @classmethod
-    def from_memory(cls, episode_memory) -> EpisodicMemoryDoc:
+    def from_memory(cls, episodic_memory) -> EpisodicMemoryDoc:
         """
         Convert from Memory object to ES EpisodicMemoryDoc instance
 
@@ -149,7 +152,7 @@ class EpisodicMemoryConverter(BaseEsConverter[EpisodicMemoryDoc]):
         including jieba word segmentation and field mapping logic.
 
         Args:
-            episode_memory: Instance of Memory object
+            episodic_memory: Instance of Memory object
 
         Returns:
             EpisodicMemoryDoc: ES document instance, ready for indexing

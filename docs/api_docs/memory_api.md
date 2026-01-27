@@ -1,115 +1,111 @@
 # Memory API Documentation
 
-## Table of Contents
-
-- [Overview](#overview)
-- [Key Features](#key-features)
-- [Interface Specification](#interface-specification)
-  - [POST `/api/v1/memories` - Store Single Message Memory](#post-apiv1memories)
-- [Use Cases](#use-cases)
-  - [1. Real-time Message Stream Processing](#1-real-time-message-stream-processing)
-  - [2. Chatbot Integration](#2-chatbot-integration)
-  - [3. Message Queue Consumption](#3-message-queue-consumption)
-- [Usage Examples](#usage-examples)
-  - [Using curl](#using-curl)
-  - [Using Python Code](#using-python-code)
-  - [Using run_memorize.py Script](#using-run_memorizepy-script)
-- [FAQ](#faq)
-- [Architecture](#architecture)
-  - [Data Flow](#data-flow)
-  - [Core Components](#core-components)
-- [Memory Query Interfaces](#memory-query-interfaces)
-  - [GET `/api/v1/memories` - Fetch User Memories](#get-apiv1memories)
-  - [GET `/api/v1/memories/search` - Search Memories](#get-apiv1memoriessearch)
-- [Conversation Metadata Management](#conversation-metadata-management)
-  - [POST `/api/v1/memories/conversation-meta` - Save Conversation Metadata](#post-apiv1memoriesconversation-meta)
-  - [PATCH `/api/v1/memories/conversation-meta` - Partial Update Conversation Metadata](#patch-apiv1memoriesconversation-meta)
-- [Memory Deletion Interface](#memory-deletion-interface)
-  - [DELETE `/api/v1/memories` - Delete Memories (Soft Delete)](#delete-apiv1memories)
-- [Related Documentation](#related-documentation)
-
----
+[Home](../../README.md) > [Docs](../README.md) > [API Docs](.) > Memory API
 
 ## Overview
 
-The Memory API provides specialized interfaces for processing group chat memories, using a simple and direct message format without any preprocessing or format conversion.
+The Memory API provides RESTful endpoints for storing, retrieving, searching, and managing conversational memories.
 
-## Key Features
+**Base URL:** `http://localhost:8001/api/v1/memories`
 
-- ✅ **Simple and Direct**: Uses the simplest single message format, no complex data structures required
-- ✅ **No Conversion Needed**: No format conversion or adaptation required
-- ✅ **Sequential Processing**: Real-time processing of each message, suitable for message stream scenarios
-- ✅ **Centralized Adaptation**: All format conversion logic centralized in `group_chat_converter.py`, maintaining single responsibility
-- ✅ **Detailed Error Messages**: Provides clear error prompts and data statistics
+## API Endpoints
 
-## Interface Specification
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/memories` | Store a single message |
+| GET | `/memories` | Fetch memories by type |
+| GET | `/memories/search` | Search memories |
+| GET | `/memories/conversation-meta` | Get conversation metadata |
+| POST | `/memories/conversation-meta` | Save conversation metadata |
+| PATCH | `/memories/conversation-meta` | Partial update metadata |
+| DELETE | `/memories` | Soft delete memories |
 
-### POST `/api/v1/memories`
+---
 
-Store a single group chat message memory
+## POST `/memories` - Store Message
 
-#### Request Format
+Store a single message into memory.
 
-**Content-Type**: `application/json`
-
-**Request Body**: Simple direct single message format (no pre-conversion needed)
+### Request
 
 ```json
 {
+  "message_id": "msg_001",
+  "create_time": "2025-01-15T10:00:00+00:00",
+  "sender": "user_001",
+  "content": "Let's discuss the technical solution for the new feature today",
   "group_id": "group_123",
   "group_name": "Project Discussion Group",
-  "message_id": "msg_001",
-  "create_time": "2025-01-15T02:00:00Z",
-  "sender": "user_001",
-  "sender_name": "Zhang San",
-  "content": "Let's discuss the technical approach for the new feature today",
+  "sender_name": "John",
+  "role": "user",
   "refer_list": ["msg_000"]
 }
 ```
 
-**Field Descriptions**:
+### Request Fields
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| group_id | string | No | Group ID |
-| group_name | string | No | Group name |
-| message_id | string | Yes | Unique message identifier |
-| create_time | string | Yes | Message creation time (ISO 8601 format) |
-| sender | string | Yes | Sender user ID |
-| sender_name | string | No | Sender name (defaults to sender) |
-| content | string | Yes | Message content |
-| refer_list | array | No | List of referenced message IDs |
+| `message_id` | string | Yes | Unique message identifier |
+| `create_time` | string | Yes | ISO 8601 timestamp with timezone |
+| `sender` | string | Yes | Sender user ID |
+| `content` | string | Yes | Message content |
+| `group_id` | string | No | Group identifier |
+| `group_name` | string | No | Group display name |
+| `sender_name` | string | No | Sender display name (defaults to `sender`) |
+| `role` | string | No | `user` (human) or `assistant` (AI) |
+| `refer_list` | array | No | Referenced message IDs |
 
-#### Response Format
+### Group ID Behavior
 
-**Success Response (200 OK)**
+When `group_id` and `group_name` are not provided (null), the API automatically creates a default group based on the `sender` field. This enables simpler use cases where correlated memories between multiple senders are not needed.
 
-The response has two forms depending on the memory extraction status:
+**When to omit `group_id`:**
+- **Knowledge base ingestion** - Single-source content where sender correlation is not needed
+- **Persona/profile building** - Building memories for a single user without multi-party context
+- **Simple chatbot interactions** - 1:1 conversations where grouping is not required
 
-**1. Extracted** - When the message triggers boundary detection and successfully extracts memories:
+**When to provide `group_id`:**
+- **Multi-user conversations** - Group chats where multiple participants interact
+- **User + AI assistant** - Conversations between a user and AI where context correlation matters
+- **Project/topic-based organization** - When you want to query memories by logical groupings
 
+Providing a `group_id` enables better episodic memory extraction by giving the system context about related messages across multiple senders. See the [Group Chat Guide](../advanced/GROUP_CHAT_GUIDE.md) for detailed guidance.
+
+### Example
+
+```bash
+curl -X POST "http://localhost:8001/api/v1/memories" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message_id": "msg_001",
+    "create_time": "2025-01-15T10:00:00+00:00",
+    "sender": "user_001",
+    "sender_name": "John",
+    "role": "user",
+    "content": "Let us discuss the technical solution for the new feature today",
+    "group_id": "group_123",
+    "group_name": "Project Discussion Group",
+    "refer_list": []
+  }'
+```
+
+### Response
+
+**Success (200)** - Memory extracted (boundary triggered):
 ```json
 {
   "status": "ok",
   "message": "Extracted 1 memories",
   "result": {
-    "saved_memories": [
-      {
-        "memory_type": "episode_memory",
-        "user_id": "user_001",
-        "group_id": "group_123",
-        "timestamp": "2025-01-15T10:00:00",
-        "content": "User discussed technical approach for the new feature"
-      }
-    ],
+    "saved_memories": [],
     "count": 1,
     "status_info": "extracted"
   }
 }
 ```
 
-**2. Accumulated** - When the message is stored but does not trigger boundary detection:
-
+**Success (200)** - Message queued (boundary not triggered):
 ```json
 {
   "status": "ok",
@@ -122,367 +118,59 @@ The response has two forms depending on the memory extraction status:
 }
 ```
 
-**Field Descriptions**:
-- `status_info`: Processing status, `extracted` means memories were extracted, `accumulated` means message is queued awaiting boundary detection
-- `saved_memories`: List of saved memories, empty array when `status_info` is `accumulated`
-- `count`: Number of saved memories
-
-**Error Response (400 Bad Request)**
-
-```json
-{
-  "status": "failed",
-  "code": "INVALID_PARAMETER",
-  "message": "Data format error: missing required field message_id",
-  "timestamp": "2025-01-15T10:30:00+00:00",
-  "path": "/api/v1/memories"
-}
-```
-
-**Error Response (500 Internal Server Error)**
-
-```json
-{
-  "status": "failed",
-  "code": "SYSTEM_ERROR",
-  "message": "Failed to store memory, please try again later",
-  "timestamp": "2025-01-15T10:30:00+00:00",
-  "path": "/api/v1/memories"
-}
-```
-
 ---
 
-## Use Cases
+## GET `/memories` - Fetch Memories
 
-### 1. Real-time Message Stream Processing
+Retrieve memories by type with optional filters.
 
-Suitable for processing real-time message streams from chat applications, storing each message as it arrives.
-
-**Example**:
-```json
-{
-  "group_id": "group_123",
-  "group_name": "Project Discussion Group",
-  "message_id": "msg_001",
-  "create_time": "2025-01-15T02:00:00Z",
-  "sender": "user_001",
-  "sender_name": "Zhang San",
-  "content": "Let's discuss the technical approach for the new feature today",
-  "refer_list": []
-}
-```
-
-### 2. Chatbot Integration
-
-After a chatbot receives a user message, it can directly call the Memory API to store the memory.
-
-**Example**:
-```json
-{
-  "group_id": "bot_conversation_123",
-  "group_name": "Conversation with AI Assistant",
-  "message_id": "bot_msg_001",
-  "create_time": "2025-01-15T02:05:00Z",
-  "sender": "user_456",
-  "sender_name": "Li Si",
-  "content": "Help me summarize today's meeting content",
-  "refer_list": []
-}
-```
-
-### 3. Message Queue Consumption
-
-When consuming messages from a message queue (such as Kafka), you can call the Memory API for each message.
-
-**Kafka Consumer Example**:
-```python
-from kafka import KafkaConsumer
-import httpx
-import asyncio
-
-async def process_message(message):
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            "http://localhost:1995/api/v1/memories",
-            json={
-                "group_id": message["group_id"],
-                "group_name": message["group_name"],
-                "message_id": message["message_id"],
-                "create_time": message["create_time"],
-                "sender": message["sender"],
-                "sender_name": message["sender_name"],
-                "content": message["content"],
-                "refer_list": message.get("refer_list", [])
-            }
-        )
-        return response.json()
-
-# Kafka consumer
-consumer = KafkaConsumer('chat_messages')
-for msg in consumer:
-    asyncio.run(process_message(msg.value))
-```
-
----
-
-## Usage Examples
-
-### Using curl
-
-```bash
-curl -X POST http://localhost:1995/api/v1/memories \
-  -H "Content-Type: application/json" \
-  -d '{
-    "group_id": "group_123",
-    "group_name": "Project Discussion Group",
-    "message_id": "msg_001",
-    "create_time": "2025-01-15T02:00:00Z",
-    "sender": "user_001",
-    "sender_name": "Zhang San",
-    "content": "Let'\''s discuss the technical approach for the new feature today",
-    "refer_list": []
-  }'
-```
-
-### Using Python Code
-
-```python
-import httpx
-import asyncio
-
-async def call_memory_api():
-    # Simple direct single message format
-    message_data = {
-        "group_id": "group_123",
-        "group_name": "Project Discussion Group",
-        "message_id": "msg_001",
-        "create_time": "2025-01-15T02:00:00Z",
-        "sender": "user_001",
-        "sender_name": "Zhang San",
-        "content": "Let's discuss the technical approach for the new feature today",
-        "refer_list": []
-    }
-    
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            "http://localhost:1995/api/v1/memories",
-            json=message_data
-        )
-        result = response.json()
-        print(f"Saved {result['result']['count']} memories")
-
-asyncio.run(call_memory_api())
-```
-
-### Using run_memorize.py Script
-
-For JSON files in GroupChatFormat, you can use the `run_memorize.py` script for batch processing:
-
-```bash
-# Store memory
-python src/bootstrap.py src/run_memorize.py \
-  --input data/group_chat.json \
-  --api-url http://localhost:1995/api/v1/memories
-
-# Validate format only
-python src/bootstrap.py src/run_memorize.py \
-  --input data/group_chat.json \
-  --validate-only
-```
-
----
-
-## FAQ
-
-### 1. How to handle messages with references?
-
-Use the `refer_list` field to specify the list of referenced message IDs:
-
-```json
-{
-  "message_id": "msg_002",
-  "content": "I agree with your approach",
-  "refer_list": ["msg_001"]
-}
-```
-
-### 3. Are group_id and group_name required?
-
-Not required, but **strongly recommended**:
-- `group_id` is used to identify the group for easier retrieval
-- `group_name` is used for display and understanding, improving readability
-
-### 4. How to handle private chat messages?
-
-Private chat messages can omit `group_id`, or use a special private chat ID:
-
-```json
-{
-  "group_id": "private_user001_user002",
-  "group_name": "Private chat with Zhang San",
-  "message_id": "private_msg_001",
-  "create_time": "2025-01-15T02:00:00Z",
-  "sender": "user_001",
-  "sender_name": "Zhang San",
-  "content": "Hi, how are you doing?",
-  "refer_list": []
-}
-```
-
-### 5. How to handle message timestamps?
-
-`create_time` must use ISO 8601 format, timezone support:
-
-```json
-{
-  "create_time": "2025-01-15T02:00:00Z"  // with timezone
-}
-```
-
-Or without timezone (defaults to UTC):
-
-```json
-{
-  "create_time": "2025-01-15T10:00:00"  // UTC
-}
-```
-
-### 6. How to batch process historical messages?
-
-Use the `run_memorize.py` script:
-
-1. Prepare a JSON file in GroupChatFormat
-2. Run the script, which will automatically call the Memory API for each message
-
-```bash
-python src/bootstrap.py src/run_memorize.py \
-  --input data/group_chat.json \
-  --api-url http://localhost:1995/api/v1/memories
-```
-
-### 7. Are there rate limits for API calls?
-
-Currently no hard limits, but we recommend:
-- Real-time scenarios: No more than 100 requests per second
-- Batch import: Suggest 0.1 second interval between messages
-
-### 8. How to handle errors?
-
-The interface returns detailed error messages:
-
-```json
-{
-  "status": "failed",
-  "code": "INVALID_PARAMETER",
-  "message": "Missing required field: message_id"
-}
-```
-
-We recommend implementing retry mechanism on the client side, with up to 3 retries for 5xx errors.
-
----
-
-## Architecture
-
-### Data Flow
-
-```
-Client
-  ↓
-  │ Simple direct single message format
-  ↓
-Memory Controller (memory_controller.py)
-  ↓
-  │ Call group_chat_converter.py
-  ↓
-Format Conversion (convert_simple_message_to_memorize_input)
-  ↓
-  │ Internal format
-  ↓
-Memory Manager (memory_manager.py)
-  ↓
-  │ Memory storage
-  ↓
-Database / Vector Database
-```
-
-### Core Components
-
-1. **Memory Controller** (`memory_controller.py`)
-   - Receives simple direct single messages
-   - Calls converter for format conversion
-   - Calls memory_manager to store memories
-
-2. **Group Chat Converter** (`group_chat_converter.py`)
-   - Centralized adaptation layer
-   - Responsible for all format conversion logic
-   - Maintains single responsibility
-
-3. **Memory Manager** (`memory_manager.py`)
-   - Memory extraction and storage
-   - Vectorization
-   - Persistence
-
----
-
-## Memory Query Interfaces
-
-### GET `/api/v1/memories`
-
-Retrieve user's core memory data through KV method.
-
-#### Features
-
-- Directly retrieve stored core memories based on user ID
-- Support multiple memory types: base memory, profile, preferences, etc.
-- Support pagination and sorting
-- Suitable for scenarios requiring quick access to user's fixed memory collection
-
-#### Request Parameters (Query Parameters)
+### Request Parameters (Query String)
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| user_id | string | Yes | - | User ID |
-| memory_type | string | No | "profile" | Memory type, options: `profile`, `episode_memory`, `foresight`, `event_log` |
-| limit | integer | No | 10 | Maximum number of memories to return |
-| offset | integer | No | 0 | Pagination offset |
-| sort_by | string | No | - | Sort field |
-| sort_order | string | No | "desc" | Sort direction, options: `asc`, `desc` |
-| filters | object | No | {} | Additional filter conditions |
-| version_range | array | No | - | Version range filter, format: [start, end], closed interval |
+| `user_id` | string | No* | - | User ID |
+| `group_id` | string | No* | - | Group ID |
+| `memory_type` | string | No | `episodic_memory` | Memory type |
+| `limit` | integer | No | 40 | Max results (max: 500) |
+| `offset` | integer | No | 0 | Pagination offset |
+| `start_time` | string | No | - | Filter start time (ISO 8601) |
+| `end_time` | string | No | - | Filter end time (ISO 8601) |
+| `version_range` | array | No | - | Version range `[start, end]` |
 
-**Memory Type Descriptions**:
-- `profile`: User profile, containing user's characteristics and attributes
-- `episode_memory`: Episodic memory summary
-- `foresight`: Foresight memory, containing user's intentions and plans
-- `event_log`: Event log, recording user's behavioral events
+*At least one of `user_id` or `group_id` must be provided (cannot both be `__all__`).
 
-#### Response Format
+### Memory Types
 
-**Success Response (200 OK)**
+| Type | Description |
+|------|-------------|
+| `profile` | User profile information |
+| `episodic_memory` | Conversation episodes (default) |
+| `foresight` | Prospective memory |
+| `event_log` | Atomic facts |
+
+### Example
+
+```bash
+curl "http://localhost:8001/api/v1/memories?user_id=user_123&memory_type=episodic_memory&limit=20"
+```
+
+### Response
 
 ```json
 {
   "status": "ok",
-  "message": "记忆获取成功，共获取 15 条记忆",
+  "message": "Memory retrieval successful, retrieved 1 memories",
   "result": {
     "memories": [
       {
-        "memory_type": "base_memory",
+        "memory_type": "episodic_memory",
         "user_id": "user_123",
         "timestamp": "2024-01-15T10:30:00",
-        "content": "User likes coffee",
-        "summary": "Coffee preference"
-      },
-      {
-        "memory_type": "profile",
-        "user_id": "user_123",
-        "timestamp": "2024-01-14T09:20:00",
-        "content": "User is a software engineer"
+        "content": "User discussed coffee during the project sync",
+        "summary": "Project sync coffee note"
       }
     ],
-    "total_count": 15,
+    "total_count": 100,
     "has_more": false,
     "metadata": {
       "source": "fetch_mem_service",
@@ -493,432 +181,268 @@ Retrieve user's core memory data through KV method.
 }
 ```
 
-#### Usage Examples
-
-**Using curl**:
-
-```bash
-curl -X GET "http://localhost:1995/api/v1/memories?user_id=user_123&memory_type=episodic_memory&limit=20" \
-  -H "Content-Type: application/json"
-```
-
-**Using Python**:
-
-```python
-import httpx
-import asyncio
-
-async def fetch_memories():
-    params = {
-        "user_id": "user_123",
-        "memory_type": "episodic_memory",
-        "limit": 20,
-        "offset": 0
-    }
-    
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            "http://localhost:1995/api/v1/memories",
-            params=params
-        )
-        result = response.json()
-        print(f"Fetched {len(result['result']['memories'])} memories")
-
-asyncio.run(fetch_memories())
-```
-
 ---
 
-### GET `/api/v1/memories/search`
+## GET `/memories/search` - Search Memories
 
-Retrieve relevant memories based on query text using keyword, vector, or hybrid methods.
+Search memories using keyword, vector, or hybrid retrieval methods.
 
-#### Features
-
-- Find most relevant memories based on query text
-- Support three retrieval methods: keyword (BM25), vector similarity, and hybrid
-- Support time range filtering
-- Results organized by groups with relevance scores
-- Suitable for scenarios requiring exact matching or semantic retrieval
-
-#### Request Format
-
-**Content-Type**: `application/json`
-
-**Request Body**:
+### Request Body
 
 ```json
 {
+  "query": "coffee preference",
   "user_id": "user_123",
   "group_id": "group_456",
-  "query": "coffee preference",
   "retrieve_method": "keyword",
+  "memory_types": ["episodic_memory"],
   "top_k": 10,
   "start_time": "2024-01-01T00:00:00",
   "end_time": "2024-12-31T23:59:59",
-  "memory_types": ["episode_memory"],
-  "filters": {},
+  "radius": 0.6,
   "include_metadata": true
 }
 ```
 
-**Field Descriptions**:
+### Request Fields
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| user_id | string | No | - | User ID (at least one of user_id or group_id is required) |
-| group_id | string | No | - | Group ID (at least one of user_id or group_id is required) |
-| query | string | No | - | Query text |
-| retrieve_method | string | No | "keyword" | Retrieval method, options: `keyword`, `vector`, `hybrid`, `rrf`, `agentic` |
-| top_k | integer | No | 10 | Maximum number of results to return |
-| start_time | string | No | - | Time range start (ISO 8601 format) |
-| end_time | string | No | - | Time range end (ISO 8601 format) |
-| memory_types | array | No | ["episode_memory"] | List of memory types to retrieve, options: `episode_memory`, `foresight`, `event_log` (`profile` not supported) |
-| filters | object | No | {} | Additional filter conditions |
-| radius | float | No | - | COSINE similarity threshold for vector retrieval (only for vector and hybrid methods, default 0.6) |
-| include_metadata | boolean | No | true | Whether to include metadata |
+| `query` | string | No | - | Search query text |
+| `user_id` | string | No* | - | User ID |
+| `group_id` | string | No* | - | Group ID |
+| `retrieve_method` | string | No | `keyword` | Retrieval method |
+| `memory_types` | array | No | `[]` (defaults to `episodic_memory`) | Memory types to search |
+| `top_k` | integer | No | 40 | Max results (max: 100) |
+| `start_time` | string | No | - | Filter start time (ISO 8601) |
+| `end_time` | string | No | - | Filter end time (ISO 8601) |
+| `radius` | float | No | - | Cosine similarity threshold (0.0-1.0, for vector/hybrid only) |
+| `include_metadata` | boolean | No | true | Include metadata in response |
+| `current_time` | string | No | - | Current time for filtering foresight events |
 
-**Retrieval Method Descriptions**:
-- `keyword`: BM25 keyword-based retrieval, suitable for exact matching, fast (default)
-- `vector`: Semantic vector similarity retrieval, suitable for fuzzy queries and semantic similarity
-- `hybrid`: Hybrid retrieval strategy combining keyword and vector + Rerank (recommended)
-- `rrf`: RRF fusion retrieval, keyword + vector + RRF ranking fusion, no Rerank needed
-- `agentic`: LLM-guided multi-round intelligent retrieval, suitable for complex query scenarios
+*At least one of `user_id` or `group_id` must be provided (cannot both be `__all__`).
 
-#### Response Format
+**Note:** `profile` memory type is not supported in the search interface.
 
-**Success Response (200 OK)**
+### Retrieve Methods
+
+| Method | Description |
+|--------|-------------|
+| `keyword` | BM25 keyword retrieval (default) |
+| `vector` | Vector semantic retrieval |
+| `hybrid` | Keyword + vector + rerank |
+| `rrf` | RRF fusion (keyword + vector + RRF ranking) |
+| `agentic` | LLM-guided multi-round intelligent retrieval |
+
+### Example
+
+```bash
+curl -X GET "http://localhost:8001/api/v1/memories/search" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "coffee preference",
+    "user_id": "user_123",
+    "retrieve_method": "keyword",
+    "top_k": 10
+  }'
+```
+
+### Response
 
 ```json
 {
   "status": "ok",
-  "message": "记忆检索成功，共检索到 2 个群组",
+  "message": "Memory search successful, retrieved 1 groups",
   "result": {
     "memories": [
       {
-        "group_456": [
+        "episodic_memory": [
           {
-            "memory_type": "episode_memory",
+            "memory_type": "episodic_memory",
             "user_id": "user_123",
             "timestamp": "2024-01-15T10:30:00",
-            "summary": "Discussed coffee preferences",
+            "summary": "Discussed coffee choices",
             "group_id": "group_456"
           }
         ]
       }
     ],
-    "scores": [
-      {
-        "group_456": [0.95]
-      }
-    ],
+    "scores": [{"episodic_memory": [0.95]}],
     "importance_scores": [0.85],
     "original_data": [],
-    "total_count": 2,
+    "total_count": 45,
     "has_more": false,
     "query_metadata": {
       "source": "episodic_memory_es_repository",
       "user_id": "user_123",
       "memory_type": "retrieve"
     },
-    "pending_messages": [
-      {
-        "id": "507f1f77bcf86cd799439012",
-        "request_id": "req_789",
-        "message_id": "msg_003",
-        "group_id": "group_456",
-        "user_id": "user_123",
-        "sender": "user_123",
-        "sender_name": "Zhang San",
-        "group_name": "Coffee Discussion Group",
-        "content": "I also like tea",
-        "refer_list": null,
-        "message_create_time": "2024-01-15T11:00:00",
-        "created_at": "2024-01-15T11:00:01+00:00",
-        "updated_at": "2024-01-15T11:00:01+00:00"
-      }
-    ]
+    "metadata": {
+      "source": "episodic_memory_es_repository",
+      "user_id": "user_123",
+      "memory_type": "retrieve"
+    },
+    "pending_messages": []
   }
 }
 ```
 
-**Return Field Descriptions**:
-- `memories`: Memory list organized by groups
-- `scores`: Relevance score for each memory
-- `importance_scores`: Group importance scores used for sorting
-- `total_count`: Total number of memories
-- `has_more`: Whether there are more results
-- `pending_messages`: List of unconsumed cached messages (sync_status=-1 or 0) that have not yet been extracted into memories. These are messages that have been received but are still waiting for boundary detection or memory extraction
+### Response Fields
 
-#### Usage Examples
-
-**Using curl**:
-
-```bash
-curl -X GET http://localhost:1995/api/v1/memories/search \
-  -H "Content-Type: application/json" \
-  -d '{
-    "user_id": "user_123",
-    "query": "coffee preference",
-    "retrieve_method": "keyword",
-    "top_k": 10
-  }'
-```
-
-**Using Python**:
-
-```python
-import httpx
-import asyncio
-
-async def search_memories():
-    search_data = {
-        "user_id": "user_123",
-        "query": "coffee preference",
-        "retrieve_method": "hybrid",
-        "top_k": 10,
-        "memory_types": ["episode_memory"]
-    }
-    
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            "http://localhost:1995/api/v1/memories/search",
-            json=search_data
-        )
-        result = response.json()
-        print(f"Found {result['result']['total_count']} memories")
-
-asyncio.run(search_memories())
-```
+| Field | Description |
+|-------|-------------|
+| `memories` | List of memory groups, organized by memory type |
+| `scores` | Relevance scores for each memory |
+| `importance_scores` | Group importance scores for sorting |
+| `original_data` | Original data associated with memories |
+| `total_count` | Total number of memories found |
+| `has_more` | Whether more results are available |
+| `query_metadata` | Metadata about the query execution |
+| `metadata` | Additional response metadata |
+| `pending_messages` | Messages waiting for memory extraction |
 
 ---
 
-## Conversation Metadata Management
+## GET `/memories/conversation-meta` - Get Metadata
 
-### POST `/api/v1/memories/conversation-meta`
+Retrieve conversation metadata by group_id with fallback to default config.
 
-Save conversation metadata, including scene, participants, tags, etc.
+### Request Parameters
 
-#### Request Format
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `group_id` | string | No | Group ID (omit for default config) |
 
-**Content-Type**: `application/json`
+### Example
 
-**Request Body**:
-
-```json
-{
-  "version": "1.0",
-  "scene": "group_chat",
-  "scene_desc": {
-    "bot_ids": ["bot_001"],
-    "type": "project_discussion"
-  },
-  "name": "Project Discussion Group",
-  "description": "Technical discussion for new feature development",
-  "group_id": "group_123",
-  "created_at": "2025-01-15T02:00:00Z",
-  "default_timezone": "UTC",
-  "user_details": {
-    "user_001": {
-      "full_name": "Zhang San",
-      "role": "developer",
-      "extra": {"department": "Engineering"}
-    },
-    "user_002": {
-      "full_name": "Li Si",
-      "role": "designer",
-      "extra": {"department": "Design"}
-    }
-  },
-  "tags": ["work", "technical"]
-}
+```bash
+curl "http://localhost:8001/api/v1/memories/conversation-meta?group_id=group_123"
 ```
 
-**Field Descriptions**:
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| version | string | Yes | Metadata version |
-| scene | string | Yes | Scene identifier (e.g., "group_chat") |
-| scene_desc | object | Yes | Scene description object, can contain fields like bot_ids |
-| name | string | Yes | Conversation name |
-| description | string | No | Conversation description |
-| group_id | string | Yes | Unique group identifier |
-| created_at | string | Yes | Conversation creation time (ISO 8601 format) |
-| default_timezone | string | No | Default timezone (defaults to system timezone) |
-| user_details | object | No | Participant details, key is user ID, value is user detail object |
-| tags | array | No | Tag list |
-
-#### Response Format
-
-**Success Response (200 OK)**
+### Response
 
 ```json
 {
   "status": "ok",
-  "message": "Conversation metadata saved successfully",
+  "message": "Conversation metadata retrieved successfully",
   "result": {
-    "id": "507f1f77bcf86cd799439011",
+    "id": "...",
     "group_id": "group_123",
     "scene": "group_chat",
-    "name": "Project Discussion Group",
-    "version": "1.0",
-    "created_at": "2025-01-15T02:00:00Z",
-    "updated_at": "2025-01-15T02:00:00Z"
+    "name": "Engineering Team",
+    "user_details": {...},
+    "is_default": false
   }
 }
 ```
 
-**Note**: This interface uses upsert behavior. If `group_id` already exists, it will update the entire record.
+---
+
+## POST `/memories/conversation-meta` - Save Metadata
+
+Save or update conversation metadata (upsert behavior).
+
+### Request Body
+
+```json
+{
+  "version": "1.0.0",
+  "scene": "group_chat",
+  "scene_desc": {
+    "description": "Project discussion group chat",
+    "type": "project_discussion"
+  },
+  "name": "Engineering Team",
+  "description": "Backend team discussions",
+  "group_id": "group_123",
+  "created_at": "2025-01-15T10:00:00Z",
+  "default_timezone": "America/New_York",
+  "user_details": {
+    "alice": {
+      "full_name": "Alice Smith",
+      "role": "user",
+      "custom_role": "Tech Lead"
+    }
+  },
+  "tags": ["engineering", "backend"]
+}
+```
+
+### Request Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `version` | string | Yes | Metadata version |
+| `scene` | string | Yes | Scene identifier: `assistant` or `group_chat` |
+| `scene_desc` | object | Yes | Scene description object |
+| `name` | string | Yes | Conversation name |
+| `description` | string | No | Conversation description |
+| `group_id` | string | No | Group identifier (omit for default config) |
+| `created_at` | string | Yes | Conversation creation time (ISO 8601 format) |
+| `default_timezone` | string | No | Default timezone (defaults to system timezone) |
+| `user_details` | object | No | Participant details, key is user ID |
+| `tags` | array | No | Tag list |
+
+### User Details Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `full_name` | string | Display name |
+| `role` | string | `user` or `assistant` |
+| `custom_role` | string | Job title/position |
+| `extra` | object | Additional metadata |
 
 ---
 
-### PATCH `/api/v1/memories/conversation-meta`
+## PATCH `/memories/conversation-meta` - Update Metadata
 
-Partially update conversation metadata, only updating the provided fields.
+Partially update conversation metadata.
 
-#### Request Format
-
-**Content-Type**: `application/json`
-
-**Request Body** (only provide fields to update):
+### Request Body
 
 ```json
 {
   "group_id": "group_123",
-  "name": "New Conversation Name",
-  "tags": ["tag1", "tag2"]
+  "name": "Updated Team Name",
+  "tags": ["engineering", "python"]
 }
 ```
 
-**Field Descriptions**:
+### Updatable Fields
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| group_id | string | Yes | Group ID to update |
-| name | string | No | New conversation name |
-| description | string | No | New description |
-| scene_desc | string | No | New scene description |
-| tags | array | No | New tag list |
-| user_details | object | No | New user details (completely replaces existing user_details) |
-| default_timezone | string | No | New default timezone |
+| Field | Description |
+|-------|-------------|
+| `name` | Conversation name |
+| `description` | Conversation description |
+| `scene_desc` | Scene description |
+| `tags` | Tag list |
+| `user_details` | User details (replaces entire object) |
+| `default_timezone` | Default timezone |
 
-**Updatable Fields**:
-- `name`: Conversation name
-- `description`: Conversation description
-- `scene_desc`: Scene description
-- `tags`: Tag list
-- `user_details`: User details (completely replaces existing user_details)
-- `default_timezone`: Default timezone
-
-**Immutable Fields** (cannot be modified via PATCH):
-- `version`: Metadata version
-- `scene`: Scene identifier
-- `group_id`: Group ID
-- `conversation_created_at`: Conversation creation time
-
-#### Response Format
-
-**Success Response (200 OK)**
+### Response
 
 ```json
 {
   "status": "ok",
   "message": "Conversation metadata updated successfully, 2 fields updated",
   "result": {
-    "id": "507f1f77bcf86cd799439011",
+    "id": "...",
     "group_id": "group_123",
     "scene": "group_chat",
-    "name": "New Conversation Name",
+    "name": "Updated Team Name",
     "updated_fields": ["name", "tags"],
-    "updated_at": "2025-01-15T02:30:00Z"
+    "updated_at": "2025-01-15T12:00:00Z"
   }
 }
 ```
 
-**Error Response (400 Bad Request)**
-
-```json
-{
-  "status": "failed",
-  "code": "INVALID_PARAMETER",
-  "message": "Missing required field group_id",
-  "timestamp": "2025-01-15T10:30:00+00:00",
-  "path": "/api/v1/memories/conversation-meta"
-}
-```
-
-**Error Response (404 Not Found)**
-
-```json
-{
-  "status": "failed",
-  "code": "RESOURCE_NOT_FOUND",
-  "message": "Conversation metadata not found: group_123",
-  "timestamp": "2025-01-15T10:30:00+00:00",
-  "path": "/api/v1/memories/conversation-meta"
-}
-```
-
-#### Usage Example
-
-**Using curl**:
-
-```bash
-# Partially update conversation metadata
-curl -X PATCH http://localhost:1995/api/v1/memories/conversation-meta \
-  -H "Content-Type: application/json" \
-  -d '{
-    "group_id": "group_123",
-    "name": "New Conversation Name",
-    "tags": ["updated", "tags"]
-  }'
-```
-
-**Using Python**:
-
-```python
-import httpx
-import asyncio
-
-async def patch_conversation_meta():
-    update_data = {
-        "group_id": "group_123",
-        "name": "New Conversation Name",
-        "tags": ["updated", "tags"]
-    }
-    
-    async with httpx.AsyncClient() as client:
-        response = await client.patch(
-            "http://localhost:1995/api/v1/memories/conversation-meta",
-            json=update_data
-        )
-        result = response.json()
-        print(f"Updated {len(result['result']['updated_fields'])} fields")
-
-asyncio.run(patch_conversation_meta())
-```
-
 ---
 
-## Memory Deletion Interface
+## DELETE `/memories` - Delete Memories
 
-### DELETE `/api/v1/memories`
+Soft delete memories based on filter criteria (AND logic).
 
-Soft delete MemCell records based on combined filter criteria.
-
-#### Features
-
-- Soft delete records matching combined filter conditions
-- If multiple conditions are provided, ALL must be satisfied (AND logic)
-- Use MAGIC_ALL (`"__all__"`) to skip a specific filter
-- At least one valid filter must be specified (not all MAGIC_ALL)
-
-#### Request Format
-
-**Content-Type**: `application/json`
-
-**Request Body**:
+### Request Body
 
 ```json
 {
@@ -928,28 +452,26 @@ Soft delete MemCell records based on combined filter criteria.
 }
 ```
 
-**Field Descriptions**:
+### Request Fields
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| event_id | string | No | "__all__" | Filter by event ID |
-| user_id | string | No | "__all__" | Filter by user ID |
-| group_id | string | No | "__all__" | Filter by group ID |
+| `event_id` | string | No | `__all__` | Filter by event ID |
+| `user_id` | string | No | `__all__` | Filter by user ID |
+| `group_id` | string | No | `__all__` | Filter by group ID |
 
-**Filter Criteria**:
-- All filter conditions are combined with AND logic
-- Use `"__all__"` to skip a specific filter
-- At least one non-`"__all__"` filter must be provided
+At least one filter must be provided (not all `__all__`).
 
-**Filter Examples**:
-- `event_id` only: Delete specific memory by event
-- `user_id` only: Delete all memories of a user
-- `user_id` + `group_id`: Delete user's memories in a specific group
-- `event_id` + `user_id` + `group_id`: Delete if all conditions match
+### Example
 
-#### Response Format
+```bash
+# Delete all memories for a user in a group
+curl -X DELETE "http://localhost:8001/api/v1/memories" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": "user_123", "group_id": "group_456"}'
+```
 
-**Success Response (200 OK)**
+### Response
 
 ```json
 {
@@ -962,121 +484,65 @@ Soft delete MemCell records based on combined filter criteria.
 }
 ```
 
-**Field Descriptions**:
-- `filters`: List of filter conditions actually used
-- `count`: Number of memories deleted
+---
 
-**Error Response (400 Bad Request)**
+## Batch Processing with run_memorize.py
 
-```json
-{
-  "status": "failed",
-  "code": "INVALID_PARAMETER",
-  "message": "At least one of event_id, user_id, or group_id must be provided (not MAGIC_ALL)",
-  "timestamp": "2025-01-15T10:30:00+00:00",
-  "path": "/api/v1/memories"
-}
-```
-
-**Error Response (404 Not Found)**
-
-```json
-{
-  "status": "failed",
-  "code": "RESOURCE_NOT_FOUND",
-  "message": "No memories found matching the criteria or already deleted",
-  "timestamp": "2025-01-15T10:30:00+00:00",
-  "path": "/api/v1/memories"
-}
-```
-
-**Error Response (500 Internal Server Error)**
-
-```json
-{
-  "status": "failed",
-  "code": "SYSTEM_ERROR",
-  "message": "Failed to delete memories, please try again later",
-  "timestamp": "2025-01-15T10:30:00+00:00",
-  "path": "/api/v1/memories"
-}
-```
-
-#### Soft Delete Notes
-
-- Records are marked as deleted, not physically removed
-- Deleted records can be restored if needed
-- Deleted records won't appear in regular queries
-
-#### Usage Examples
-
-**Using curl - Delete by event_id**:
+For batch processing GroupChatFormat JSON files:
 
 ```bash
-curl -X DELETE http://localhost:1995/api/v1/memories \
-  -H "Content-Type: application/json" \
-  -d '{
-    "event_id": "evt_001"
-  }'
+# Process a group chat file
+uv run python src/bootstrap.py src/run_memorize.py \
+  --input data/group_chat.json \
+  --scene group_chat \
+  --api-url http://localhost:8001/api/v1/memories
+
+# Validate format only
+uv run python src/bootstrap.py src/run_memorize.py \
+  --input data/group_chat.json \
+  --scene group_chat \
+  --validate-only
 ```
 
-**Using curl - Delete all memories of a user**:
+### Parameters
 
-```bash
-curl -X DELETE http://localhost:1995/api/v1/memories \
-  -H "Content-Type: application/json" \
-  -d '{
-    "user_id": "user_123"
-  }'
-```
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `--input` | Yes | Path to GroupChatFormat JSON file |
+| `--scene` | Yes | `group_chat` or `assistant` |
+| `--api-url` | Yes* | Memory API endpoint |
+| `--validate-only` | No | Only validate format, skip processing |
 
-**Using curl - Delete by user_id and group_id combined**:
-
-```bash
-curl -X DELETE http://localhost:1995/api/v1/memories \
-  -H "Content-Type: application/json" \
-  -d '{
-    "user_id": "user_123",
-    "group_id": "group_456"
-  }'
-```
-
-**Using Python**:
-
-```python
-import httpx
-import asyncio
-
-async def delete_memories():
-    # Delete all memories of a specific user in a specific group
-    delete_data = {
-        "user_id": "user_123",
-        "group_id": "group_456"
-    }
-    
-    async with httpx.AsyncClient() as client:
-        response = await client.delete(
-            "http://localhost:1995/api/v1/memories",
-            json=delete_data
-        )
-        result = response.json()
-        print(f"Deleted {result['result']['count']} memories")
-
-asyncio.run(delete_memories())
-```
-
-#### Use Cases
-
-- **User Data Deletion Request**: Respond to user requests for personal data deletion
-- **Group Chat Cleanup**: Clean up historical memories in a specific group
-- **Privacy Compliance**: Meet requirements of privacy regulations like GDPR
-- **Conversation History Management**: Manage and clean up expired conversation memories
+*Required unless using `--validate-only`.
 
 ---
 
-## Related Documentation
+## Error Responses
 
-- [GroupChatFormat Specification](../../data_format/group_chat/group_chat_format.md)
-- [Memory API Testing Guide](../dev_docs/memory_api_testing_guide.md)
-- [run_memorize.py Usage Guide](../dev_docs/run_memorize_usage.md)
+All error responses follow this format:
 
+```json
+{
+  "status": "failed",
+  "code": "ERROR_CODE",
+  "message": "Human-readable error message",
+  "timestamp": "2025-01-15T10:30:00+00:00",
+  "path": "/api/v1/memories"
+}
+```
+
+### Error Codes
+
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| `INVALID_PARAMETER` | 400 | Invalid or missing request parameters |
+| `RESOURCE_NOT_FOUND` | 404 | Requested resource not found |
+| `SYSTEM_ERROR` | 500 | Internal server error |
+
+---
+
+## See Also
+
+- [Group Chat Guide](../advanced/GROUP_CHAT_GUIDE.md) - Multi-participant conversations
+- [Metadata Control Guide](../advanced/METADATA_CONTROL.md) - Conversation metadata management
+- [GroupChatFormat Specification](../../data_format/group_chat/group_chat_format.md) - Data format reference

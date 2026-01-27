@@ -54,6 +54,23 @@ class RerankServiceInterface(ABC):
         ...
 
     @abstractmethod
+    async def rerank_documents(
+        self, query: str, documents: List[str], instruction: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Rerank raw documents (low-level API)
+
+        Args:
+            query: Query text
+            documents: List of document strings to rerank
+            instruction: Optional reranking instruction
+
+        Returns:
+            Dict with 'results' key containing list of {index, score, rank}
+        """
+        ...
+
+    @abstractmethod
     async def close(self):
         """Close and cleanup resources"""
         ...

@@ -38,6 +38,7 @@ class ConversationStatus(DocumentBase, AuditBase):
                 "last_memcell_time": datetime(2021, 1, 1, 0, 0, 0),
             }
         },
+        extra="allow",
     )
 
     @property

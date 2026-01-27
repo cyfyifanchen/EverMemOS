@@ -5,28 +5,23 @@
 ## 1. Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        Conversation Event Stream                     │
-│                             ↓                                       │
-│                    ┌───────────────┐                                │
-│                    │   MemCell     │  ← boundary-detected chunk      │
-│                    │  (memory unit)│                                │
-│                    └───────┬───────┘                                │
-│                            │                                        │
-│            ┌───────────────┼───────────────┐                        │
-│            ↓               ↓               ↓                        │
-│   ┌────────────────┐ ┌────────────────┐ ┌────────────────┐          │
-│   │ Group Episode  │ │Personal Episode│ │Personal Episode│  × N     │
-│   │ (group view)    │ │  (User A)      │ │  (User B)      │          │
-│   └───────┬────────┘ └───────┬────────┘ └─────────────┬──┘          │
-│           │                  │                        │             │
-│     ┌─────┴─────┐      ┌─────┴─────────┐        ┌─────┴───────┐     │
-│     ↓           ↓      ↓               ↓        ↓             ↓     │
-│ ┌─────────┐ ┌────────┐ ┌─────────┐ ┌────────┐ ┌─────────┐ ┌────────┐│
-│ │Foresight│ │EventLog│ │Foresight│ │EventLog│ │Foresight│ │EventLog││
-│ │  ×10    │ │×(5-40) │ │  ×10    │ │ ×(5-40)│ │  ×10    │ │ ×(5-40)││
-│ └─────────┘ └────────┘ └─────────┘ └────────┘ └─────────┘ └────────┘│
-└─────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────┐
+│                          Conversation Event Stream                             │
+│                                    ↓                                           │
+│                           ┌───────────────┐                                    │
+│                           │   MemCell     │  ← boundary-detected chunk         │
+│                           │  (memory unit)│                                    │
+│                           └───────┬───────┘                                    │
+│                                   │                                            │
+│   ┌───────────────┬───────────────┼───────────────┬───────────────┐            │
+│   │               │               │               │               │            │
+│   ↓               ↓               ↓               ↓               ↓            │
+│ ┌────────────────┐ ┌────────────────┐  ┌─────────────┐ ┌─────────────┐         │
+│ │ Group Episode  │ │Personal Episode│  │  Foresight  │ │  EventLog   │         │
+│ │ (all scenes)   │ │ (group chat)   │  │ (assistant  │ │ (assistant  │         │
+│ └────────────────┘ └────────────────┘  │  scene only)│ │  scene only)│         │
+│                                        └─────────────┘ └─────────────┘         │
+└────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -51,6 +46,7 @@
 **Business Purpose**:
 - Source of all downstream memories
 - Guarantees each unit represents a full topic
+- **One-to-many relationship**: Each MemCell can produce multiple downstream memories (Episode, Foresight, EventLog), but each downstream memory **comes from exactly one MemCell**
 
 ---
 
@@ -77,13 +73,14 @@
 **Business Purpose**:
 - Human-readable understanding for assistants
 - Supports downstream reasoning tasks
-- Parent node for Foresight/EventLog
 
 ---
 
 ### 2.3 Foresight
 
-**Definition**: Predictive memories describing how the episode may impact future decisions.
+> ⚠️ **Note**: Foresight is only extracted in **assistant scene** (1:1 chat), not in group chat.
+
+**Definition**: Predictive memories describing how the conversation may impact future decisions. Extracted directly from MemCell.
 
 **Core Fields**:
 
@@ -93,7 +90,8 @@
 | `evidence` | Supporting clue |
 | `start_time` / `end_time` | Valid timeframe |
 | `duration_days` | Validity length |
-| `parent_episode_id` | Parent Episode ID |
+| `parent_type` | Parent memory type (Memcell/Episode) |
+| `parent_id` | Parent memory ID (for linking) |
 
 **Business Purpose**:
 - Power proactive reminders and planning
@@ -115,7 +113,9 @@
 
 ### 2.4 EventLog
 
-**Definition**: Atomic facts extracted from an Episode; every fact is an independent retrieval unit.
+> ⚠️ **Note**: EventLog is only extracted in **assistant scene** (1:1 chat), not in group chat.
+
+**Definition**: Atomic facts extracted directly from MemCell/conversation; every fact is an independent retrieval unit.
 
 > ⚠️ **Important**: The LLM returns a list of `atomic_fact`, but each fact is persisted as its own `EventLogRecord`.
 
@@ -125,7 +125,8 @@
 |-------|-------------|
 | `atomic_fact` | Single fact string |
 | `vector` | Embedding for the fact |
-| `parent_episode_id` | Source Episode |
+| `parent_type` | Parent memory type (Memcell/Episode) |
+| `parent_id` | Parent memory ID (for linking) |
 | `timestamp` | Occurrence time |
 | `user_id` / `group_id` | Ownership info |
 
@@ -136,9 +137,9 @@
 
 **Example (3 records)**:
 ```json
-{ "atomic_fact": "Alice proposed a new product design.", "parent_episode_id": "ep_001" }
-{ "atomic_fact": "Bob confirmed the feasibility.", "parent_episode_id": "ep_001" }
-{ "atomic_fact": "Team starts prototyping next Monday.", "parent_episode_id": "ep_001" }
+{ "atomic_fact": "Alice proposed a new product design.", "parent_type": "memcell", "parent_id": "mc_001" }
+{ "atomic_fact": "Bob confirmed the feasibility.", "parent_type": "memcell", "parent_id": "mc_001" }
+{ "atomic_fact": "Team starts prototyping next Monday.", "parent_type": "memcell", "parent_id": "mc_001" }
 ```
 
 ---
@@ -150,34 +151,34 @@
 | Layer | DB Records | Notes |
 |-------|-----------|-------|
 | MemCell | 1 | One per boundary |
-| Episode | 1 + N | 1 group + N personal (participants) |
-| Foresight | ~10 × (1+N) | Target 10 items per Episode |
-| EventLog | **M × (1+N)** | M = number of atomic facts (5–15 typical) |
+| Episode | 1 (assistant) / 1+N (group) | assistant: 1 group (copied to user); group: 1 group + N personal |
+| Foresight | ~10 | **Assistant scene only**, 4-10 items per MemCell |
+| EventLog | **M** | **Assistant scene only**, M = atomic facts (5–15 typical) |
 
 ### 3.2 Scenario Examples
 
 **Scenario A: Assistant Chat (1:1)**
 ```
 MemCell: 1
-├── Group Episode (copied to user)
-│   ├── Foresight: 10
-│   └── EventLog: 8 (assume 8 atomic facts)
-└── Total records: 1 + 10 + 8 = 19
+├── Group Episode: 1 (copied to user)
+├── Foresight: ~10 (extracted from MemCell)
+├── EventLog: ~8 (extracted from MemCell)
+└── Total records: 1 Episode + 10 Foresight + 8 EventLog = 19
 ```
 
 **Scenario B: Group Chat (3 participants)**
 ```
 MemCell: 1
-├── Group Episode
-│   ├── Foresight: 10
-│   └── EventLog: 10
-├── Personal Episode (User A): 10 Foresight + 8 EventLog
-├── Personal Episode (User B): 10 Foresight + 8 EventLog
-├── Personal Episode (User C): 10 Foresight + 8 EventLog
-└── Total: 4 Episodes + 40 Foresights + 34 EventLogs = 78
+├── Group Episode: 1
+├── Personal Episode (User A): 1
+├── Personal Episode (User B): 1
+├── Personal Episode (User C): 1
+├── Foresight: 0 (NOT extracted in group chat)
+├── EventLog: 0 (NOT extracted in group chat)
+└── Total records: 4 Episodes
 ```
 
-> **Note**: EventLog count grows with conversation richness; 5–15 facts per Episode is typical.
+> **Note**: Foresight and EventLog are only extracted in assistant (1:1) scenes for efficiency.
 
 ---
 
@@ -221,8 +222,9 @@ MemCell: 1
 # Main pipeline
 biz_layer/mem_memorize.py::memorize()
     └── process_memory_extraction()
-        ├── _extract_episodes()
-        └── _extract_foresight_and_eventlog()
+        ├── _extract_episodes()      # All scenes
+        ├── _extract_foresights()    # Assistant scene only
+        └── _extract_event_logs()    # Assistant scene only
 ```
 
 ### 6.2 Extractors
@@ -250,11 +252,13 @@ agentic_layer/memory_manager.py::MemoryManager
 **Q1: Why split Group vs Personal Episode?**  
 - Group records collective facts; personal captures user-centric perspective; retrieval can filter by `user_id`.
 
-**Q2: Is “10 foresights” hard-coded?**  
-- The extractor tries to return 10, but fewer items are accepted if the LLM provides less content.
+**Q2: Is "10 foresights" hard-coded?**  
+- The extractor targets 4-10 items, but fewer items are accepted if the LLM provides less content.
+- **Only extracted in assistant scene** (not in group chat).
 
-**Q3: How many EventLog records per Episode?**  
+**Q3: How many EventLog records per MemCell?**  
 - Depends on LLM output; every atomic fact becomes one document (typically 5–15).
+- **Only extracted in assistant scene** (not in group chat).
 
 **Q4: Which memory type should I query?**  
 - Narrative/story: Episode  
@@ -268,5 +272,6 @@ agentic_layer/memory_manager.py::MemoryManager
 | Version | Date | Notes |
 |---------|------|-------|
 | v1.0 | 2024-12 | Initial release |
+| v1.1 | 2025-01 | Foresight/EventLog now extracted from MemCell (assistant scene only) |
 
 

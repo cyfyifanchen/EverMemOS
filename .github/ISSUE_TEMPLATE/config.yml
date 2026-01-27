@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discord Community
+    url: https://discord.gg/pfwwskxp
+    about: Ask questions and discuss with the community
+  - name: GitHub Discussions
+    url: https://github.com/EverMind-AI/EverMemOS/discussions
+    about: General discussions and Q&A

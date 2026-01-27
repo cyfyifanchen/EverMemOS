@@ -229,8 +229,12 @@ Environment variables:
 
     except SystemExit as e:
         # Target script may call sys.exit(), which is normal
-        print(f"\n📋 Script execution completed, exit code: {e.code}")
-        sys.exit(e.code)
+        # Only propagate non-zero exit codes to avoid unnecessary stack traces
+        if e.code is not None and e.code != 0:
+            print(f"\n📋 Script exited with code: {e.code}")
+            raise  # Re-raise to propagate the exit code
+        else:
+            print(f"\n📋 Script execution completed successfully")
     except Exception as e:
         print(f"\n❌ Script execution error: {e}", file=sys.stderr)
         import traceback

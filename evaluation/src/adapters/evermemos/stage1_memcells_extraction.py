@@ -478,7 +478,7 @@ async def process_single_conversation(
 
         async def extract_single_event_log(idx: int, memcell):
             event_log = await event_log_extractor.extract_event_log(
-                episode_text=memcell.episode, timestamp=memcell.timestamp
+                memcell=memcell, timestamp=memcell.timestamp
             )
             return idx, event_log
 

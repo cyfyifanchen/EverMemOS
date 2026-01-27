@@ -23,14 +23,6 @@
 [![][share-mastodon-shield]][share-mastodon-link]
 [![][share-weibo-shield]][share-mastodon-link]
 
-
-[Documentation][documentation] •
-[API Reference][api-docs] •
-[Demo][demo-section]
-
-[![README in English][lang-en-badge]][lang-en-readme]
-[![简体中文][lang-zh-badge]][lang-zh-readme]
-
 </div>
 
 <br>
@@ -64,17 +56,17 @@
 
 - [Welcome to EverMemOS][welcome]
 - [Star and stay tuned with us][star-us]
+- [Introduction][introduction]
 - [Why EverMemOS][why-evermemos]
-  - [How EverMemOS works][how-evermemos-works]
-  - [EverMemOS benchmark][evermemos-benchmark]
 - [Quick Start][quick-start]
   - [Prerequisites][prerequisites]
   - [Installation][installation]
-  - [Run the Demo][run-demo]
-  - [Full Demo Experience][full-demo-experience]
-- [API Usage][api-usage]
-- [Evaluation][evaluation-section]
-- [Documentation][docs-section]
+- [Basic Usage][basic-usage]
+- [Advanced Techniques][advanced-techniques]
+- [Evaluation & Benchmarking][evaluation-benchmarking]
+  - [Benchmark Results][benchmark-results]
+  - [Supported Benchmarks][supported-benchmarks]
+  - [Evaluation Quick Start][evaluation-quick-start]
 - [Questions][questions-section]
 - [Contributing][contributing]
 
@@ -88,11 +80,11 @@ Welcome to EverMemOS! Join our community to help improve the project and collabo
 
 | Community | Purpose |
 | :-------- | :------ |
-| [![Discord][discord-badge]][discord] | Join our Discord community |
-| [![Hugging Face Space][hugging-face-badge]][hugging-face] | Join our Hugging Face community to explore our spaces and models |
-| [![X][x-badge]][x] | Follow updates on X |
-| [![LinkedIn][linkedin-badge]][linkedin] | Connect with us on LinkedIn |
-| [![Reddit][reddit-badge]][reddit] | Join the Reddit community |
+| [![Discord][discord-badge]][discord] | Chat with the team and other builders |
+| [![Hugging Face Space][hugging-face-badge]][hugging-face] | Explore our Spaces and open models |
+| [![X][x-badge]][x] | Follow product updates and releases |
+| [![LinkedIn][linkedin-badge]][linkedin] | Connect with us professionally |
+| [![Reddit][reddit-badge]][reddit] | Share ideas and community discussions |
 
 
 <br>
@@ -103,35 +95,6 @@ Welcome to EverMemOS! Join our community to help improve the project and collabo
 ![star us gif](https://github.com/user-attachments/assets/0c512570-945a-483a-9f47-8e067bd34484)
 
 <br>
-
-<!-- ## Why EverMemOS
-
-### How EverMemOS works
-![image](https://github.com/user-attachments/assets/2a2a4f15-9185-47b3-9182-9c28145e18a4)
-
-EverMemOS enables AI to not only remember what happened, but understand the meaning behind memories and use them to guide decisions. Achieving **93% reasoning accuracy** on the LoCoMo benchmark, EverMemOS provides long-term memory capabilities for conversational AI agents through structured extraction, intelligent retrieval, and progressive profile building.
-
-![divider][divider-light]
-![divider][divider-dark]
-
-
-### EverMemOS benchmark
-
-![image](https://github.com/user-attachments/assets/9583e4de-8f3b-4681-ab5f-10ee82327da8)
-
-* 🎯 93% Accuracy - Best-in-class performance on LoCoMo benchmark
-* 🚀 Production Ready - Enterprise-grade with Milvus vector DB, Elasticsearch, MongoDB, and Redis
-* 🔧 Easy Integration - Simple REST API, works with any LLM
-* 📊 Multi-Modal Memory - Episodes, facts, preferences, relations
-* 🔍 Smart Retrieval - BM25, embeddings, or agentic search
-
-<br>
-
-<div align="right">
-
-[![][back-to-top]][readme-top]
-
-</div> -->
 
 ## Introduction
 
@@ -210,6 +173,11 @@ curl http://localhost:8001/health
 ✅ Server running at `http://localhost:8001` • [Full Setup Guide](docs/installation/SETUP.md)
 
 <br>
+<div align="right">
+
+[![][back-to-top]][readme-top]
+
+</div>
 
 ## Basic Usage
 
@@ -246,6 +214,11 @@ for memory_group in result.get("memories", []):
 📖 [More Examples](docs/usage/USAGE_EXAMPLES.md) • 📚 [API Reference](docs/api_docs/memory_api.md) • 🎯 [Interactive Demos](docs/usage/DEMOS.md)
 
 <br>
+<div align="right">
+
+[![][back-to-top]][readme-top]
+
+</div>
 
 ## Advanced Techniques
 
@@ -255,6 +228,11 @@ for memory_group in result.get("memories", []):
 - **[Batch Operations](docs/usage/BATCH_OPERATIONS.md)** - Process multiple messages efficiently
 
 <br>
+<div align="right">
+
+[![][back-to-top]][readme-top]
+
+</div>
 
 ## Evaluation & Benchmarking
 
@@ -271,6 +249,8 @@ EverMemOS achieves **93% overall accuracy** on the LoCoMo benchmark, outperformi
 - **[LoCoMo](https://github.com/snap-research/locomo)** - Long-context memory benchmark with single/multi-hop reasoning
 - **[LongMemEval](https://huggingface.co/datasets/xiaowu0162/longmemeval-cleaned)** - Multi-session conversation evaluation
 - **[PersonaMem](https://huggingface.co/datasets/bowen-upenn/PersonaMem)** - Persona-based memory evaluation
+
+<br>
 
 ### Quick Start
 
@@ -291,219 +271,12 @@ cat evaluation/results/locomo-evermemos/report.txt
 📊 [Full Evaluation Guide](evaluation/README.md) • 📈 [Complete Results](https://huggingface.co/datasets/EverMind-AI/EverMemOS_Eval_Results)
 
 <br>
-
-<!-- ## Hackathon
-
-Join our AI Memory Hackathon! Build innovative applications, plugins, or infrastructure improvements powered by EverMemOS.
-
-**Tracks:**
-- **Agent + Memory** - Build intelligent agents with long-term, evolving memories
-- **Platform Plugins** - Integrate EverMemOS with VSCode, Chrome, Slack, Notion, LangChain, and more
-- **OS Infrastructure** - Optimize core functionality and performance
-
-👉 **[Get Started with the Hackathon Starter Kit](docs/STARTER_KIT.md)** 👈
-
-Join our [Discord](https://discord.gg/pfwwskxp) to find teammates and brainstorm ideas!
-
----
-
-## Quick Start
-
-### Prerequisites
-
-| Category | Requirements |
-| -------- | ------------ |
-| **Runtime** | Python 3.10+, [uv][uv] package manager |
-| **Services** | Docker 20.10+, Docker Compose 2.0+ |
-| **Hardware** | CPU ≥ 2 cores, RAM ≥ 4 GB |
-| **API Keys** | LLM API key, [DeepInfra][deepinfra] API key (for embedding/rerank) |
-
-![divider][divider-light]
-![divider][divider-dark]
-
-
-### Installation
-
-① Clone the repository and cd into the project
-```bash
-git clone https://github.com/EverMind-AI/EverMemOS.git
-
-cd EverMemOS
-```
-
-② Start dependency services (MongoDB, Elasticsearch, Milvus and Redis)
-```bash
-docker-compose up -d
-```
-
-③ Install uv and use uv to install dependencies
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-uv sync
-```
-
-④ Configure API Keys
-```bash
-cp env.template .env
-
-# Edit .env and set:
-#   - LLM_API_KEY (for memory extraction)
-#   - VECTORIZE_API_KEY (for embedding/rerank)
-```
-
-⑤ Start server
-```bash
-uv run python src/run.py --port 8001
-```
-
-⑥ Verify installation
-```bash
-curl http://localhost:8001/health
-# Expected response: {"status": "healthy", ...}
-```
-
-![divider][divider-light]
-![divider][divider-dark]
-
-### Run the Demo
-
-① Terminal 1: Start the API server
-```bash
-uv run python src/run.py --port 8001
-```
-
-② Terminal 2: Run the simple demo
-```bash
-uv run python src/bootstrap.py demo/simple_demo.py
-```
-
-The demo stores sample conversations, waits for indexing, and searches for relevant memories — showing the complete workflow in action.
-
-![divider][divider-light]
-![divider][divider-dark]
-
-### Full Demo Experience
-
-① Extract memories from sample data
-```bash
-uv run python src/bootstrap.py demo/extract_memory.py
-```
-
-② Start interactive chat with memory
-```
-uv run python src/bootstrap.py demo/chat_with_memory.py
-```
-
-See the [Demo Guide][demo-guide] for detailed instructions.
-
-<br>
-
 <div align="right">
 
 [![][back-to-top]][readme-top]
 
 </div>
 
-## API Usage
-
-#### Store a Memory
-
-```bash
-curl -X POST http://localhost:8001/api/v1/memories \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message_id": "msg_001",
-    "create_time": "2025-02-01T10:00:00+00:00",
-    "sender": "user_001",
-    "sender_name": "Alice",
-    "content": "I love playing basketball on weekends",
-    "group_id": "group_001",
-    "scene": "assistant"
-  }'
-```
-
-![divider][divider-light]
-![divider][divider-dark]
-
-#### Search Memories
-
-```bash
-curl -X GET http://localhost:8001/api/v1/memories/search \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "What sports does the user like?",
-    "user_id": "user_001",
-    "data_source": "episode",
-    "memory_scope": "personal",
-    "retrieval_mode": "rrf"
-  }'
-```
-
-See the [API Documentation][api-docs] for complete reference.
-
-<br>
-
-<div align="right">
-
-[![][back-to-top]][readme-top]
-
-</div>
-
-## Evaluation
-
-Run benchmarks to test EverMemOS performance:
-
-#### Quick smoke test
-```bash
-uv run python -m evaluation.cli --dataset locomo --system evermemos --smoke
-```
-
-
-#### Full evaluation
-```bash
-uv run python -m evaluation.cli --dataset locomo --system evermemos
-```
-
-#### View results
-```bash
-cat evaluation/results/locomo-evermemos/report.txt
-```
-
-![divider][divider-light]
-![divider][divider-dark]
-
-Supported datasets: `locomo`, `longmemeval`, `personamem`
-
-See the [Evaluation Guide][evaluation-guide] for details.
-
-<br>
-
-<div align="right">
-
-[![][back-to-top]][readme-top]
-
-</div>
-
-## Documentation
-
-| Guide | Description |
-| ----- | ----------- |
-| [Quick Start][getting-started] | Installation and configuration |
-| [Configuration Guide][config-guide] | Environment variables and services |
-| [API Usage Guide][api-usage-guide] | Endpoints and data formats |
-| [Development Guide][dev-guide] | Architecture and best practices |
-| [Memory API][api-docs] | Complete API reference |
-| [Demo Guide][demo-guide] | Interactive examples |
-| [Evaluation Guide][evaluation-guide] | Benchmark testing |
-
-<br>
-
-<div align="right">
-
-[![][back-to-top]][readme-top]
-
-</div> -->
 
 ## Questions
 
@@ -570,20 +343,20 @@ Read our [Contribution Guidelines](CONTRIBUTING.md) for code standards and Git w
 <!-- Navigation -->
 [readme-top]: #readme-top
 [welcome]: #welcome-to-evermemos
+[introduction]: #introduction
 [why-evermemos]: #why-evermemos
-[how-evermemos-works]: #how-evermemos-works
-[evermemos-benchmark]: #evermemos-benchmark
 [quick-start]: #quick-start
 [prerequisites]: #prerequisites
 [installation]: #installation
-[run-demo]: #run-the-demo
-[full-demo-experience]: #full-demo-experience
-[api-usage]: #api-usage
-[evaluation-section]: #evaluation
+[basic-usage]: #basic-usage
+[advanced-techniques]: #advanced-techniques
+[evaluation-benchmarking]: #evaluation--benchmarking
+[benchmark-results]: #benchmark-results
+[supported-benchmarks]: #supported-benchmarks
+[evaluation-quick-start]: #quick-start-1
 [docs-section]: #documentation
 [questions-section]: #questions
 [contributing]: #contributing
-[demo-section]: #run-the-demo
 
 <!-- Dividers -->
 [divider-light]: https://github.com/user-attachments/assets/aec54c94-ced9-4683-ae58-0a5a7ed803bd#gh-light-mode-only

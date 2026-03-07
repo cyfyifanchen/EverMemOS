@@ -96,7 +96,7 @@ Welcome to EverMemOS! Join our community to help improve the project and collabo
 
 ## Usecases
 
-[![Image](https://github.com/user-attachments/assets/60713404-2e94-4cab-9e5f-15b36291dc6f)](https://github.com/user-attachments/assets/0e06da2b-0236-430f-89b4-980b8b6a855f)
+[![Image](https://github.com/user-attachments/assets/0e06da2b-0236-430f-89b4-980b8b6a855f)](https://github.com/EverMind-AI/EverMemOS/tree/agent_memory)
 
 **EverMind + OpenClaw Agent Memory and Plugin**
 

@@ -96,11 +96,11 @@ Welcome to EverMemOS! Join our community to help improve the project and collabo
 
 ## Usecases
 
-[![Image](https://github.com/user-attachments/assets/60713404-2e94-4cab-9e5f-15b36291dc6f)](https://github.com/EverMind-AI/EverMemOS/tree/agent_memory)
+[![Image](https://github.com/user-attachments/assets/60713404-2e94-4cab-9e5f-15b36291dc6f)](https://github.com/user-attachments/assets/0e06da2b-0236-430f-89b4-980b8b6a855f)
 
-**OpenClaw Long-Term Memory Plugin**
+**EverMind + OpenClaw Agent Memory and Plugin**
 
-Claw is putting the pieces of his memory together. Imagine a 24/7 agent with continuous learning memory that you can carry with you wherever you go next. Check out the [agent_memory](https://github.com/EverMind-AI/EverMemOS/tree/agent_memory) branch for more details.
+Claw is putting the pieces of his memory together. Imagine a 24/7 agent with continuous learning memory that you can carry with you wherever you go next. Check out the [agent_memory](https://github.com/EverMind-AI/EverMemOS/tree/agent_memory) branch and the [plugin](https://github.com/EverMind-AI/EverMemOS/tree/agent_memory/evermemos-openclaw-plugin) for more details.
 
 
 ![divider][divider-light]

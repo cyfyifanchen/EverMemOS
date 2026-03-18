@@ -3,21 +3,21 @@
 ![banner-gif][banner-gif]
 
 [![][arxiv-badge]][arxiv-link]
-[![Python][python-badge]][python]
+<!-- [![Python][python-badge]][python]
 [![Docker][docker-badge]][docker]
 [![FastAPI][fastapi-badge]][fastapi]
 [![MongoDB][mongodb-badge]][mongodb]
 [![Elasticsearch][elasticsearch-badge]][elasticsearch]
-[![Milvus][milvus-badge]][milvus]
+[![Milvus][milvus-badge]][milvus] -->
 [![Ask DeepWiki][deepwiki-badge]][deepwiki]
 [![License][license-badge]][license]
 
-<p><strong>Share EverMemOS Repository</strong></p>
+<!-- <p><strong>Share EverMemOS Repository</strong></p>
 
 [![][share-x-shield]][share-x-link]
 [![][share-linkedin-shield]][share-linkedin-link]
 [![][share-reddit-shield]][share-reddit-link]
-[![][share-telegram-shield]][share-telegram-link]
+[![][share-telegram-shield]][share-telegram-link] -->
 <!-- [![][share-whatsapp-shield]][share-whatsapp-link]
 [![][share-mastodon-shield]][share-mastodon-link]
 [![][share-weibo-shield]][share-weibo-link] -->
@@ -33,7 +33,7 @@
 
 <br>
 
-[![Memory Genesis Competition 2026][competition-image]][competition-link]
+<!-- [![Memory Genesis Competition 2026][competition-image]][competition-link]
 
 > [!IMPORTANT]
 >
@@ -48,7 +48,7 @@
 >
 > **[Get Started with the Competition Starter Kit][starter-kit]**
 >
-> Join our [Discord][discord] to ask anything you want. AMA session is open to everyone and occurs biweekly.
+> Join our [Discord][discord] to ask anything you want. AMA session is open to everyone and occurs biweekly. -->
 
 <br>
 

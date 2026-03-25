@@ -11,17 +11,7 @@
 [![Milvus][milvus-badge]][milvus]
 [![Ask DeepWiki][deepwiki-badge]][deepwiki]
 [![License][license-badge]][license]
-
-<p><strong>Share EverMemOS Repository</strong></p>
-
-[![][share-x-shield]][share-x-link]
-[![][share-linkedin-shield]][share-linkedin-link]
-[![][share-reddit-shield]][share-reddit-link]
-[![][share-telegram-shield]][share-telegram-link]
-<!-- [![][share-whatsapp-shield]][share-whatsapp-link]
-[![][share-mastodon-shield]][share-mastodon-link]
-[![][share-weibo-shield]][share-weibo-link] -->
-
+d
 [Documentation][documentation] •
 [API Reference][api-docs] •
 [Demo][demo-section]
@@ -33,26 +23,7 @@
 
 <br>
 
-[![Memory Genesis Competition 2026][competition-image]][competition-link]
-
-> [!IMPORTANT]
->
-> ### Memory Genesis Competition 2026
->
-> Join our AI [Memory Competition][competition-link]! Build innovative applications, plugins, or infrastructure improvements powered by EverMemOS.
->
-> **Tracks:**
-> - **Agent + Memory** - Build intelligent agents with long-term, evolving memories
-> - **Platform Plugins** - Integrate EverMemOS with VSCode, Chrome, Slack, Notion, LangChain, and more
-> - **OS Infrastructure** - Optimize core functionality and performance
->
-> **[Get Started with the Competition Starter Kit][starter-kit]**
->
-> Join our [Discord][discord] to ask anything you want. AMA session is open to everyone and occurs biweekly.
-
-<br>
-
-<!-- <details>
+<details>
 <summary><kbd>Table of Contents</kbd></summary>
 
 <br>
@@ -76,7 +47,7 @@
 
 <br>
 
-</details> -->
+</details>
 
 ## Welcome to EverMemOS
 

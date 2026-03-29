@@ -3,6 +3,12 @@
 ![banner-gif][banner-gif]
 
 [![][arxiv-badge]][arxiv-link]
+[![Docker][docker-badge]][docker]
+[![Ask DeepWiki][deepwiki-badge]][deepwiki]
+[![License][license-badge]][license]
+
+
+<!-- [![][arxiv-badge]][arxiv-link]
 [![Python][python-badge]][python]
 [![Docker][docker-badge]][docker]
 [![FastAPI][fastapi-badge]][fastapi]
@@ -10,17 +16,15 @@
 [![Elasticsearch][elasticsearch-badge]][elasticsearch]
 [![Milvus][milvus-badge]][milvus]
 [![Ask DeepWiki][deepwiki-badge]][deepwiki]
-[![License][license-badge]][license]
+[![License][license-badge]][license] -->
 
-<p><strong>分享 EverOS 仓库</strong></p>
+<!-- <p><strong>分享 EverOS 仓库</strong></p>
 
 [![][share-x-shield]][share-x-link]
 [![][share-linkedin-shield]][share-linkedin-link]
 [![][share-reddit-shield]][share-reddit-link]
-[![][share-telegram-shield]][share-telegram-link]
-<!-- [![][share-whatsapp-shield]][share-whatsapp-link]
-[![][share-mastodon-shield]][share-mastodon-link]
-[![][share-weibo-shield]][share-weibo-link] -->
+[![][share-telegram-shield]][share-telegram-link] -->
+
 
 [文档][documentation] •
 [API 参考][api-docs] •
@@ -33,41 +37,32 @@
 
 <br>
 
-[![Memory Genesis Competition 2026][competition-image]][competition-link]
+<!-- [![Memory Genesis Competition 2026][competition-image]][competition-link] -->
 
 > [!IMPORTANT]
 >
-> ### Memory Genesis Competition 2026
+> ### [Memory Sparse Attention](https://github.com/EverMind-AI/MSA)
 >
-> 欢迎参加我们的 AI [记忆竞赛][competition-link]。无论你是构建创新应用、平台插件，还是改进底层基础设施，只要是基于 EverOS 的作品都欢迎提交。
+> 查看我们的最新论文 [Memory Sparse Attention](https://github.com/EverMind-AI/MSA) - 一个面向 1 亿 token 上下文的可扩展、端到端可训练的潜在记忆框架。
 >
-> **赛道：**
-> - **Agent + Memory** - 构建具备长期、可演化记忆的智能体
-> - **Platform Plugins** - 将 EverOS 集成到 VSCode、Chrome、Slack、Notion、LangChain 等平台
-> - **OS Infrastructure** - 优化核心能力与系统性能
+> - 可扩展的稀疏注意力 + 文档级 RoPE（并行 / 全局），在训练和推理中均实现近线性复杂度。
+> - KV 缓存压缩 + Memory Parallel 推理引擎，在 2×A800 GPU 上实现 1 亿 token 吞吐。
+> - Memory Interleave，支持跨分散记忆片段的多轮、多跳推理。
 >
-> **[从竞赛 Starter Kit 开始][starter-kit]**
->
-> 欢迎加入我们的 [Discord][discord] 提问交流。AMA 面向所有人开放，双周举行一次。
+> 加入我们的 [Discord][discord] 提问交流。AMA 面向所有人开放，双周举行一次。
 
 <br>
 
-<!-- <details>
+<details open>
 <summary><kbd>目录</kbd></summary>
 
 <br>
 
 - [欢迎来到 EverOS][welcome]
-- [介绍][introduction]
-- [点亮 Star 并关注我们][star-us]
-- [为什么选择 EverOS][why-everos]
+- [应用场景][use-cases]
 - [快速开始][quick-start]
-  - [环境要求][prerequisites]
-  - [安装][installation]
-- [API 使用][api-usage]
-- [演示][demo-section]
-  - [运行 Demo][run-demo]
-  - [完整 Demo 体验][full-demo-experience]
+- [基础使用][api-usage]
+- [Demo][demo-section]
 - [评测][evaluation-section]
 - [文档][docs-section]
 - [GitHub Codespaces][codespaces]
@@ -76,7 +71,7 @@
 
 <br>
 
-</details> -->
+</details>
 
 ## 欢迎来到 EverOS
 
@@ -505,13 +500,14 @@ EverOS 已接入以下 AI 驱动问答平台。它们可以帮助你快速、准
 [welcome]: #欢迎来到-everos
 [introduction]: #介绍
 [why-everos]: #为什么选择-everos
+[use-cases]: #应用场景
 [quick-start]: #快速开始
 [prerequisites]: #环境要求
 [installation]: #安装
 [codespaces]: #github-codespaces
 [run-demo]: #运行-demo
 [full-demo-experience]: #完整-demo-体验
-[api-usage]: #api-使用
+[api-usage]: #基础使用
 [evaluation-section]: #评测与基准测试
 [docs-section]: #文档
 [questions-section]: #提问与支持
@@ -523,7 +519,7 @@ EverOS 已接入以下 AI 驱动问答平台。它们可以帮助你快速、准
 [divider-dark]: https://github.com/user-attachments/assets/d57fad08-4f49-4a1c-bdfc-f659a5d86150#gh-dark-mode-only
 
 <!-- Images -->
-[banner-gif]: https://github.com/user-attachments/assets/3f22c9a8-a8db-4061-accf-f04c055aa01b
+[banner-gif]: https://github.com/user-attachments/assets/73634a04-9ea8-4ce8-a8ec-eb71925df968
 [competition-image]: https://github.com/user-attachments/assets/739a0939-ab1d-4659-81c4-0842466afde9
 [usecase-openclaw-image]: https://github.com/user-attachments/assets/0e06da2b-0236-430f-89b4-980b8b6a855f
 [usecase-live2d-image]: https://github.com/user-attachments/assets/a80bdab3-e5d0-43b9-9e8d-0a9605012a26
@@ -537,7 +533,7 @@ EverOS 已接入以下 AI 驱动问答平台。它们可以帮助你快速、准
 [star-gif]: https://github.com/user-attachments/assets/0c512570-945a-483a-9f47-8e067bd34484
 
 <!-- Header Badges -->
-[arxiv-badge]: https://img.shields.io/badge/arXiv-EverOS_Paper-F5C842?labelColor=gray&style=flat-square&logo=arxiv&logoColor=white
+[arxiv-badge]: https://img.shields.io/badge/arXiv-2601.02163-b31b1b?labelColor=gray&style=flat-square&logo=arxiv&logoColor=white
 [license-badge]: https://img.shields.io/badge/License-Apache%202.0-blue?labelColor=gray&labelColor=F5C842&style=flat-square
 
 <!-- Tech Stack Badges -->
